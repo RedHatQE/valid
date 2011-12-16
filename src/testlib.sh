@@ -146,7 +146,6 @@ function test_rhel_version()
           new_test "The selected image has the version RHEL $RHELV"
         else
           echo "Version Mismatched !!!!, The input version RHEL$RHELV should be similar to the selected Ami's version RHEL$RHEL_FOUND" 
-          exit
         fi
 	BETA=`cat /etc/redhat-release  | grep -i beta | wc -l`
 	if [ $BETA == 1 ]; then 
@@ -558,13 +557,13 @@ function test_repos()
     
 	if [ $RHEL == 5 ]; then
 	new_test "## test repo files ... "
-	assert "ls /etc/yum.repos.d/ | wc -l " 6
-	assert "ls /etc/yum.repos.d/redhat* | wc -l" 4
-	assert "ls /etc/yum.repos.d/rhel* | wc -l" 2
+	assert "ls /etc/yum.repos.d/ | wc -l " 24
+	assert "ls /etc/yum.repos.d/redhat* | wc -l" 17
+	assert "ls /etc/yum.repos.d/rhel* | wc -l" 1
     else
 	new_test "## test repo files ... "
 	assert "ls /etc/yum.repos.d/ | wc -l " 4
-	assert "ls /etc/yum.repos.d/redhat* | wc -l" 4
+	assert "ls /etc/yum.repos.d/redhat* | wc -l" 2
 	assert "ls /etc/yum.repos.d/rhel* | wc -l" 0
     fi
 }
@@ -860,8 +859,9 @@ function open_bugzilla()
 function bugzilla_comments()
 {
 	echo "Adding log file contents to bugzilla"
+    mv splitValid.log* /tmp 2> /dev/null
 	split ${LOGFILE} -l 500 splitValid.log
-
+    mv ${LOGFILE} /tmp 2> /dev/null
  	for part in $(ls splitValid.log*);do
 	 BUG_COMMENTS=`cat $part`
          $BUGZILLACOMMAND modify $BUGZILLA -l "${BUG_COMMENTS}"

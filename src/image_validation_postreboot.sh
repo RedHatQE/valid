@@ -16,6 +16,7 @@
 # modified by kbidarka@redhat.com for RHEL 6
 
 FAILURES=0
+source $PWD/testlib.sh
 
 function usage()
 {
@@ -83,6 +84,9 @@ for i in $*
            ;;
  esac
 done
+
+# initialize testlib
+_testlib_init
 
 
 if [[ -z $IMAGEID ]] || [[ -z $RHELV ]] ||  [[ -z $yum_test ]] || [[ -z $BUG_USERNAME ]] || [[ -z $BUG_PASSWORD ]] ; then
