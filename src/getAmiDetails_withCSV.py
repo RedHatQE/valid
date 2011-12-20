@@ -46,6 +46,8 @@ SSHKEY_NAME_US_E = config.get('SSH-Info', 'ssh-key-name_useast')
 SSHKEY_US_E = config.get('SSH-Info', 'ssh-key-path_useast')
 SSHKEY_NAME_US_O = config.get('SSH-Info', 'ssh-key-name_uswest-oregon')
 SSHKEY_US_O = config.get('SSH-Info', 'ssh-key-path_uswest-oregon')
+SSHKEY_SA_E = config.get('SSH-Info', 'ssh-key-path_saeast')
+SSHKEY_NAME_SA_E = config.get('SSH-Info', 'ssh-key-name_saeast')
 
 BZUSER = config.get('Bugzilla-Info', 'bugzilla_usr')
 BZPASS = config.get('Bugzilla-Info', 'bugzilla_pwd')
@@ -72,6 +74,8 @@ val1 = {
     'SSHKEY_NAME_AP_N':      SSHKEY_NAME_AP_N,
     'SSHKEY_AP_S':           SSHKEY_AP_S,
     'SSHKEY_NAME_AP_S':      SSHKEY_NAME_AP_S,
+    'SSHKEY_SA_E':           SSHKEY_SA_E,
+    'SSHKEY_NAME_SA_E':      SSHKEY_NAME_SA_E,
     'BZUSER':                BZUSER,
     'BZPASS':                BZPASS,
     'AWS_ACCESS_KEY_ID':     AWS_ACCESS_KEY_ID,
@@ -280,6 +284,9 @@ if CSV == 'true':
         elif REGION == "ap-northeast-1":
             SSHKEY = SSHKEY_AP_N
             SSHKEYNAME = SSHKEY_NAME_AP_N
+        elif REGION == "sa-east-1":
+            SSHKEY = SSHKEY_SA_E
+            SSHKEYNAME = SSHKEY_NAME_SA_E
 
 
         publicDNS = []
