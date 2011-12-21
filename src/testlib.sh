@@ -450,38 +450,26 @@ function test_bash_history()
 
 function test_swap_file()
 {
-	if [ -f /root/noswap ] ; then
-		echo "/root/noswap present -- this machine doesn't require swap" >> $LOGFILE
+	if [ -f /root/noswap ] || [ $UNAMEI == "x86_64" ] ; then
+		echo "this machine doesn't require swap" >> $LOGFILE
 		return 0
 	fi
-	new_test "## Verify turning on/off swap file ... "
-	if [ $UNAMEI == "i386" ]; then
-	 swap=`cat swap_partitions`
-	 fst=`cat /etc/fstab | grep swap | awk '{print $1}'`
-	 [ $swap != $fst ] && [ -b /dev/xvde3 ] && sed -i 's/\/dev\/xvda3/\/dev\/xvde3/' /etc/fstab 
-	 [ $swap != $fst ] && [ -b /dev/xvda3 ] && sed -i 's/\/dev\/xvde3/\/dev\/xvda3/' /etc/fstab 
-     swapon `cat swap_partitions` 2> /dev/null
-	 assert "/sbin/swapoff $swap && /sbin/swapon $swap"
-	fi
 
-# The below logic was reversed, after checking the images. 
-# The images have swap partitions only for i386(not for t1.micro) and not for x86_64.
 	new_test "## Verify swap size ... "
-	if [ $UNAMEI == "i386" ]; then
-	 size=`free | grep Swap | awk '{print $2}'`
-	 echo "free | grep Swap | awk '{print $2}'" >> $LOGFILE
-         echo "swap size = $size" >> LOGFILE
-	 if [ $size -gt 0 ]; then
-	  assert "echo true" 
-         else 
-	  assert "echo false" "1"
-	 fi
-	fi 
-          	
-	if [ $UNAMEI == "x86_64" ]; then
-	 echo "no swap for x86_64 is expected" >> $LOGFILE
+	size=`free | grep Swap | awk '{print $2}'`
+	echo "free | grep Swap | awk '{print \$2}'" >> $LOGFILE
+	echo "swap size = $size" >> LOGFILE
+	assert "test $size -gt 0"
+
+	new_test "## Verify turning on/off swap file ... "
+	swap=`cat swap_partitions`
+	fst=`cat /etc/fstab | grep swap | awk '{print $1}'`
+	if [ -n "$fs5" ] && [ $swap != $fst ] ; then
+		[ -b /dev/xvde3 ] && sed -i 's/\/dev\/xvda3/\/dev\/xvde3/' /etc/fstab 
+		[ -b /dev/xvda3 ] && sed -i 's/\/dev\/xvde3/\/dev\/xvda3/' /etc/fstab 
 	fi
-	
+	swapon `cat swap_partitions` 2> /dev/null
+	assert "/sbin/swapoff $swap && /sbin/swapon $swap"
 }
 
 function test_system_id()
