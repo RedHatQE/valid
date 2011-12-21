@@ -458,7 +458,7 @@ function test_swap_file()
 	new_test "## Verify swap size ... "
 	size=`free | grep Swap | awk '{print $2}'`
 	echo "free | grep Swap | awk '{print \$2}'" >> $LOGFILE
-	echo "swap size = $size" >> LOGFILE
+	echo "swap size = $size" >> $LOGFILE
 	assert "test $size -gt 0"
 
 	new_test "## Verify turning on/off swap file ... "
