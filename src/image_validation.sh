@@ -30,6 +30,16 @@ function list_tests(){
 	declare -F | cut -d\  -f3,3  | grep "^test_.*"
 }
 
+function _sa_east_1_hosts(){
+	# a quick hack to avoid DNS resolve errors in yum...
+		cat <<-__SA_EAST_1_HOSTS >>/etc/hosts
+		# DNS workaround `date`
+		177.71.186.7    rhui2.sa-east-1.aws.ce.redhat.com
+		177.71.186.16   rhui2-cds01.sa-east-1.aws.ce.redhat.com
+		177.71.186.17   rhui2-cds02.sa-east-1.aws.ce.redhat.com
+__SA_EAST_1_HOSTS
+}
+
 function filter_tests(){
 	# produces the list of tests to execute
 	# args:
@@ -137,6 +147,7 @@ for i in $*
 done
 # initialize testlib
 _testlib_init
+# _sa_east_1_hosts
 
 if [[ -z $IMAGEID ]] || [[ -z $RHELV ]] ||  [[ -z $yum_test ]] || [[ -z $BUG_USERNAME ]] || [[ -z $BUG_PASSWORD ]] || [[ -z $MEM_HWP ]]; then
  usage
