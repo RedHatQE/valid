@@ -455,6 +455,13 @@ function test_swap_file()
 		return 0
 	fi
 
+    swap=`cat swap_partitions`
+	fst=`cat /etc/fstab | grep swap | awk '{print $1}'`
+	if [ -n "$fs5" ] && [ $swap != $fst ] ; then
+		[ -b /dev/xvde3 ] && sed -i 's/\/dev\/xvda3/\/dev\/xvde3/' /etc/fstab 
+		[ -b /dev/xvda3 ] && sed -i 's/\/dev\/xvde3/\/dev\/xvda3/' /etc/fstab 
+	fi
+
 	new_test "## Verify swap size ... "
 	size=`free | grep Swap | awk '{print $2}'`
 	echo "free | grep Swap | awk '{print \$2}'" >> $LOGFILE
@@ -462,12 +469,6 @@ function test_swap_file()
 	assert "test $size -gt 0"
 
 	new_test "## Verify turning on/off swap file ... "
-	swap=`cat swap_partitions`
-	fst=`cat /etc/fstab | grep swap | awk '{print $1}'`
-	if [ -n "$fs5" ] && [ $swap != $fst ] ; then
-		[ -b /dev/xvde3 ] && sed -i 's/\/dev\/xvda3/\/dev\/xvde3/' /etc/fstab 
-		[ -b /dev/xvda3 ] && sed -i 's/\/dev\/xvde3/\/dev\/xvda3/' /etc/fstab 
-	fi
 	swapon `cat swap_partitions` 2> /dev/null
 	assert "/sbin/swapoff $swap && /sbin/swapon $swap"
 }
