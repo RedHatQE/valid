@@ -44,7 +44,8 @@ function _testlib_init(){
 	rm -Rf swap_partitions
 	mount | grep ^/dev | awk '{print $1}' >> disk_partitions
 	parted -l | grep -B 5 swap | grep ^Disk | awk '{print $2}' | sed '$s/.$//' >> swap_partitions
-	
+#    sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/redhat-rhui-client-config.repo 
+
 	rm -Rf tmp1_partitions tmp2_partitions
 	### End:  Create a list of partitions
 	
@@ -457,14 +458,16 @@ function test_swap_file()
 
     swap=`cat swap_partitions`
 	fst=`cat /etc/fstab | grep swap | awk '{print $1}'`
-	if [ -n "$fs5" ] && [ $swap != $fst ] ; then
+	if [ -n "$fst" ] && [ $swap != $fst ] ; then
 		[ -b /dev/xvde3 ] && sed -i 's/\/dev\/xvda3/\/dev\/xvde3/' /etc/fstab 
 		[ -b /dev/xvda3 ] && sed -i 's/\/dev\/xvde3/\/dev\/xvda3/' /etc/fstab 
 	fi
 
 	new_test "## Verify swap size ... "
-	size=`free | grep Swap | awk '{print $2}'`
-	echo "free | grep Swap | awk '{print \$2}'" >> $LOGFILE
+	#size=`free | grep Swap | awk '{print $2}'`
+	size=`parted -l | grep linux-swap | awk '{print $4}' | awk -F'MB' '{print $1}'`
+    #echo "free | grep Swap | awk '{print \$2}'" >> $LOGFILE
+	echo "parted -l | grep linux-swap | awk '{print \$4}' | awk -F'MB' '{print \$1}'" >> $LOGFILE
 	echo "swap size = $size" >> $LOGFILE
 	assert "test $size -gt 0"
 
