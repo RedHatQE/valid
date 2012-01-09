@@ -147,7 +147,7 @@ for i in $*
 done
 # initialize testlib
 _testlib_init
-# _sa_east_1_hosts
+#_sa_east_1_hosts
 
 if [[ -z $IMAGEID ]] || [[ -z $RHELV ]] ||  [[ -z $yum_test ]] || [[ -z $BUG_USERNAME ]] || [[ -z $BUG_PASSWORD ]] || [[ -z $MEM_HWP ]]; then
  usage
