@@ -20,18 +20,18 @@ source $PWD/testlib.sh
 
 function usage()
 {
-           echo " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " 
+           echo " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "
 	   echo "Please use all options"
 	   echo ""
            echo " This script will run through some basic sanity tests for a Red Hat Enterprise Linux image "
            echo " A valid Red Hat bugzilla username and password will be required at the end of the script "
            echo " http://bugzilla.redhat.com/ "
-           echo " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " 
+           echo " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "
            echo ""
            echo "Available options are:"
            echo "--imageID=          :: Please provide a unique id for the image"
            echo "--RHEL=             :: Please specify the correct FULL rhel version eg: --RHEL=5.7 or --RHEL=6.1"
-           echo "--full-yum-suite=   :: Please input the value  "yes" OR "no""          
+           echo "--full-yum-suite=   :: Please input the value  "yes" OR "no""
 	   echo "--skip-questions=   :: Please input the value  "yes" or "no""
 	   echo "--bugzilla-username :: Please specify your bugzilla username@email.com"
 	   echo "--bugzilla-password :: Please specify your bugzilla password"
@@ -65,7 +65,7 @@ for i in $*
       --bugzilla-username=*)
 	  BUG_USERNAME="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
 	  ;;
-      --bugzilla-password=*)
+	--bugzilla-password=*)
 	  BUG_PASSWORD="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
 	  ;;
       --bugzilla-num=*)
@@ -78,7 +78,7 @@ for i in $*
 	  MEM_HWP="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
           ;;
         *)
-         # unknown option 
+         # unknown option
 	   usage
            exit 1
            ;;
@@ -99,14 +99,14 @@ fi
 
 source $PWD/testlib.sh
 
-echo " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " 
+echo " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "
 echo " This script will run through some basic sanity tests for a Red Hat Enterprise Linux image "
 echo " A valid Red Hat bugzilla username and password will be required at the end of the script "
 echo " http://bugzilla.redhat.com/ "
 echo ""
 echo "***************** DETAILED RESULTS LOGGED TO validate.log  ********************************"
-echo " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " 
-echo "" 
+echo " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "
+echo ""
 echo ""
 postReboot
 echo ""

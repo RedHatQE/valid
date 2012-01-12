@@ -249,7 +249,7 @@ hwp_x86_64 = [m1Xlarge, t1Micro , m1Large , m2Xlarge, m22Xlarge, m24Xlarge , c1X
 #hwp_x86_64 = [m24Xlarge]
 
 #Use just one hwp for os tests
-#hwp_i386 = [c1Medium]
+hwp_i386 = [c1Medium]
 #hwp_x86_64 = [m1Xlarge,m22Xlarge]
 if CSV == 'true':
     reader = csv.reader(open(CSVFILE,"rb"))
