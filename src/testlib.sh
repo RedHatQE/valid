@@ -45,7 +45,7 @@ function _rotate_file() {
 
 function _testlib_init(){
 	[ -n "$__TESTLIB_INIT__" ] && return 0
-	set -x
+	# set -x
 	LOGFILE=$PWD/validate.log
 	exec 4<&2 2>>$LOGFILE.err
 	DLOG=" tee -a ${LOGFILE} " #Display and log output
