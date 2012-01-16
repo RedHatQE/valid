@@ -19,11 +19,37 @@
 [ -n "$__TESTLIB__" ] && return 0
 __TESTLIB__=loaded
 
+__VALIDATION_VAR_NAME_PREFIX="/etc/profile.d/image_validation_var"
+
+# "rotate" given file
+function _rotate_file() {
+	local ret=""
+	local version=0
+	[ -z "$1" ] && return 1
+	if [ -w $1 ] ; then
+		# figure backup file version, if $1 already exists
+		[ -f $1.1 ] && {
+			# only in case older backup file version already exists
+			ret=$( ls --sort=version $1.* | tail -1 )
+			version=${ret##*.}
+		}
+		version=$((version+1)) || return $?
+		# rotate
+		mv $1 $1.$version
+		: > $1 || return $?
+	fi
+	# no file with the name $1 present yet
+	# just return
+	return 0
+}
+
 function _testlib_init(){
 	[ -n "$__TESTLIB_INIT__" ] && return 0
+	set -x
 	LOGFILE=$PWD/validate.log
+	exec 4<&2 2>>$LOGFILE.err
 	DLOG=" tee -a ${LOGFILE} " #Display and log output
-	cat /dev/null > $LOGFILE
+	_rotate_file $LOGFILE || exit $?
 	RSLT=""
 	LOGRESULT="echo ${RSLT} 1>>$LOGFILE 2>>$LOGFILE"
 	DIFFDIR=$PWD
@@ -97,16 +123,17 @@ _exit() {
 
 _get_perm_env_var() {
 	[ -z "$1" ] && _exit 1 "no varname specified"
-	if [ -r "$1" ] ; then
-		source /etc/profile.d/image_validation.$1.sh || _exit $?
+	local varfile="${__VALIDATION_VAR_NAME_PREFIX}.$1.sh"
+	if [ -r "$varfile" ] ; then
+		source "$varfile" || _exit $?
 	fi
-	export $1
 }
 # save a variable in /etc/profile.d/image_validation.$1.sh
 #   $1: var name
 _set_perm_env_var() {
+	local varfile="${__VALIDATION_VAR_NAME_PREFIX}.$1.sh"
 	[ -z "$1" ] && _exit 1 "no varname specified"
-	cat <<-__SET_PERM_ENV_VAR > /etc/profile.d/image_validation.$1.sh || _exit $?
+	cat <<-__SET_PERM_ENV_VAR > $varfile || _exit $?
 		export $1="${!1}"
 __SET_PERM_ENV_VAR
 	_get_perm_env_var $1
@@ -115,38 +142,46 @@ __SET_PERM_ENV_VAR
 # remove a variable save file /etc/profile.d/image_validation.$1.sh
 #   $1: var name
 _unset_perm_env_var() {
+	local varfile="${__VALIDATION_VAR_NAME_PREFIX}.$1.sh"
 	[ -z "$1" ] && _exit 1 "no varname specified"
-	rm -f /etc/profile.d/image_validation.$1.sh
+	rm -f $varfile
 	unset $1
 }
 
 function _check_sys_update_phase0() {
 	local ret=""
+	local pkg=""
 	echo "# checking possible sys update" | tee -a $LOGFILE
 	case $RHEL_FOUND in
 		5.*)
-			yum check-update redhat-release
-			ret=$?
+			pkg="redhat-release"
 		;;
 		*)
-			yum check-update redhat-release-server
-			ret=$?
+			pkg="redhat-release-server"
 		;;
 	esac
+	yum check-update $pkg >> $LOGFILE
+	ret=$?
 	case $ret in
 		100)
 			echo "# sys update found" | tee -a $LOGFILE
 			_VALID_SYS_UPDATE_OLD=$( cat /etc/redhat-release )
 			_set_perm_env_var _VALID_SYS_UPDATE_OLD
-		;;
+			;;
+		0)
+			echo "# no sys update found" | tee -a $LOGFILE
+			;;
 		*)
-			_unset_perm_env_var _VALID_SYS_UPDATE_OLD
+			_err $ret "error during: yum check-update"
 			;;
 	esac
 }
 
 function _check_sys_update_phase1() {
 	local redhat_release
+	echo "# checking sys update done"
+	# RC scripts don't have /etc/profile.d/ contents preloaded?
+	_get_perm_env_var _VALID_SYS_UPDATE_OLD
 	if [ -z "$_VALID_SYS_UPDATE_OLD" ] ; then
 		echo "# no update was required" | tee -a $LOGFILE
 		return 0
@@ -524,11 +559,11 @@ function test_yum_full_test()
         new_test "## Verify yum update ... "
         assert "/usr/bin/yum -y update"
 
-	new_test "## Verify no fa1lures in rpm package ... "
-	assert "cat $LOGFILE | grep 'failure in rpm package' | wc -l" "1"
+        new_test "## Verify no fa1lures in rpm package ... "
+        assert "cat $LOGFILE | grep 'failure in rpm package' | wc -l" "1"
 
-	new_test "## Verify no rpm scriplet fa1lures ... "
-	assert "cat $LOGFILE | grep 'scriptlet failed, exit status 1' | wc -l" "1"
+        new_test "## Verify no rpm scriplet fa1lures ... "
+        assert "cat $LOGFILE | grep 'scriptlet failed, exit status 1' | wc -l" "1"
 
         new_test "## Verify package removal... "
         rc "/bin/rpm -e zsh"
@@ -549,7 +584,7 @@ function test_yum_general_test()
         # check for possible system update
         _check_sys_update_phase0
         new_test "## Verify yum update ... "
-	assert "/usr/bin/yum -y update"
+        assert "/usr/bin/yum -y update"
 }
 
 function test_bash_history()
@@ -965,12 +1000,12 @@ function open_bugzilla()
 function bugzilla_comments()
 {
 	echo "Adding log file contents to bugzilla"
-    mv splitValid.log* /tmp 2> /dev/null
+	mv splitValid.log* /tmp 2> /dev/null
 	split ${LOGFILE} -l 500 splitValid.log
-    mv ${LOGFILE} /tmp 2> /dev/null
- 	for part in $(ls splitValid.log*);do
-	 BUG_COMMENTS=`cat $part`
-         $BUGZILLACOMMAND modify $BUGZILLA -l "${BUG_COMMENTS}"
+	cp -f ${LOGFILE} /tmp 2> /dev/null
+	for part in $(ls splitValid.log*);do
+		 BUG_COMMENTS=`cat $part`
+		 $BUGZILLACOMMAND modify $BUGZILLA -l "${BUG_COMMENTS}"
 	done
         #BUG_COMMENTS02=`tail -n $(expr $(cat ${LOGFILE} | wc -l ) / 3) ${LOGFILE}`
         #BUG_COMMENTS03=`tail -n $(expr $(cat ${LOGFILE} | wc -l ) / 3) ${LOGFILE}`
