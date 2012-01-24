@@ -59,8 +59,6 @@ CSV = config.get('Misc-Info', 'csv')
 NOGIT = config.get('Misc-Info', 'git')
 BASEDIR = config.get('Misc-Info', 'basedir')
 
-BZ = None
-
 val1 = {
     'SSHKEY_US_E':           SSHKEY_US_E,
     'SSHKEY_NAME_US_E':      SSHKEY_NAME_US_E,
@@ -261,7 +259,9 @@ if CSV == 'true':
         ARCH = myRow[0]
         REGION = myRow[1]
         RHEL = myRow[4]
-#        BZ = myRow[3]
+        BZ = myRow[3]
+        if BZ == '??':
+            BZ = None
         AMI = myRow[5]
 
         BID = addBugzilla(BZ, AMI, RHEL, ARCH, REGION)
