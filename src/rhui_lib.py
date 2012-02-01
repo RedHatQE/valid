@@ -24,31 +24,31 @@ import time
 #    tr.close()
 
 def putfile(hostname, pkey_file, localpath, filepath):
-    username = 'root'
-    num = 7
-    while num > 1:
-	try:
-    	    key = paramiko.RSAKey.from_private_key_file(pkey_file)
-    	    tr = paramiko.Transport((hostname, 22))
-    	    tr.connect(username=username, pkey=key)
-    	    sftp = paramiko.SFTPClient.from_transport(tr)
-	    break
-	except:
-	    print "\n\nError, re-trying in 30 secs"
-	    print "The Hostname is :", hostname
-	    print "The key is :", pkey_file
-	    print "The Local and REmote path is :", localpath, " ", filepath
-	    num = num - 1
-	    print "Number of attempts left", num
-	    time.sleep(30)
-	    continue
-    if num == 1:
-	return 1 
-    print "\n\nPlease wait, Trying to upload the file ", localpath, " to   hostname : ", hostname
-    sftp.put(localpath,filepath)
-    print "Uploading the file : ", localpath, "  to  ", hostname, " completed"
-    sftp.close()
-    tr.close()
+	username = 'root'
+	num = 7
+	while num > 1:
+		try:
+			key = paramiko.RSAKey.from_private_key_file(pkey_file)
+			tr = paramiko.Transport((hostname, 22))
+			tr.connect(username=username, pkey=key)
+			sftp = paramiko.SFTPClient.from_transport(tr)
+			break
+		except:
+			print "\n\nError, re-trying in 30 secs"
+			print "The Hostname is :", hostname
+			print "The key is :", pkey_file
+			print "The Local and REmote path is :", localpath, " ", filepath
+			num = num - 1
+			print "Number of attempts left", num
+			time.sleep(30)
+			continue
+	if num == 1:
+		return 1
+	print "\n\nPlease wait, Trying to upload the file ", localpath, " to   hostname : ", hostname
+	sftp.put(localpath,filepath)
+	print "Uploading the file : ", localpath, "  to  ", hostname, " completed"
+	sftp.close()
+	tr.close()
 
     
 #def getfile(hostname, pkey_file, localpath, filepath):
@@ -76,9 +76,9 @@ def getfile(hostname, pkey_file, localpath, filepath):
             break
         except:
             print "\nError, re-trying in 30 secs"
-	    print "\nThe Hostname is :", hostname
-	    print "\nThe key is :", pkey_file
-	    print "\nThe Local and Remote path is :", localpath, " ", filepath
+            print "\nThe Hostname is :", hostname
+            print "\nThe key is :", pkey_file
+            print "\nThe Local and Remote path is :", localpath, " ", filepath
             num = num - 1
             print "Number of attempts left", num
             time.sleep(30)

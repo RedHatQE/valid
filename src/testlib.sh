@@ -19,36 +19,62 @@
 [ -n "$__TESTLIB__" ] && return 0
 __TESTLIB__=loaded
 
+__VALIDATION_VAR_NAME_PREFIX="/etc/profile.d/image_validation_var"
+
+# "rotate" given file
+function _rotate_file() {
+	local ret=""
+	local version=0
+	[ -z "$1" ] && return 1
+	if [ -w $1 ] ; then
+		# figure backup file version, if $1 already exists
+		[ -f $1.1 ] && {
+			# only in case older backup file version already exists
+			ret=$( ls --sort=version $1.* | tail -1 )
+			version=${ret##*.}
+		}
+		version=$((version+1)) || return $?
+		# rotate
+		mv $1 $1.$version
+		: > $1 || return $?
+	fi
+	# no file with the name $1 present yet
+	# just return
+	return 0
+}
+
 function _testlib_init(){
 	[ -n "$__TESTLIB_INIT__" ] && return 0
+	# set -x
 	LOGFILE=$PWD/validate.log
+	exec 4<&2 2>>$LOGFILE.err
 	DLOG=" tee -a ${LOGFILE} " #Display and log output
-	cat /dev/null > $LOGFILE
+	_rotate_file $LOGFILE || exit $?
 	RSLT=""
 	LOGRESULT="echo ${RSLT} 1>>$LOGFILE 2>>$LOGFILE"
 	DIFFDIR=$PWD
 	SYSDATE=$( /bin/date '+%Y-%m-%d %H:%M' )
 	UNAMEI=$( /bin/uname -i )
 	BETA=0
-	
-	
+
+
 	echo ""
 	echo ""
-	
+
 	txtred=$(tput setaf 1)    # Red
 	txtgrn=$(tput setaf 2)    # Green
 	txtrst=$(tput sgr0)       # Text reset
-	
+
 	### Begin:  Create a list of partitions
 	rm -Rf disk_partitions
 	rm -Rf swap_partitions
 	mount | grep ^/dev | awk '{print $1}' >> disk_partitions
 	parted -l | grep -B 5 swap | grep ^Disk | awk '{print $2}' | sed '$s/.$//' >> swap_partitions
-#    sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/redhat-rhui-client-config.repo 
+	# sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/redhat-rhui-client-config.repo
 
 	rm -Rf tmp1_partitions tmp2_partitions
 	### End:  Create a list of partitions
-	
+
 	RHEL=`cat /etc/redhat-release | awk '{print $7}' | awk -F. '{print $1}'`
 	RHELU=`cat /etc/redhat-release | awk '{print $7}' | awk -F. '{print $2}'`
 	RHEL_FOUND=$RHEL.$RHELU
@@ -59,6 +85,122 @@ function _testlib_init(){
 	echo "IMAGE ID= ${IMAGEID}" >> $LOGFILE
 	__TESTLIB_INIT__=initialized
 }
+
+# report a testcase error including a stack trace
+_err() {
+	# make current testcase fail
+	assert false
+	# dump the stack
+	local frame=1
+	local ret=$1
+	shift
+	exec 3<&2 2>>$LOGFILE
+	while caller $frame >&2 ; do
+		((frame++));
+		tail -1 $LOGFILE
+	done
+	exec 2<&3 3<&-
+	exec 3<&1 1>>$LOGFILE
+	echo "_err $ret ${@}"
+	exec 1<&3 3<&-
+}
+
+
+# an error "exit" function
+# typically will be called from within a test
+# terminates the execution with a bugzilla report
+_exit() {
+	local ret=$1
+	shift
+	# call the error reporter
+	_err $ret "${@}"
+	# provide a bugzilla status report
+	open_bugzilla
+	bugzilla_comments
+	verify_bugzilla
+	# terminate the execution
+	im_exit
+}
+
+_get_perm_env_var() {
+	[ -z "$1" ] && _exit 1 "no varname specified"
+	local varfile="${__VALIDATION_VAR_NAME_PREFIX}.$1.sh"
+	if [ -r "$varfile" ] ; then
+		source "$varfile" || _exit $?
+	fi
+}
+# save a variable in /etc/profile.d/image_validation.$1.sh
+#   $1: var name
+_set_perm_env_var() {
+	local varfile="${__VALIDATION_VAR_NAME_PREFIX}.$1.sh"
+	[ -z "$1" ] && _exit 1 "no varname specified"
+	cat <<-__SET_PERM_ENV_VAR > $varfile || _exit $?
+		export $1="${!1}"
+__SET_PERM_ENV_VAR
+	_get_perm_env_var $1
+}
+
+# remove a variable save file /etc/profile.d/image_validation.$1.sh
+#   $1: var name
+_unset_perm_env_var() {
+	local varfile="${__VALIDATION_VAR_NAME_PREFIX}.$1.sh"
+	[ -z "$1" ] && _exit 1 "no varname specified"
+	rm -f $varfile
+	unset $1
+}
+
+function _check_sys_update_phase0() {
+	local ret=""
+	local pkg=""
+	echo "# checking possible sys update" | tee -a $LOGFILE
+	case $RHEL_FOUND in
+		5.*)
+			pkg="redhat-release"
+		;;
+		*)
+			pkg="redhat-release-server"
+		;;
+	esac
+	yum check-update $pkg >> $LOGFILE
+	ret=$?
+	case $ret in
+		100)
+			echo "# sys update found" | tee -a $LOGFILE
+			_VALID_SYS_UPDATE_OLD=$( cat /etc/redhat-release )
+			_set_perm_env_var _VALID_SYS_UPDATE_OLD
+			;;
+		0)
+			echo "# no sys update found" | tee -a $LOGFILE
+			;;
+		*)
+			_err $ret "error during: yum check-update"
+			;;
+	esac
+}
+
+function _check_sys_update_phase1() {
+	local redhat_release
+	echo "# checking sys update done"
+	# RC scripts don't have /etc/profile.d/ contents preloaded?
+	_get_perm_env_var _VALID_SYS_UPDATE_OLD
+	if [ -z "$_VALID_SYS_UPDATE_OLD" ] ; then
+		echo "# no update was required" | tee -a $LOGFILE
+		return 0
+	fi
+	echo -n "# update was required; previous version: $_VALID_SYS_UPDATE_OLD" | tee -a $LOGFILE
+	redhat_release=$( cat /etc/redhat-release )
+	if [ "${_VALID_SYS_UPDATE_OLD}" == "${redhat_release}" ] ; then
+		echo "... but no update performed" | tee -a $LOGFILE
+		return 1
+	fi
+	echo "... and was done; new version: $redhat_release" | tee -a $LOGFILE
+	# update was required - reset the _VALID_SYS_UPDATE_OLD var state
+	_unset_perm_env_var _VALID_SYS_UPDATE_OLD
+	return 0
+}
+
+
+
 
 function new_test()
 {
@@ -80,14 +222,14 @@ function rc()
 
 function rq()
 {
-	echo "QUESTION: $1" 
+	echo "QUESTION: $1"
 }
 
 #runs a basic command and redirects stdout to file $2
 function rc_outFile()
 {
 	echo "COMMAND: $1 $2" >>$LOGFILE
- 	`eval $1 1>>${LOGFILE}` 
+ 	`eval $1 1>>${LOGFILE}`
 	rc=$?
 	echo "RETURN CODE: $rc" >>$LOGFILE
 }
@@ -113,24 +255,24 @@ function assert()
 
         if [[ "$RSLT" == "$option" ]] || [[ "$RSLT" == $option2 ]] && [[ "$option" != "" ]];then
          #echo "IN FIRST TEST" >>$LOGFILE
-         echo "${txtgrn}PASS${txtrst}" 
+         echo "${txtgrn}PASS${txtrst}"
          echo "PASS" >> $LOGFILE
         elif [ -z "$option" ] && [ "$rc" == 0 ];then
          #echo "IN SECOND TEST" >>$LOGFILE
-         echo "${txtgrn}PASS${txtrst}" 
+         echo "${txtgrn}PASS${txtrst}"
          echo "PASS" >> $LOGFILE
 	elif [[ "$rc" == "$option" ]];then
-         echo "${txtgrn}PASS${txtrst}" 
+         echo "${txtgrn}PASS${txtrst}"
          echo "PASS" >> $LOGFILE
         elif [[ "$RSLT" != "$option" ]] && [[ "$RSLT" != "$option2" ]] &&  [[ "$rc" != 0 ]] ;then
          #echo "IN THIRD TEST" >>$LOGFILE
-         echo "${txtred}FAIL${txtrst}" 
+         echo "${txtred}FAIL${txtrst}"
          echo "FAIL1" >>  $LOGFILE
          echo ${RSLT} >>${LOGFILE}
 	 TEST_FAILED="$TEST_FAILED $TEST_CURRENT"
          let FAILURES++
         else
-         echo "${txtred}FAIL${txtrst}" 
+         echo "${txtred}FAIL${txtrst}"
          echo "FAIL2" >>  $LOGFILE
          echo ${RSLT} >>${LOGFILE}
 	 TEST_FAILED="$TEST_FAILED $TEST_CURRENT"
@@ -146,10 +288,10 @@ function test_rhel_version()
         if [ $RHELV == $RHEL_FOUND ]; then
           new_test "The selected image has the version RHEL $RHELV"
         else
-          echo "Version Mismatched !!!!, The input version RHEL$RHELV should be similar to the selected Ami's version RHEL$RHEL_FOUND" 
+          echo "Version Mismatched !!!!, The input version RHEL$RHELV should be similar to the selected Ami's version RHEL$RHEL_FOUND"
         fi
 	BETA=`cat /etc/redhat-release  | grep -i beta | wc -l`
-	if [ $BETA == 1 ]; then 
+	if [ $BETA == 1 ]; then
 	 echo "ami is a BETA" >> $LOGFILE
 	fi
 }
@@ -161,8 +303,8 @@ function print_rhel_version()
         if [ $RHELV == $RHEL_FOUND ]; then
           new_test "The selected image has the version RHEL $RHELV"
         else
-          echo "Version Mismatched !!!!, The input version RHEL$RHELV should be similar to the selected Ami's version RHEL$RHEL_FOUND" 
-          echo "Version Mismatched !!!!, Check the logs to see if yum update changed the RHEL version" 
+          echo "Version Mismatched !!!!, The input version RHEL$RHELV should be similar to the selected Ami's version RHEL$RHEL_FOUND"
+          echo "Version Mismatched !!!!, Check the logs to see if yum update changed the RHEL version"
         fi
 }
 
@@ -200,7 +342,7 @@ function userInput_CloudProvider()
 {
 	echo ""
 	echo "******** Please answer the following questions *********"
-	new_test  "Cloud Provider Basic Information.." 
+	new_test  "Cloud Provider Basic Information.."
 	echo ""
 	rq "What is the cloud providers company name?"
 	read answer
@@ -217,7 +359,7 @@ function userInput_Filesystem()
 {
 	echo ""
 	echo "******** Please answer the following questions *********"
-	new_test "Non-Standard Image Layout or Filesystem Types.." 
+	new_test "Non-Standard Image Layout or Filesystem Types.."
 	echo ""
 	rq "If this image contains a non standard partition or filesystem, please describe it"
 	read answer
@@ -228,7 +370,7 @@ function userInput_Errata_Notification()
 {
 	echo ""
 	echo "******** Please answer the following questions *********"
-	new_test "Description of Errata Notification Procedure/Process to be Used to Notify Cloud Users" 
+	new_test "Description of Errata Notification Procedure/Process to be Used to Notify Cloud Users"
 	echo ""
 	rq "Please describe the process to be used in order to notify Cloud Users of errata and critical updates."
 	read answer
@@ -239,12 +381,12 @@ function userInput_Availability()
 {
 	echo ""
 	echo "******** Please answer the following questions *********"
-	new_test "Description of Policy for Availability of Updated Starter Images" 
+	new_test "Description of Policy for Availability of Updated Starter Images"
 	echo ""
 	rq "Please clearly define the policy for making starter images available."
 	read answer
 	echo $answer >>$LOGFILE
-	new_test "Description of Policy for retiring  starter images" 
+	new_test "Description of Policy for retiring  starter images"
 	echo ""
 	rq "Please clearly define the policy for retiring "
 	read answer
@@ -261,7 +403,7 @@ function test_disk_size()
 	  then
 	   echo "$part is 4gb or greater"
 	   assert "echo true" true
-          else  
+          else
 	   echo "$part is NOT 4gb or greater"
 	   assert "echo false" true
   	 fi
@@ -279,7 +421,7 @@ function test_disk_format()
 	assert "echo $result" ext3
 	else
 	ext=`mount | grep $part | awk '{print $3}'`
-        if [ "$ext" == "/" ] ; then 
+        if [ "$ext" == "/" ] ; then
 	 assert "echo $result" "ext4"
 	else
 	 assert "echo $result" "ext3"
@@ -292,13 +434,13 @@ function test_disk_format()
 function test_selinux()
 {
  	echo "## SELINUX TESTS"
-	new_test "## /sbin/getenforce ... " 
+	new_test "## /sbin/getenforce ... "
 	assert "/usr/sbin/getenforce" "Enforcing"
-	
-	new_test "## Verify SELINUX enforcing ... " 
+
+	new_test "## Verify SELINUX enforcing ... "
 	assert "grep ^SELINUX= /etc/sysconfig/selinux | cut -d\= -f2" enforcing
 
-	new_test "## Verify SELINUXTYPE targeted ... " 
+	new_test "## Verify SELINUXTYPE targeted ... "
 	assert "grep ^SELINUXTYPE= /etc/sysconfig/selinux | cut -d\= -f2" targeted
 
 	new_test "## Flip Selinux Permissive ... "
@@ -356,7 +498,7 @@ function test_verify_rpms()
     THIS_RHEL=`echo $RHELV | cut -d . -f 1`
     if [ $THIS_RHEL == 5 ] ; then
 	file=/tmp/rpmqaV.txt
-        new_test "## Verify RPMs ... " 
+        new_test "## Verify RPMs ... "
         /bin/rpm -Va --nomtime --nosize --nomd5 2>> $LOGFILE | sort -fu > ${file}
         echo "/bin/rpm -Va --nomtime --nosize --nomd5" >> $LOGFILE
 	    cat $file >> $LOGFILE
@@ -366,7 +508,7 @@ function test_verify_rpms()
         assert "/bin/rpm -q --queryformat '%{RELEASE}\n' redhat-release | cut -d. -f1,2" $RHELV # to-do, pass this in
     else
 	file=/tmp/rpmqaV.txt
-        new_test "## Verify RPMs ... " 
+        new_test "## Verify RPMs ... "
         /bin/rpm -Va --nomtime --nosize --nomd5 2>> $LOGFILE | sort -fu > ${file}
 	    cat $file >> $LOGFILE
 	    cat rpmVerifyTable >> $LOGFILE
@@ -378,10 +520,10 @@ function test_verify_rpms()
 		*)
 			assert "cat ${file} | wc -l" "4";;
 	esac
-        new_test "## Verify Version 2 ... " 
+        new_test "## Verify Version 2 ... "
         assert "/bin/rpm -q --queryformat '%{RELEASE}\n' redhat-release-server | cut -d. -f1,2" $RHELV # to-do, pass this in
      fi
-        
+
 	new_test "## Verify packager ... "
         file=/tmp/Packager
         `cat /dev/null > $file`
@@ -391,36 +533,38 @@ function test_verify_rpms()
          rpm -qi $x | grep Packager >>$file
         done
         assert "cat $file | grep -v 'Red Hat, Inc.' |  grep -v crash-trace-commandPackager| wc -l" 0
-        cat $file | grep -v 'Red Hat, Inc.' >>$LOGFILE	
+        cat $file | grep -v 'Red Hat, Inc.' >>$LOGFILE
 }
 
 function test_yum_full_test()
 {
         #echo "Invoking more rigorous yum tests"
         new_test "## List the configured repositories..."
-        assert "/usr/bin/yum repolist" 
+        assert "/usr/bin/yum repolist"
 
         new_test "## Search zsh..."
-        assert "/usr/bin/yum search zsh" 
+        assert "/usr/bin/yum search zsh"
 
         new_test "## install zsh ... "
         rc "/usr/bin/yum -y install zsh"
         assert "/bin/rpm -q --queryformat '%{NAME}\n' zsh" zsh
 
         new_test "## List available groups.."
-        assert "/usr/bin/yum grouplist" 
+        assert "/usr/bin/yum grouplist"
 
-        new_test "## Install Development tools group..." 
+        new_test "## Install Development tools group..."
         assert "/usr/bin/yum -y groupinstall 'Development tools'"
 
+        # check for possible system update
+        _check_sys_update_phase0
         new_test "## Verify yum update ... "
-        assert "/usr/bin/yum -y update"  
- 	
-	new_test "## Verify no fa1lures in rpm package ... "
-	assert "cat $LOGFILE | grep 'failure in rpm package' | wc -l" "1"
-	
-	new_test "## Verify no rpm scriplet fa1lures ... "
-	assert "cat $LOGFILE | grep 'scriptlet failed, exit status 1' | wc -l" "1"
+        assert "/usr/bin/yum -y update"
+
+        new_test "## Verify no fa1lures in rpm package ... "
+        assert "cat $LOGFILE | grep 'failure in rpm package' | wc -l" "1"
+
+        new_test "## Verify no rpm scriplet fa1lures ... "
+        assert "cat $LOGFILE | grep 'scriptlet failed, exit status 1' | wc -l" "1"
 
         new_test "## Verify package removal... "
         rc "/bin/rpm -e zsh"
@@ -438,14 +582,16 @@ function test_yum_general_test()
         rc "/bin/rpm -e zsh"
         assert "/bin/rpm -q zsh" "package zsh is not installed"
 
-        new_test "## Verify yum update ... " 
-	assert "/usr/bin/yum -y update" 
+        # check for possible system update
+        _check_sys_update_phase0
+        new_test "## Verify yum update ... "
+        assert "/usr/bin/yum -y update"
 }
 
 function test_bash_history()
 {
 	new_test "## Verify bash_history ... "
-	assert "cat ~/.bash_history | wc -l " 0 
+	assert "cat ~/.bash_history | wc -l " 0
 }
 
 
@@ -478,7 +624,7 @@ function test_swap_file()
 
 function test_system_id()
 {
-        new_test "## Verify no systemid file ... " 
+        new_test "## Verify no systemid file ... "
 	if [ ! -f /etc/sysconfig/rhn/systemid ]; then
 	 assert "echo true"
 	else
@@ -512,7 +658,7 @@ function test_nameserver()
 
 function test_group()
 {
-        new_test "## Verify group file ... " 
+        new_test "## Verify group file ... "
 	assert "cat /etc/group | grep root:x:0" "root:x:0:root"
 	assert "cat /etc/group | grep bin:x:1" "bin:x:1:root,bin,daemon"
 	assert "cat /etc/group | grep daemon:x:2" "daemon:x:2:root,bin,daemon"
@@ -530,11 +676,11 @@ function test_passwd()
 function test_inittab()
 {
         if [ $RHEL == 5 ] ;then
-	new_test "## Verify runlevel ... " 
+	new_test "## Verify runlevel ... "
 	assert "cat /etc/inittab | grep id:" "id:3:initdefault:"
 	assert "cat /etc/inittab | grep si:" "si::sysinit:/etc/rc.d/rc.sysinit"
-	else	
-	new_test "## Verify runlevel ... " 
+	else
+	new_test "## Verify runlevel ... "
 	assert "cat /etc/inittab | grep id:" "id:3:initdefault:"
 	fi
 }
@@ -542,14 +688,14 @@ function test_inittab()
 
 function test_shells()
 {
-        new_test "## Verify new shells file ... " 
+        new_test "## Verify new shells file ... "
 	assert "cat /etc/shells | grep bash" "/bin/bash"
 	assert "cat /etc/shells | grep nologin" "/sbin/nologin"
 }
 
 function test_repos()
 {
-    
+
 	if [ $RHEL == 5 ]; then
 	new_test "## test repo files ... "
 	assert "ls /etc/yum.repos.d/ | wc -l " 24
@@ -571,11 +717,11 @@ function test_yum_plugin()
 
 function test_gpg_keys()
 {
-        new_test "## Verify GPG checking ... " 
+        new_test "## Verify GPG checking ... "
 	assert "grep '^gpgcheck=1' /etc/yum.repos.d/redhat-*.repo | cut -d\= -f2 | sort -f | uniq" 1
 
 	new_test "## Verify GPG Keys ... "
-	if [ $BETA == 1 ]; then	
+	if [ $BETA == 1 ]; then
 	 assert "rpm -qa gpg-pubkey* | wc -l " 2
 	elif [ $RHEL_FOUND == "6.1" ]; then
 	 assert "rpm -qa gpg-pubkey* | wc -l " 2
@@ -597,7 +743,7 @@ function test_gpg_keys()
 	 new_test "## Verify GPG RPMS ... "
 	 assert "rpm -qa gpg-pubkey* | sort -f | tail -n 1" "gpg-pubkey-fd431d51-4ae0493b"
 	 assert "rpm -qa gpg-pubkey* |  grep 2fa6" "gpg-pubkey-2fa658e0-45700c69"
-    	fi 
+    	fi
 }
 
 function test_IPv6()
@@ -609,7 +755,7 @@ function test_IPv6()
 function test_networking()
 {
         new_test "## Verify networking ... "
- 	assert "grep ^NETWORKING= /etc/sysconfig/network | cut -d\= -f2" yes	
+ 	assert "grep ^NETWORKING= /etc/sysconfig/network | cut -d\= -f2" yes
 
 	new_test "## Verify device ... "
 	assert "grep ^DEVICE= /etc/sysconfig/network-scripts/ifcfg-eth0 | cut -d\= -f2" eth0
@@ -624,19 +770,19 @@ function test_sshd()
 
 
 function test_iptables()
-{       
+{
 	if [ $RHEL == 5 ]; then
         new_test "## Verify iptables ... "
         rc_outFile "/etc/init.d/iptables status | grep REJECT"
-	assert "/etc/init.d/iptables status | grep :22 | grep ACCEPT | wc -l " "1" 
+	assert "/etc/init.d/iptables status | grep :22 | grep ACCEPT | wc -l " "1"
 	assert "/etc/init.d/iptables status | grep "dpt:631" | grep ACCEPT | wc -l " "2"
 #	assert "/etc/init.d/iptables status | grep "icmp type" | grep ACCEPT | wc -l" "1"
 	assert "/etc/init.d/iptables status | grep "dpt:5353" | grep ACCEPT | wc -l" "1"
 	assert "/etc/init.d/iptables status | grep "RELATED,ESTABLISHED" | grep ACCEPT | wc -l" "1"
-	assert "/etc/init.d/iptables status | grep -e esp -e ah | grep ACCEPT | wc -l" "2"	
-#	assert "/etc/init.d/iptables status | grep :80 | grep ACCEPT | wc -l " "1" 
-#	assert "/etc/init.d/iptables status | grep :443 | grep ACCEPT | wc -l " "1" 
-	assert "/etc/init.d/iptables status | grep REJECT | grep all | grep 0.0.0.0/0 | grep icmp-host-prohibited |  wc -l" "1" 
+	assert "/etc/init.d/iptables status | grep -e esp -e ah | grep ACCEPT | wc -l" "2"
+#	assert "/etc/init.d/iptables status | grep :80 | grep ACCEPT | wc -l " "1"
+#	assert "/etc/init.d/iptables status | grep :443 | grep ACCEPT | wc -l " "1"
+	assert "/etc/init.d/iptables status | grep REJECT | grep all | grep 0.0.0.0/0 | grep icmp-host-prohibited |  wc -l" "1"
 	else
         new_test "## Verify iptables ... "
         rc_outFile "/etc/init.d/iptables status | grep REJECT"
@@ -654,7 +800,7 @@ function test_iptables()
 
 function test_chkconfig()
 {
- 
+
 	if [ $RHEL == 5 ]; then
     new_test "## Verify  chkconfig ... "
 	assert "chkconfig --list | grep crond | cut -f 5" "3:on"
@@ -679,13 +825,13 @@ function test_libc6-xen.conf()
 	if [ $UNAMEI == "x86_64" ]; then
   	 assert "ls /etc/ld.so.conf.d/libc6-xen.conf" "2"
 	else
-	 assert "ls /etc/ld.so.conf.d/libc6-xen.conf" "2"	
+	 assert "ls /etc/ld.so.conf.d/libc6-xen.conf" "2"
 	fi
 }
 
 function test_syslog()
 {
-        new_test "## Verify rsyslog is on ... " 
+        new_test "## Verify rsyslog is on ... "
 	assert "chkconfig --list | grep rsyslog | cut -f 5" "3:on"
 	new_test "## Verify rsyslog config ... "
 	if [ $RHEL == 5 ] ; then
@@ -752,21 +898,24 @@ function test_uname()
          #assert "rpm -q kernel-xen | sort -n | tail -n 1 | cut -c 12-50| sed 's/\(.*\)..../\1/'"  $CURRENT_UNAME_KERNAL_VERSION
 	 assert "uname -r | sed  's/\(.*\)......./\1/'"  $LATEST_RPM_KERNEL_VERSION
 	fi
- 
+
 	new_test "## Verify latest kenerl is in /boot/grub/menu.1st ... "
 	assert "cat /boot/grub/menu.lst | grep $LATEST_RPM_KERNEL_VERSION"
 
 	new_test "## Verify operating system ... "
 	assert "/bin/uname -o" GNU/Linux
-	
+
         new_test "## Verify /etc/sysconfig/kernel ... "
 	assert "ls /etc/sysconfig/kernel"
- 
+
 	new_test "## Verify /etc/sysconfig/kernel contains UPDATEDEFAULT ... "
-  	assert "cat /etc/sysconfig/kernel | grep UPDATEDEFAULT=yes"
-	
+	assert "cat /etc/sysconfig/kernel | grep UPDATEDEFAULT=yes"
+
 	new_test "## Verify /etc/sysconfig/kernel contains DEFAULTKERNEL ... "
-  	assert "cat /etc/sysconfig/kernel | grep DEFAULTKERNEL=kernel"
+	assert "cat /etc/sysconfig/kernel | grep DEFAULTKERNEL=kernel"
+
+	new_test "## Verify system up to date"
+	assert "_check_sys_update_phase1"
 
 }
 
@@ -789,7 +938,7 @@ function installTestKernel()
 	#cat /proc/cpuinfo | grep nonstop_tsc >> $LOGFILE
 	echo "yumlocalinstall -y /root/kernel/*" >> $LOGFILE
 	rc "yum localinstall -y  /root/kernel/* --nogpgcheck"
-	
+
 	#cat /boot/grub/grub.conf > /boot/grub/menu.lst
 	#/bin/sed -i -e 's/(hd0,0)/(hd0)/' /boot/grub/menu.lst
 }
@@ -815,7 +964,7 @@ function test_memory()
 	else
 	 echo "FAILED!! FOUND MEMORY OF $MEM > hwp MEMORY of $MEM_HWP" >> $LOGFILE
 	 assert "echo false" "1"
-	fi	
+	fi
 }
 
 function sos_report()
@@ -831,7 +980,7 @@ function sos_report()
 function open_bugzilla()
 {
 	#echo "######### /etc/rc.local ########" >> $LOGFILE
-	#cat /etc/rc.local >> $LOGFILE	
+	#cat /etc/rc.local >> $LOGFILE
 	#echo "######### /etc/rc.local ########" >> $LOGFILE
 
  	BUGZILLACOMMAND=$DIFFDIR/bugzilla-command
@@ -840,7 +989,7 @@ function open_bugzilla()
 	echo "Logging into bugilla"
 	echo ""
 	$BUGZILLACOMMAND --bugzilla=https://bugzilla.redhat.com/xmlrpc.cgi --user=$BUG_USERNAME --password=$BUG_PASSWORD login
-	if [ -z $BUG_NUM ]; then 
+	if [ -z $BUG_NUM ]; then
 	 BUGZILLA=`$BUGZILLACOMMAND new  -p"Cloud Image Validation" -v"RHEL$RHELV" -a"$UNAMEI" -c"images" -l"initial bug opening" -s"$IMAGEID $RHELV $UNAMEI " | cut -b "2-8"`
 	 echo ""
 	 echo "new bug created: $BUGZILLA https://bugzilla.redhat.com/show_bug.cgi?id=$BUGZILLA"
@@ -854,12 +1003,12 @@ function open_bugzilla()
 function bugzilla_comments()
 {
 	echo "Adding log file contents to bugzilla"
-    mv splitValid.log* /tmp 2> /dev/null
+	mv splitValid.log* /tmp 2> /dev/null
 	split ${LOGFILE} -l 500 splitValid.log
-    mv ${LOGFILE} /tmp 2> /dev/null
- 	for part in $(ls splitValid.log*);do
-	 BUG_COMMENTS=`cat $part`
-         $BUGZILLACOMMAND modify $BUGZILLA -l "${BUG_COMMENTS}"
+	cp -f ${LOGFILE} /tmp 2> /dev/null
+	for part in $(ls splitValid.log*);do
+		 BUG_COMMENTS=`cat $part`
+		 $BUGZILLACOMMAND modify $BUGZILLA -l "${BUG_COMMENTS}"
 	done
         #BUG_COMMENTS02=`tail -n $(expr $(cat ${LOGFILE} | wc -l ) / 3) ${LOGFILE}`
         #BUG_COMMENTS03=`tail -n $(expr $(cat ${LOGFILE} | wc -l ) / 3) ${LOGFILE}`
@@ -876,10 +1025,10 @@ function verify_bugzilla()
 	echo "If no failures found move bug to verified"
 	if [ $FAILURES == 0 ];then
           echo "MOVING BUG TO VERIFIED: test has $FAILURES failures"
-	  $BUGZILLACOMMAND modify --status="VERIFIED" $BUGZILLA	
+	  $BUGZILLACOMMAND modify --status="VERIFIED" $BUGZILLA
 	else
 	   echo "MOVING BUG TO ON_QA: test has $FAILURES failures"
-	  $BUGZILLACOMMAND modify --status="ON_QA" $BUGZILLA	
+	  $BUGZILLACOMMAND modify --status="ON_QA" $BUGZILLA
 	fi
 
 }
@@ -890,7 +1039,7 @@ function remove_bugzilla_rpms()
 	echo ""
 	echo "Removing epel-release and python-bugzilla"
 	rpm -e epel-release python-bugzilla
-        rpm -e gpg-pubkey-0608b895-4bd22942 gpg-pubkey-217521f6-45e8a532 	
+        rpm -e gpg-pubkey-0608b895-4bd22942 gpg-pubkey-217521f6-45e8a532
     echo ""
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 	echo "Please attach the sosreport bz2 in file /tmp to https://bugzilla.redhat.com/show_bug.cgi?id=$BUGZILLA"
@@ -929,12 +1078,12 @@ function show_failures()
 
 function im_exit()
 {
-	echo "" 
-        echo "## Summary ##" 
-	echo "FAILURES = ${FAILURES}" 
-	echo "FAILED TESTS = ${FAILED}" 
-	echo "LOG FILE = ${LOGFILE}" 
-        echo "## Summary ##" 
-	echo "" 
+	echo ""
+        echo "## Summary ##"
+	echo "FAILURES = ${FAILURES}"
+	echo "FAILED TESTS = ${FAILED}"
+	echo "LOG FILE = ${LOGFILE}"
+        echo "## Summary ##"
+	echo ""
 	exit ${FAILURES}
 }
