@@ -20,6 +20,24 @@
 __TESTLIB__=loaded
 
 __VALIDATION_VAR_NAME_PREFIX="/etc/profile.d/image_validation_var"
+LOGFILE=$PWD/validate.log
+
+#_testlib_init
+
+# enable error logs to file
+function _stderrlogOn () {
+	[ ${__STDERR_LOGGING:-0} -eq 1 ]  && return
+	exec 4<&2 2>> $LOGFILE.err
+	__STDERR_LOGGING=1
+}
+
+# disable error logs to file
+function _stderrlogOff () {
+	[ ${__STDERR_LOGGING:-0} -eq 0 ] && return
+	exec 4<&7 7<&-
+	__STDERR_LOGGING=0
+}
+
 
 # "rotate" given file
 function _rotate_file() {
@@ -43,13 +61,29 @@ function _rotate_file() {
 	return 0
 }
 
+function _testlib_init_staging(){
+	# prepare for a staging test
+	echo "Preparing staging environment" | $DLOG
+	echo "10.3.94.100 rhui2-cds01-stage.us-east-1.aws.ce.redhat.com" >> /etc/hosts
+	sed -i 's/enabled=1/enabled=0/' /etc/yum.repos.d/redhat-us-east-1-1y.repo || _exit $?
+	sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/redhat-us-east-1.repo || _exit $?
+	sed -i 's/enabled=0/enabled=1/' /etc/yum/pluginconf.d/rhui-lb.conf || _exit $?
+	sed -i 's/REGION/us-east/' /etc/yum/pluginconf.d/rhui-lb.conf || _exit $?
+	sed -i 's/rhui2-cds01.us-east-1.aws.ce.redhat.com/rhui2-cds01-stage.us-east-1.aws.ce.redhat.com/' /etc/yum.repos.d/redhat-us-east-1.repo || _exit $?
+	echo rhui2-cds01-stage.us-east-1.aws.ce.redhat.com > /etc/yum.repos.d/rhui-load-balancers.us-east-1 || _exit $?
+	echo "Preparing staging environment done" | $DLOG
+}
+
+
+
+
 function _testlib_init(){
 	[ -n "$__TESTLIB_INIT__" ] && return 0
 	# set -x
-	LOGFILE=$PWD/validate.log
-	exec 4<&2 2>>$LOGFILE.err
-	DLOG=" tee -a ${LOGFILE} " #Display and log output
+	_rotate_file $LOGFILE.err || exit $?
 	_rotate_file $LOGFILE || exit $?
+	_stderrlogOn
+	DLOG=" tee -a ${LOGFILE} " #Display and log output
 	RSLT=""
 	LOGRESULT="echo ${RSLT} 1>>$LOGFILE 2>>$LOGFILE"
 	DIFFDIR=$PWD

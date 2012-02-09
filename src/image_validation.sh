@@ -18,13 +18,17 @@
 
 FAILURES=0
 MEM_HWP=0
+BUGZILLA=1
+POSTREBOOT=1
 
 # try to pushd to a `valid' source tree
 [ -z $BASEDIR ] && BASEDIR=/root/valid/src
 [ -d $BASEDIR ] || BASEDIR=$PWD
 pushd $BASEDIR > /dev/null
 source testlib.sh
-
+_testlib_init
+set -x
+echo =====`basename $0; date`===== | $DLOG
 function list_tests(){
 	# return the list of defined tests
 	declare -F | cut -d\  -f3,3  | grep "^test_.*"
@@ -88,6 +92,7 @@ function usage()
 }
 
 #cli
+#set -x
 for i in $*
  do
  case $i in
@@ -137,6 +142,15 @@ for i in $*
 	  list_tests
 	  exit 0
 	  ;;
+      --staging)
+	 _testlib_init_staging
+          ;;
+      --no-bugzilla)
+         BUGZILLA=0
+	 ;;
+      --no-postreboot)
+        POSTREBOOT=0
+	;;
 
         *)
          # unknown option
@@ -146,20 +160,29 @@ for i in $*
  esac
 done
 # initialize testlib
-_testlib_init
+#_testlib_init
 #_sa_east_1_hosts
 
-if [[ -z $IMAGEID ]] || [[ -z $RHELV ]] ||  [[ -z $yum_test ]] || [[ -z $BUG_USERNAME ]] || [[ -z $BUG_PASSWORD ]] || [[ -z $MEM_HWP ]]; then
+if [[ -z $IMAGEID ]] || [[ -z $RHELV ]] ||  [[ -z $yum_test ]] || [[ -z $MEM_HWP ]]; then
  usage
  exit 1
+fi
+
+if [ ${BUGZILLA:-1} -eq 1 ] ; then
+	if [[ -z $BUG_USERNAME ]] || [[ -z $BUG_PASSWORD ]] ; then
+		usage
+		exit 1
+	fi
 fi
 
 
 
 
 ### DONT REMOVE OR COMMENT OUT ###
-echo "opening a bugzilla for logging purposes"
-open_bugzilla
+if [ ${BUGZILLA} -eq 1 ] ; then
+	echo "opening a bugzilla for logging purposes"
+	open_bugzilla
+fi
 ##################################
 
 echo " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " 
@@ -191,16 +214,22 @@ done
 
 ### DONT REMOVE OR COMMENT OUT ###
 show_failures
-open_bugzilla
-bugzilla_comments
+if [ ${BUGZILLA} -eq 1 ] ; then
+	open_bugzilla
+	bugzilla_comments
+fi
 sed -i 's/default=1/default=0/' /boot/grub/grub.conf
-setup_rc.local 
-#sos_report
-echo "REBOOTING"
-sleep 1
-echo "REBOOTING"
-sleep 1
-echo "REBOOTING"
-reboot
-#im_exit
+
+if [ ${POSTREBOOT} -eq 1 ] ; then
+	setup_rc.local 
+	#sos_report
+	echo "REBOOTING"
+	sleep 1
+	echo "REBOOTING"
+	sleep 1
+	echo "REBOOTING"
+	reboot
+else
+	im_exit
+fi
 ##################################
