@@ -27,7 +27,7 @@ POSTREBOOT=1
 pushd $BASEDIR > /dev/null
 source testlib.sh
 _testlib_init
-set -x
+#set -x
 echo =====`basename $0; date`===== | $DLOG
 function list_tests(){
 	# return the list of defined tests
@@ -162,8 +162,6 @@ done
 # initialize testlib
 #_testlib_init
 #_sa_east_1_hosts
-
-	 _testlib_init_staging
 
 
 if [[ -z $IMAGEID ]] || [[ -z $RHELV ]] ||  [[ -z $yum_test ]] || [[ -z $MEM_HWP ]]; then
