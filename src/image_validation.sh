@@ -163,12 +163,15 @@ done
 #_testlib_init
 #_sa_east_1_hosts
 
+	 _testlib_init_staging
+
+
 if [[ -z $IMAGEID ]] || [[ -z $RHELV ]] ||  [[ -z $yum_test ]] || [[ -z $MEM_HWP ]]; then
  usage
  exit 1
 fi
 
-if [ ${BUGZILLA:-1} -eq 1 ] ; then
+if [ ${BUGZILLA:-1} -gt 0 ] ; then
 	if [[ -z $BUG_USERNAME ]] || [[ -z $BUG_PASSWORD ]] ; then
 		usage
 		exit 1
@@ -179,7 +182,7 @@ fi
 
 
 ### DONT REMOVE OR COMMENT OUT ###
-if [ ${BUGZILLA} -eq 1 ] ; then
+if [ ${BUGZILLA} -gt 0 ] ; then
 	echo "opening a bugzilla for logging purposes"
 	open_bugzilla
 fi
@@ -214,7 +217,7 @@ done
 
 ### DONT REMOVE OR COMMENT OUT ###
 show_failures
-if [ ${BUGZILLA} -eq 1 ] ; then
+if [ ${BUGZILLA} -gt 0 ] ; then
 	open_bugzilla
 	bugzilla_comments
 fi
