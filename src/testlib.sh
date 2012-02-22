@@ -529,35 +529,33 @@ function test_package_set()
 
 function test_verify_rpms()
 {
-    THIS_RHEL=`echo $RHELV | cut -d . -f 1`
-    if [ $THIS_RHEL == 5 ] ; then
+	THIS_RHEL=`echo $RHELV | cut -d . -f 1`
 	file=/tmp/rpmqaV.txt
-        new_test "## Verify RPMs ... "
-        /bin/rpm -Va --nomtime --nosize --nomd5 2>> $LOGFILE | sort -fu > ${file}
-        echo "/bin/rpm -Va --nomtime --nosize --nomd5" >> $LOGFILE
-	    cat $file >> $LOGFILE
-	    cat rpmVerifyTable >> $LOGFILE
-        assert "cat ${file} | wc -l" "2"
-        new_test "## Verify Version 2 ... "
-        assert "/bin/rpm -q --queryformat '%{RELEASE}\n' redhat-release | cut -d. -f1,2" $RHELV # to-do, pass this in
-    else
-	file=/tmp/rpmqaV.txt
-        new_test "## Verify RPMs ... "
-        /bin/rpm -Va --nomtime --nosize --nomd5 2>> $LOGFILE | sort -fu > ${file}
-	    cat $file >> $LOGFILE
-	    cat rpmVerifyTable >> $LOGFILE
+	new_test "## Verify RPMs ... "
+	/bin/rpm -Va --nomtime --nosize --nomd5 2>> $LOGFILE | sort -fu > ${file}
+	cat $file >> $LOGFILE
+	cat rpmVerifyTable >> $LOGFILE
 	case $RHEL_FOUND in
 		6.1)
 			assert "cat ${file} | wc -l" "5";;
 		6.2)
 			assert "cat ${file} | wc -l" "6";;
+		5.8)
+			assert "cat ${file} | wc -l" "3";;
+		5.*)
+			assert "cat ${file} | wc -l" "2";;
 		*)
 			assert "cat ${file} | wc -l" "4";;
 	esac
-        new_test "## Verify Version 2 ... "
-        assert "/bin/rpm -q --queryformat '%{RELEASE}\n' redhat-release-server | cut -d. -f1,2" $RHELV # to-do, pass this in
-     fi
-
+	new_test "## Verify Version 2 ... "
+	case $RHEL_FOUND in
+		5.*)
+			assert "/bin/rpm -q --queryformat '%{RELEASE}\n' redhat-release | cut -d. -f1,2" $RHELV ;;
+		6.*)
+			assert "/bin/rpm -q --queryformat '%{RELEASE}\n' redhat-release-server | cut -d. -f1,2" $RHELV ;;
+		*)
+			echo "WARNING: unsupported version: RHEL_FOUND=$RHEL_FOUND" >> $LOGFILE ;;
+	esac
 	new_test "## Verify packager ... "
         file=/tmp/Packager
         `cat /dev/null > $file`
