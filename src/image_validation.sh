@@ -215,7 +215,7 @@ done
 
 ### DONT REMOVE OR COMMENT OUT ###
 show_failures
-if [ ${BUGZILLA} -gt 0 ] ; then
+if [ ${BUGZILLA:-1} -gt 0 ] ; then
 	open_bugzilla
 	bugzilla_comments
 fi
