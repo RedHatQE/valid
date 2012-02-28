@@ -727,18 +727,18 @@ function test_shells()
 
 function test_repos()
 {
-
-	if [ $RHEL == 5 ]; then
-	new_test "## test repo files ... "
-	assert "ls /etc/yum.repos.d/ | wc -l " 24
-	assert "ls /etc/yum.repos.d/redhat* | wc -l" 17
-	assert "ls /etc/yum.repos.d/rhel* | wc -l" 1
-    else
 	new_test "## test repo files ... "
 	assert "ls /etc/yum.repos.d/ | wc -l " 4
 	assert "ls /etc/yum.repos.d/redhat* | wc -l" 2
-	assert "ls /etc/yum.repos.d/rhel* | wc -l" 0
-    fi
+	case $RHEL_FOUND in
+		5.*)
+			assert "ls /etc/yum.repos.d/rhel* | wc -l" 1
+		;;
+		6.*)
+			assert "ls /etc/yum.repos.d/rhel* | wc -l" 0
+		;;
+	esac
+
 }
 
 function test_yum_plugin()
