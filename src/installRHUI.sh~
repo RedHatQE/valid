@@ -5,17 +5,22 @@
 ##
 ## example ./script.sh rhua xvdk
 ## example ./script.sh cds xvdf (xvdf for 6.0 rhel or so I've seen)
+# Update if working in beaker.. you probably cant add a large mount
+# set export env
 
 ## CHANGE ME ####
 export rhua=host.internal	
 export cds1=host.internal
 export cds2=host.internal
+#export env=ec2
+export env=beaker
 ## CHANGE ME ####
 
 
 
 export server="$1"
 export device="$2"
+ 
 
 if [ "$server" == "rhua" ]; then
  echo "RHUI Selected"
@@ -83,7 +88,9 @@ fi
 
 popd
 
-nss-db-gen
+if [ "$server" == "rhua" ]; then
+ nss-db-gen
+fi
 
 #/etc/pulp/pulp.conf
 #/etc/pulp/consumer/consumer.conf

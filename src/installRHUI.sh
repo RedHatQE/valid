@@ -88,7 +88,9 @@ fi
 
 popd
 
-nss-db-gen
+if [ "$server" == "rhua" ]; then
+ nss-db-gen
+fi
 
 #/etc/pulp/pulp.conf
 #/etc/pulp/consumer/consumer.conf
