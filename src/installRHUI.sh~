@@ -15,9 +15,9 @@ export cds2=host.internal
 export ec2pem=/root/wes-us-west-2.pem
 ## CHANGE ME ####
 
-export rhui_ip='dig +short' 
-export cds1_ip='dig +short'
-export cds2_ip='dig +short'
+export rhui_ip='dig +short $rhui' 
+export cds1_ip='dig +short $cds1'
+export cds2_ip='dig +short $cds2'
 
 echo "$rhui_ip $rhua" >> /etc/hosts
 echo "$cds1_ip $cds1" >> /etc/hosts
@@ -41,7 +41,8 @@ if [ "$server" == "cds" ]; then
  ls /var/lib/pulp-cds
 fi
 
-iptables -A INPUT -j DROP
+iptables --flush
+
 iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
 iptables -A INPUT -p icmp -j ACCEPT 
 iptables -A INPUT -i lo -j ACCEPT 
@@ -108,19 +109,19 @@ fi
 
 if [ "$server" == "rhua" ]; then
  if [ -e "/etc/pulp/pulp.conf" ]; then
-  sed -i 's/server_name: localhost/server_name: $rhui/g' /etc/pulp/pulp.conf;
+  sed -i 's/server_name: localhost/server_name: $rhua/g' /etc/pulp/pulp.conf;
   cat /etc/pulp/pulp.conf | grep server_name 
  fi
  if [ -e "/etc/pulp/client.conf" ]; then
-  sed -i 's/host = localhost.localdomain/host = $rhui/g' /etc/pulp/client.conf;
+  sed -i 's/host = localhost.localdomain/host = $rhua/g' /etc/pulp/client.conf;
   cat /etc/pulp/client.conf | grep host
  fi
  if [ -e "/etc/pulp/consumer/consumer.conf" ]; then
-  sed -i 's/host = localhost.localdomain/host = $rhui/g' /etc/pulp/consumer/consumer.conf;
+  sed -i 's/host = localhost.localdomain/host = $rhua/g' /etc/pulp/consumer/consumer.conf;
   cat /etc/pulp/consumer/consumer.conf | grep host
  fi
  if [ -e "/etc/rhui/rhui-tools.conf" ]; then
-  sed -i 's/hostname: localhost/hostname: $rhui/g' /etc/rhui/rhui-tools.conf;
+  sed -i 's/hostname: localhost/hostname: $rhua/g' /etc/rhui/rhui-tools.conf;
   cat /etc/rhui/rhui-tools.conf | grep hostname
  fi
 fi
@@ -173,5 +174,5 @@ if [ "$server" == "rhua" ]; then
  scp -i $ec2pem /root/RH* root@$cds2:/root
  scp -i $ec2pem /root/installRHUI.sh root@$cds2:/root
  scp -i $ec2pem -r /tmp/rhui root@$cds2:/tmp
- scp -i $ec2pem /etc/hosts root@cds2:/etc/hosts
+ scp -i $ec2pem /etc/hosts root@$cds2:/etc/hosts
 fi
