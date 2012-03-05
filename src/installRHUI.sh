@@ -148,9 +148,11 @@ DELIM
 if [ "$server" == "rhua" ]; then
  /usr/bin/rhui-installer /root/answers.txt
 
- scp -i $ec2pem /root/RH* root@$cds1
+ scp -i $ec2pem /root/RH* root@$cds1:/root
+ scp -i $ec2pem /root/installRHUI.sh root@$cds1:/root
  scp -i $ec2pem -r /tmp/rhui root@$cds1:/tmp
 
- scp -i $ec2pem /root/RH* root@$cds2
+ scp -i $ec2pem /root/RH* root@$cds2:/root
+ scp -i $ec2pem /root/installRHUI.sh root@$cds2:/root
  scp -i $ec2pem -r /tmp/rhui root@$cds2:/tmp
 fi
