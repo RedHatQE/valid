@@ -107,21 +107,26 @@ fi
 
 if [ "$server" == "rhua" ]; then
  if [ -e "/etc/pulp/pulp.conf" ]; then
-  sed -i 's/server_name: localhost/server_name: $rhui/g' /etc/pulp/pulp.conf; 
+  sed -i 's/server_name: localhost/server_name: $rhui/g' /etc/pulp/pulp.conf;
+  cat /etc/pulp/pulp.conf | grep server_name 
  fi
  if [ -e "/etc/pulp/client.conf" ]; then
   sed -i 's/host = localhost.localdomain/host = $rhui/g' /etc/pulp/client.conf;
+  cat /etc/pulp/client.conf | grep host
  fi
  if [ -e "/etc/pulp/consumer/consumer.conf" ]; then
   sed -i 's/host = localhost.localdomain/host = $rhui/g' /etc/pulp/consumer/consumer.conf;
+  cat /etc/pulp/consumer/consumer.conf | grep host
  fi
  if [ -e "/etc/rhui/rhui-tools.conf" ]; then
   sed -i 's/hostname: localhost/hostname: $rhui/g' /etc/rhui/rhui-tools.conf;
+  cat /etc/rhui/rhui-tools.conf | grep hostname
  fi
 fi
 
 if [ "$server" == "cds" ]; then
- perl -npe 's/host = localhost.localdomain/host = $rhui/g' -i /etc/pulp/cds.conf;
+ sed -i 's/host = localhost.localdomain/host = $rhui/g' /etc/pulp/cds.conf;
+ cat /etc/pulp/cds.conf | grep host
 fi
 
 export cert=.crt

@@ -93,6 +93,7 @@ mkdir /tmp/mnt
 mount -o loop /root/RH* /tmp/mnt/
 pushd /tmp/mnt/
 if [ "$server" == "rhua" ]; then
+ yum -y install rpm-build
  ./install_RHUA.sh ;./install_tools.sh 
 fi
 if [ "$server" == "cds" ]; then
