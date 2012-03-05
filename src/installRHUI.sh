@@ -41,7 +41,8 @@ if [ "$server" == "cds" ]; then
  ls /var/lib/pulp-cds
 fi
 
-iptables -A INPUT -j DROP
+iptables --flush
+
 iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
 iptables -A INPUT -p icmp -j ACCEPT 
 iptables -A INPUT -i lo -j ACCEPT 
