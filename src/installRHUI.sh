@@ -15,11 +15,11 @@ export cds2=host.internal
 export ec2pem=/root/wes-us-west-2.pem
 ## CHANGE ME ####
 
-export rhui_ip='dig +short $rhui' 
+export rhua_ip='dig +short $rhua' 
 export cds1_ip='dig +short $cds1'
 export cds2_ip='dig +short $cds2'
 
-echo "$rhui_ip $rhua" >> /etc/hosts
+echo "$rhua_ip $rhua" >> /etc/hosts
 echo "$cds1_ip $cds1" >> /etc/hosts
 echo "$cds2_ip $cds2" >> /etc/hosts
 

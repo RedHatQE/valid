@@ -15,7 +15,7 @@ export cds2=host.internal
 export ec2pem=/root/wes-us-west-2.pem
 ## CHANGE ME ####
 
-export rhui_ip='dig +short $rhui' 
+export rhui_ip='dig +short $rhua' 
 export cds1_ip='dig +short $cds1'
 export cds2_ip='dig +short $cds2'
 
