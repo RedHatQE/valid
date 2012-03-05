@@ -12,7 +12,7 @@
 export rhua=host.internal	
 export cds1=host.internal
 export cds2=host.internal
-#export env=ec2
+export ec2pem=/root/wes-us-west-2.pem
 export env=beaker
 ## CHANGE ME ####
 
@@ -147,6 +147,10 @@ DELIM
 
 if [ "$server" == "rhua" ]; then
  /usr/bin/rhui-installer /root/answers.txt
+
+ scp -i $ec2pem /root/RH* root@$cds1
+ scp -i $ec2pem -r /tmp/rhui root@$cds1:/tmp
+
+ scp -i $ec2pem /root/RH* root@$cds2
+ scp -i $ec2pem -r /tmp/rhui root@$cds2:/tmp
 fi
-
-
