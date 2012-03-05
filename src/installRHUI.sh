@@ -13,12 +13,20 @@ export rhua=host.internal
 export cds1=host.internal
 export cds2=host.internal
 export ec2pem=/root/wes-us-west-2.pem
-export env=beaker
 ## CHANGE ME ####
 
+export rhui_ip=dig +short $rhua
+export cds1_ip=dig +short $cds1
+export cds2_ip=dig +short $cds2
+
+echo "$rhui_ip $rhua" >> /etc/hosts
+echo "$cds1_ip $cds1" >> /etc/hosts
+echo "$cds2_ip $cds2" >> /etc/hosts
 
 
+#options rhua or cds
 export server="$1"
+#options /dev/$someDevice
 export device="$2"
  
 
@@ -33,6 +41,11 @@ if [ "$server" == "cds" ]; then
  ls /var/lib/pulp-cds
 fi
 
+iptables -A INPUT -j DROP
+iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
+iptables -A INPUT -p icmp -j ACCEPT 
+iptables -A INPUT -i lo -j ACCEPT 
+iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
 iptables -A INPUT -p tcp -m state --state NEW  -m tcp --dport 443 -j ACCEPT
 iptables -A INPUT -p tcp -m state --state NEW  -m tcp --dport 5674 -j ACCEPT
 
@@ -92,28 +105,28 @@ if [ "$server" == "rhua" ]; then
  nss-db-gen
 fi
 
-#/etc/pulp/pulp.conf
-#/etc/pulp/consumer/consumer.conf
-#/etc/pulp/client.conf
-#host = localhost.localdomain
-
 if [ "$server" == "rhua" ]; then
  if [ -e "/etc/pulp/pulp.conf" ]; then
-  sed -i 's/server_name: localhost/server_name: $rhui/g' /etc/pulp/pulp.conf; 
+  sed -i 's/server_name: localhost/server_name: $rhui/g' /etc/pulp/pulp.conf;
+  cat /etc/pulp/pulp.conf | grep server_name 
  fi
  if [ -e "/etc/pulp/client.conf" ]; then
   sed -i 's/host = localhost.localdomain/host = $rhui/g' /etc/pulp/client.conf;
+  cat /etc/pulp/client.conf | grep host
  fi
  if [ -e "/etc/pulp/consumer/consumer.conf" ]; then
-  set -i 's/host = localhost.localdomain/host = $rhui/g' /etc/pulp/consumer/consumer.conf;
+  sed -i 's/host = localhost.localdomain/host = $rhui/g' /etc/pulp/consumer/consumer.conf;
+  cat /etc/pulp/consumer/consumer.conf | grep host
  fi
  if [ -e "/etc/rhui/rhui-tools.conf" ]; then
-  set -i 's/hostname: localhost/hostname: $rhui/g' /etc/rhui/rhui-tools.conf;
+  sed -i 's/hostname: localhost/hostname: $rhui/g' /etc/rhui/rhui-tools.conf;
+  cat /etc/rhui/rhui-tools.conf | grep hostname
  fi
 fi
 
 if [ "$server" == "cds" ]; then
- perl -npe 's/host = localhost.localdomain/host = $rhui/g' -i /etc/pulp/cds.conf;
+ sed -i 's/host = localhost.localdomain/host = $rhui/g' /etc/pulp/cds.conf;
+ cat /etc/pulp/cds.conf | grep host
 fi
 
 export cert=.crt
@@ -154,8 +167,10 @@ if [ "$server" == "rhua" ]; then
  scp -i $ec2pem /root/RH* root@$cds1:/root
  scp -i $ec2pem /root/installRHUI.sh root@$cds1:/root
  scp -i $ec2pem -r /tmp/rhui root@$cds1:/tmp
+ scp -i $ec2pem /etc/hosts root@cds1:/etc/hosts
 
  scp -i $ec2pem /root/RH* root@$cds2:/root
  scp -i $ec2pem /root/installRHUI.sh root@$cds2:/root
  scp -i $ec2pem -r /tmp/rhui root@$cds2:/tmp
+ scp -i $ec2pem /etc/hosts root@cds2:/etc/hosts
 fi
