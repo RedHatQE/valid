@@ -4,7 +4,8 @@
 ## Run on the rhua and each cds ##
 ##
 ## example ./script.sh rhua xvdk
-## example ./script.sh cds xvdf (xvdf for 6.0 rhel or so I've seen)
+## example ./script.sh cds01 xvdf (xvdf for 6.0 rhel or so I've seen)
+## example ./script.sh cds02 xvdf (xvdf for 6.0 rhel or so I've seen)
 # Update if working in beaker.. you probably cant add a large mount
 # set export env
 
@@ -13,21 +14,38 @@ export rhua=host.internal
 export cds1=host.internal
 export cds2=host.internal
 export ec2pem=/root/wes-us-west-2.pem
+#export version=2.0.1
+export version=2.0.2
 ## CHANGE ME ####
-
-export rhui_ip='dig +short $rhua' 
-export cds1_ip='dig +short $cds1'
-export cds2_ip='dig +short $cds2'
-
-echo "$rhui_ip $rhua" >> /etc/hosts
-echo "$cds1_ip $cds1" >> /etc/hosts
-echo "$cds2_ip $cds2" >> /etc/hosts
-
 
 #options rhua or cds
 export server="$1"
 #options /dev/$someDevice
 export device="$2"
+
+export rhua_ip='dig +short $rhua' 
+export cds1_ip='dig +short $cds1'
+export cds2_ip='dig +short $cds2'
+
+echo "$rhua_ip $rhua" >> /etc/hosts
+echo "$cds1_ip $cds1" >> /etc/hosts
+echo "$cds2_ip $cds2" >> /etc/hosts
+
+if [ "$version" == "2.0.1" ]; then
+ setenforce 0;
+  perl -npe 's/SELINUX=enforcing/SELINUX=permissive/g' -i /etc/selinux/config;
+fi
+
+if [ "$server" == "cds1" ]; then
+ echo "CDS1 Selected"
+ hostname $cds1
+fi
+
+if [ "$server" == "cds2" ]; then
+ echo "CDS2 Selected"
+ hostname $cds2
+fi
+
  
 
 if [ "$server" == "rhua" ]; then
@@ -35,7 +53,7 @@ if [ "$server" == "rhua" ]; then
  mkdir /var/lib/pulp
  ls /var/lib/pulp
 fi
-if [ "$server" == "cds" ]; then
+if [[ "$server" == "cds1" ]] || [[ "$server" == "cds2" ]]; then
  echo "CDS Selected"
  mkdir /var/lib/pulp-cds
  ls /var/lib/pulp-cds
@@ -71,7 +89,7 @@ if [ "$server" == "rhua" ]; then
  mount -a 
  mount 
 fi
-if [ "$server" == "cds" ]; then
+if [[ "$server" == "cds1" ]] || [[ "$server" == "cds2" ]]; then
  echo "/dev/$device$partition /var/lib/pulp-cds ext4 defaults 1 1" >> /etc/fstab
  mount -a
  mount
@@ -109,25 +127,47 @@ fi
 
 if [ "$server" == "rhua" ]; then
  if [ -e "/etc/pulp/pulp.conf" ]; then
-  sed -i 's/server_name: localhost/server_name: $rhua/g' /etc/pulp/pulp.conf;
+  perl -npe 's/server_name: localhost/server_name: $rhua/g' -i /etc/pulp/pulp.conf;
   cat /etc/pulp/pulp.conf | grep server_name 
  fi
  if [ -e "/etc/pulp/client.conf" ]; then
-  sed -i 's/host = localhost.localdomain/host = $rhua/g' /etc/pulp/client.conf;
+  perl -npe 's/host = localhost.localdomain/host = $rhua/g' -i /etc/pulp/client.conf;
   cat /etc/pulp/client.conf | grep host
  fi
  if [ -e "/etc/pulp/consumer/consumer.conf" ]; then
-  sed -i 's/host = localhost.localdomain/host = $rhua/g' /etc/pulp/consumer/consumer.conf;
+  perl -npe 's/host = localhost.localdomain/host = $rhua/g' -i /etc/pulp/consumer/consumer.conf;
   cat /etc/pulp/consumer/consumer.conf | grep host
  fi
  if [ -e "/etc/rhui/rhui-tools.conf" ]; then
-  sed -i 's/hostname: localhost/hostname: $rhua/g' /etc/rhui/rhui-tools.conf;
+  perl -npe 's/hostname: localhost/hostname: $rhua/g' -i /etc/rhui/rhui-tools.conf;
   cat /etc/rhui/rhui-tools.conf | grep hostname
  fi
 fi
 
-if [ "$server" == "cds" ]; then
- sed -i 's/host = localhost.localdomain/host = $rhui/g' /etc/pulp/cds.conf;
+if [[ "$server" == "cds1" ]] || [[ "$server" == "cds2" ]]; then
+ if [ "$server" == "rhua" ]; then
+ if [ -e "/etc/pulp/pulp.conf" ]; then
+  perl -npe 's/server_name: localhost/server_name: '${rhua}'/g' -i /etc/pulp/pulp.conf;
+  cat /etc/pulp/pulp.conf | grep server_name 
+ fi
+ if [ -e "/etc/pulp/client.conf" ]; then
+  perl -npe 's/host = localhost.localdomain/host = '${rhua}'/g' -i /etc/pulp/client.conf;
+  cat /etc/pulp/client.conf | grep host
+ fi
+ if [ -e "/etc/pulp/consumer/consumer.conf" ]; then
+  perl -npe 's/host = localhost.localdomain/host = '${rhua}'/g' -i /etc/pulp/consumer/consumer.conf;
+  cat /etc/pulp/consumer/consumer.conf | grep host
+ fi
+ if [ -e "/etc/rhui/rhui-tools.conf" ]; then
+  perl -npe 's/hostname: localhost/hostname: '${rhua}'/g' -i /etc/rhui/rhui-tools.conf;
+  cat /etc/rhui/rhui-tools.conf | grep hostname
+ fi
+fi
+
+if [[ "$server" == "cds1" ]] || [[ "$server" == "cds2" ]]; then
+ perl -npe 's/host = localhost.localdomain/host = '${rhua}'/g' -i /etc/pulp/cds.conf;
+ cat /etc/pulp/cds.conf | grep host
+fi
  cat /etc/pulp/cds.conf | grep host
 fi
 
