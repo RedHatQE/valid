@@ -99,13 +99,16 @@ fi
 
 if [ "$server" == "rhua" ]; then
  if [ -e "/etc/pulp/pulp.conf" ]; then
-  perl -npe 's/server_name: localhost/server_name: $rhui/g' -i /etc/pulp/pulp.conf; 
+  sed -i 's/server_name: localhost/server_name: $rhui/g' /etc/pulp/pulp.conf; 
  fi
  if [ -e "/etc/pulp/client.conf" ]; then
-  perl -npe 's/host = localhost.localdomain/host = $rhui/g' -i /etc/pulp/client.conf;
+  sed -i 's/host = localhost.localdomain/host = $rhui/g' /etc/pulp/client.conf;
  fi
  if [ -e "/etc/pulp/consumer/consumer.conf" ]; then
-  perl -npe 's/host = localhost.localdomain/host = $rhui/g' -i /etc/pulp/consumer/consumer.conf;
+  set -i 's/host = localhost.localdomain/host = $rhui/g' /etc/pulp/consumer/consumer.conf;
+ fi
+ if [ -e "/etc/rhui/rhui-tools.conf" ]; then
+  set -i 's/hostname: localhost/hostname: $rhui/g' /etc/rhui/rhui-tools.conf;
  fi
 fi
 

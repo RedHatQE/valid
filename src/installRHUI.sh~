@@ -125,7 +125,7 @@ qpid_nss_db: /tmp/rhua/qpid/nss
 [rhua]
 rpm_name: rh-rhua-config
 hostname: $rhua
-ssl_cert: /root/pem/$rhui$cert
+ssl_cert: /root/pem/$rhua$cert
 ssl_key: /root/pem/server.key
 ca_cert: /root/pem/ca.crt
 # proxy_server_host: proxy.example.com
