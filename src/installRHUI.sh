@@ -150,8 +150,6 @@ if [[ "$server" == "cds1" ]] || [[ "$server" == "cds2" ]]; then
  perl -npe 's/host = localhost.localdomain/host = '${my_rhua}'/g' -i /etc/pulp/cds.conf;
  cat /etc/pulp/cds.conf | grep host
 fi
- cat /etc/pulp/cds.conf | grep host
-fi
 
 export cert=.crt
 
@@ -165,7 +163,7 @@ qpid_nss_db: /tmp/rhua/qpid/nss
 [rhua]
 rpm_name: rh-rhua-config
 hostname: $rhua
-ssl_cert: /root/pem/$rhua$cert
+ssl_cert: /root/pem/$my_rhua$cert
 ssl_key: /root/pem/server.key
 ca_cert: /root/pem/ca.crt
 # proxy_server_host: proxy.example.com
@@ -175,12 +173,12 @@ ca_cert: /root/pem/ca.crt
 [cds-1]
 rpm_name: rh-cds1-config
 hostname: $cds1
-ssl_cert: /root/pem/$cds1$cert
+ssl_cert: /root/pem/$my_cds1$cert
 ssl_key: /root/pem/server.key
 [cds-2]
 rpm_name: rh-cds2-config
 hostname: $cds2
-ssl_cert: /root/pem/$cds2$cert
+ssl_cert: /root/pem/$my_cds2$cert
 ssl_key: /root/pem/server.key
 
 DELIM
