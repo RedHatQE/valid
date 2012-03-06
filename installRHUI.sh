@@ -33,14 +33,17 @@ echo "$cds1_ip $my_cds1" >> /etc/hosts
 echo "$cds2_ip $my_cds2" >> /etc/hosts
 
 if [ -z "$ec2pem" ] ; then
- [ -e /root/.ssh/id_rsa.pub ] || ssh-keygen
- for i in $my_cds1 $my_cds2 $my_rhua ; do
-  cat ~/.ssh/id_rsa.pub | ssh root@$i 'mkdir -p /root/.ssh ; chmod go-rwx /root/.ssh ; cat >> /root/.ssh/authorized_keys ; chmod go-rwx /root/.ssh/authorized_keys'
- done
+ if ! [ -e /root/.ssh/id_rsa.pub ] ; then 
+  ssh-keygen
+  for i in $my_cds1 $my_cds2 $my_rhua ; do
+   cat ~/.ssh/id_rsa.pub | ssh root@$i 'mkdir -p /root/.ssh ; chmod go-rwx /root/.ssh ; cat >> /root/.ssh/authorized_keys ; chmod go-rwx /root/.ssh/authorized_keys'
+  done
+ fi
+ export ec2pem=/root/.ssh/id_rsa
 fi
 
 if [ "$version" == "2.0.1" ]; then
- setenforce 0;
+ setenforce permissive;
  perl -npe 's/SELINUX=enforcing/SELINUX=permissive/g' -i /etc/selinux/config;
 fi
 
@@ -106,7 +109,7 @@ EOF
   mount
  fi
 fi
- 
+
 if [ "$server" == "rhua" ]; then
  mkdir -p /root/pem && pushd /root/pem
  openssl req -new -x509 -extensions v3_ca -keyout ca.key -subj '/C=US/ST=NC/L=Raleigh/CN=localhost' -out ca.crt -days 365
@@ -197,26 +200,11 @@ DELIM
 
 if [ "$server" == "rhua" ]; then
  /usr/bin/rhui-installer /root/answers.txt
-
- if [ -n "$ec2pem" ] ; then
-  scp -i $ec2pem /root/RH* root@$my_cds1:/root
-  scp -i $ec2pem /root/installRHUI.sh root@$my_cds1:/root
-  scp -i $ec2pem -r /tmp/rhui root@$my_cds1:/tmp
-  scp -i $ec2pem /etc/hosts root@$my_cds1:/etc/hosts
-
-  scp -i $ec2pem /root/RH* root@$my_cds2:/root
-  scp -i $ec2pem /root/installRHUI.sh root@$my_cds2:/root
-  scp -i $ec2pem -r /tmp/rhui root@$my_cds2:/tmp
-  scp -i $ec2pem /etc/hosts root@$my_cds2:/etc/hosts
- else
-  scp /root/RH* root@$my_cds1:/root
-  scp /root/installRHUI.sh root@$my_cds1:/root
-  scp -r /tmp/rhui root@$my_cds1:/tmp
-  scp /etc/hosts root@$my_cds1:/etc/hosts
-
-  scp /root/RH* root@$my_cds2:/root
-  scp /root/installRHUI.sh root@$my_cds2:/root
-  scp -r /tmp/rhui root@$my_cds2:/tmp
-  scp /etc/hosts root@$my_cds2:/etc/hosts
- fi
+ for i in $my_cds1 $my_cds2 ; do
+  scp -i $ec2pem /root/RH* root@$i:/root
+  scp -i $ec2pem /root/installRHUI.sh root@$i:/root
+  scp -i $ec2pem -r /tmp/rhui root@$i:/tmp
+  scp -i $ec2pem /etc/hosts root@$i:/etc/hosts
+ done
 fi
+find /tmp/rhui -maxdepth 1 -name "rh-$server-config*.rpm" -exec rpm -Uvh {} \;
