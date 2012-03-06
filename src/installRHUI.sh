@@ -51,12 +51,14 @@ fi
 if [ "$server" == "rhua" ]; then
  echo "RHUI Selected"
  mkdir /var/lib/pulp
+ chown apache:apache /var/lib/pulp
  ls /var/lib/pulp
  hostname -v $my_rhua
 fi
 if [[ "$server" == "cds1" ]] || [[ "$server" == "cds2" ]]; then
  echo "CDS Selected"
  mkdir /var/lib/pulp-cds
+ chown apache:apache /var/lib/pulp-cds
  ls /var/lib/pulp-cds
 fi
 
