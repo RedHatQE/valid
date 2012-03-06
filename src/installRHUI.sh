@@ -38,12 +38,12 @@ fi
 
 if [ "$server" == "cds1" ]; then
  echo "CDS1 Selected"
- hostname -v $cds1
+ hostname -v $my_cds1
 fi
 
 if [ "$server" == "cds2" ]; then
  echo "CDS2 Selected"
- hostname -v $cds2
+ hostname -v $my_cds2
 fi
 
  
@@ -52,7 +52,7 @@ if [ "$server" == "rhua" ]; then
  echo "RHUI Selected"
  mkdir /var/lib/pulp
  ls /var/lib/pulp
- hostname -v $rhua
+ hostname -v $my_rhua
 fi
 if [[ "$server" == "cds1" ]] || [[ "$server" == "cds2" ]]; then
  echo "CDS Selected"
@@ -126,27 +126,8 @@ if [ "$server" == "rhua" ]; then
  nss-db-gen
 fi
 
-if [ "$server" == "rhua" ]; then
- if [ -e "/etc/pulp/pulp.conf" ]; then
-  perl -npe 's/server_name: localhost/server_name: $my_rhua/g' -i /etc/pulp/pulp.conf;
-  cat /etc/pulp/pulp.conf | grep server_name 
- fi
- if [ -e "/etc/pulp/client.conf" ]; then
-  perl -npe 's/host = localhost.localdomain/host = $my_rhua/g' -i /etc/pulp/client.conf;
-  cat /etc/pulp/client.conf | grep host
- fi
- if [ -e "/etc/pulp/consumer/consumer.conf" ]; then
-  perl -npe 's/host = localhost.localdomain/host = $my_rhua/g' -i /etc/pulp/consumer/consumer.conf;
-  cat /etc/pulp/consumer/consumer.conf | grep host
- fi
- if [ -e "/etc/rhui/rhui-tools.conf" ]; then
-  perl -npe 's/hostname: localhost/hostname: $my_rhua/g' -i /etc/rhui/rhui-tools.conf;
-  cat /etc/rhui/rhui-tools.conf | grep hostname
- fi
-fi
 
-if [[ "$server" == "cds1" ]] || [[ "$server" == "cds2" ]]; then
- if [ "$server" == "rhua" ]; then
+if [ "$server" == "rhua" ]; then
  if [ -e "/etc/pulp/pulp.conf" ]; then
   perl -npe 's/server_name: localhost/server_name: '${my_rhua}'/g' -i /etc/pulp/pulp.conf;
   cat /etc/pulp/pulp.conf | grep server_name 
@@ -207,13 +188,13 @@ DELIM
 if [ "$server" == "rhua" ]; then
  /usr/bin/rhui-installer /root/answers.txt
 
- scp -i $ec2pem /root/RH* root@$cds1:/root
- scp -i $ec2pem /root/installRHUI.sh root@$cds1:/root
- scp -i $ec2pem -r /tmp/rhui root@$cds1:/tmp
- scp -i $ec2pem /etc/hosts root@cds1:/etc/hosts
+ scp -i $ec2pem /root/RH* root@$my_cds1:/root
+ scp -i $ec2pem /root/installRHUI.sh root@$my_cds1:/root
+ scp -i $ec2pem -r /tmp/rhui root@$my_cds1:/tmp
+ scp -i $ec2pem /etc/hosts root@$my_cds1:/etc/hosts
 
- scp -i $ec2pem /root/RH* root@$cds2:/root
- scp -i $ec2pem /root/installRHUI.sh root@$cds2:/root
- scp -i $ec2pem -r /tmp/rhui root@$cds2:/tmp
- scp -i $ec2pem /etc/hosts root@$cds2:/etc/hosts
+ scp -i $ec2pem /root/RH* root@$my_cds2:/root
+ scp -i $ec2pem /root/installRHUI.sh root@$my_cds2:/root
+ scp -i $ec2pem -r /tmp/rhui root@$my_cds2:/tmp
+ scp -i $ec2pem /etc/hosts root@$my_cds2:/etc/hosts
 fi
