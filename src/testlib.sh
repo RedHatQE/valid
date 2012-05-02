@@ -690,10 +690,23 @@ function test_nameserver()
 
 function test_group()
 {
-        new_test "## Verify group file ... "
-	assert "cat /etc/group | grep root:x:0" "root:x:0:root"
-	assert "cat /etc/group | grep bin:x:1" "bin:x:1:root,bin,daemon"
-	assert "cat /etc/group | grep daemon:x:2" "daemon:x:2:root,bin,daemon"
+	new_test "## Verify group file ... "
+	case "$RHELV" in
+		6.0|6.1|6.2|5.*)
+			assert "cat /etc/group | grep root:x:0" "root:x:0:root"
+			assert "cat /etc/group | grep daemon:x:2" "daemon:x:2:root,bin,daemon"
+			assert "cat /etc/group | grep bin:x:1" "bin:x:1:root,bin,daemon"
+			;;
+		6.*)
+			# since 6.3 the content has changed
+			assert "cat /etc/group | grep root:x:0" "root:x:0:"
+			assert "cat /etc/group | grep daemon:x:2" "daemon:x:2:bin,daemon"
+			assert "cat /etc/group | grep bin:x:1" "bin:x:1:bin,daemon"
+			;;
+		*)
+			_err 1 "Unsupported RHELV: $RHELV detected"
+			;;
+	esac
 	assert "cat /etc/group | grep nobody:x:99" "nobody:x:99:"
 }
 
@@ -863,43 +876,65 @@ function test_libc6-xen.conf()
 
 function test_syslog()
 {
-        new_test "## Verify rsyslog is on ... "
+	new_test "## Verify rsyslog is on ... "
 	assert "chkconfig --list | grep rsyslog | cut -f 5" "3:on"
 	new_test "## Verify rsyslog config ... "
-	if [ $RHEL == 5 ] ; then
-	  assert "md5sum /etc/rsyslog.conf | cut -f 1 -d  \" \"" "bd4e328df4b59d41979ef7202a05e074"  "15936b6fe4e8fadcea87b54de495f975"
-	  #assert "md5sum /etc/rsyslog.conf | cut -f 1 -d  \" \"" "15936b6fe4e8fadcea87b54de495f975"
-	else
-	 assert "md5sum /etc/rsyslog.conf | cut -f 1 -d  \" \"" "dd356958ca9c4e779f7fac13dde3c1b5"
-	fi
+	case "$RHELV" in
+		5.*)
+			assert "md5sum /etc/rsyslog.conf | cut -f 1 -d  \" \"" "bd4e328df4b59d41979ef7202a05e074"  "15936b6fe4e8fadcea87b54de495f975"
+			;;
+		6.0|6.1|6.2)
+			assert "md5sum /etc/rsyslog.conf | cut -f 1 -d  \" \"" "dd356958ca9c4e779f7fac13dde3c1b5"
+			;;
+		6.*)
+			# since 6.3, checksum has changed again
+			assert "md5sum /etc/rsyslog.conf | cut -f 1 -d  \" \"" "8b91b32300134e98ef4aee632ed61e21"
+			;;
+		*)
+			_err 1 "Error: wrong RHEL version detected: $RHEL"
+			;;
+	esac
 }
 
 function test_auditd()
 {
     new_test "## Verify auditd is on ... "
-	assert "/sbin/chkconfig --list auditd | grep 3:on"
-        assert "/sbin/chkconfig --list auditd | grep 5:on"
+    assert "/sbin/chkconfig --list auditd | grep 3:on"
+    assert "/sbin/chkconfig --list auditd | grep 5:on"
 
-	new_test "## Verify audit.rules ... "
-	assert "md5sum /etc/audit/audit.rules | cut -f 1 -d  \" \"" "f9869e1191838c461f5b9051c78a638d"
+    new_test "## Verify audit.rules ... "
+    assert "md5sum /etc/audit/audit.rules | cut -f 1 -d  \" \"" "f9869e1191838c461f5b9051c78a638d"
 
-	new_test "## Verify auditd.conf ... "
-    if [ $RHEL_FOUND == 6.2 ] ; then
+    new_test "## Verify auditd.conf ... "
+    case "$RHEL_FOUND" in
+        6.*)
 	    assert "md5sum /etc/audit/auditd.conf | cut -f 1 -d  \" \"" "e1886162554c18906df2ecd258aa4794"
-    else
+            ;;
+        5.*)
 	    assert "md5sum /etc/audit/auditd.conf | cut -f 1 -d  \" \"" "612ddf28c3916530d47ef56a1b1ed1ed"
-    fi
-	new_test "## Verify auditd sysconfig ... "
-    if [ $RHEL_FOUND == 6.2 ] ; then
-	    assert "md5sum /etc/sysconfig/auditd | cut -f 1 -d  \" \"" "d4d43637708e30418c30003e212f76fc"
-    else
-	    assert "md5sum /etc/sysconfig/auditd | cut -f 1 -d  \" \"" "123beb3a97a32d96eba4f11509e39da2"
-    fi
+            ;;
+        *)
+            _err 1 "Error: unsupported RHEL version: $RHEL_FOUND"
+           ;;
+    esac
+
+    new_test "## Verify auditd sysconfig ... "
+    case "$RHEL_FOUND" in
+        6.*)
+            assert "md5sum /etc/sysconfig/auditd | cut -f 1 -d  \" \"" "d4d43637708e30418c30003e212f76fc"
+            ;;
+        5.*)
+            assert "md5sum /etc/sysconfig/auditd | cut -f 1 -d  \" \"" "123beb3a97a32d96eba4f11509e39da2"
+            ;;
+        *)
+            _err 1 "Error: unsupported RHEL version: $RHEL_FOUND"
+           ;;
+    esac
 }
 
 function test_uname()
 {
-        new_test "## Verify kernel name ... "
+	new_test "## Verify kernel name ... "
 	assert "/bin/uname -s" Linux
 
 	new_test "## Verify latest installed kernel is running ... "
