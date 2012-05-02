@@ -932,47 +932,66 @@ function test_auditd()
     esac
 }
 
+function _query_rpm_kernel_version() {
+	local kernel=""
+	case "$RHELV" in
+		5.*)
+			kernel=`rpm -q kernel-xen | tail -n 1` || _err $? "Ooops!"
+			kernel=${kernel##kernel-xen-}
+			;;
+		6.*)
+			kernel=`rpm -q kernel | tail -n 1` || _err $? "Ooops!"
+			kernel=${kernel##kernel-}
+			;;
+		*)
+			_err 1 "Error: unsupported release detected: $RHELV"
+		;;
+	esac
+	echo "Detected rpm kernel version: $kernel" >> $LOGFILE
+	echo "$kernel"
+}
+
+function _query_uname_kernel_version() {
+	local kernel=""
+	case "$RHELV" in
+		5.*)
+			kernel=`uname -r`
+			kernel=${kernel%%xen}
+			;;
+		6.*)
+			kernel=`uname -r`
+			;;
+		*)
+			_err 1 "Error: unsupported release detected: $RHELV"
+		;;
+	esac
+	echo "Detected uname kernel version: $kernel" >> $LOGFILE
+	echo "$kernel"
+}
+
+
+
 function test_uname()
 {
 	new_test "## Verify kernel name ... "
 	assert "/bin/uname -s" Linux
 
 	new_test "## Verify latest installed kernel is running ... "
-	if [ $RHEL == 5 ] ; then
-	 echo "LATEST_RPM_KERNEL_VERSION=`rpm -q kernel-xen | tail -n 1 | cut -c 12-50| sed 's/\(.*\)..../\1/'`" >> $LOGFILE
-	 LATEST_RPM_KERNEL_VERSION=`rpm -q kernel-xen | tail -n 1 | cut -c 12-50| sed 's/\(.*\)..../\1/'`
-	 echo "CURRENT_UNAME_KERNAL_VERSION=`uname -r | sed 's/\(.*\)......./\1/'`" >> $LOGFILE
-	 CURRENT_UNAME_KERNAL_VERSION=`uname -r | sed 's/\(.*\)......./\1/'`
-	 echo "assert latest rpm kernel = uname -r" >> $LOGFILE
-         #assert "rpm -q kernel-xen | sort -n | tail -n 1 | cut -c 12-50| sed 's/\(.*\)..../\1/'"  $CURRENT_UNAME_KERNAL_VERSION
-	 assert "uname -r | sed 's/\(.*\)......./\1/'"  $LATEST_RPM_KERNEL_VERSION
-	elif [[ $RHEL == 6 ]] && [[ $UNAMEI == "i386" ]] ; then
-	 echo "RHEL VERSION IS $RHEL" >> $LOGFILE
-	 echo "LATEST_RPM_KERNEL_VERSION=rpm -q kernel --last | head -n 1 |  cut -c 8-60 | cut -d ' ' -f 1" >> $LOGFILE
-	 LATEST_RPM_KERNEL_VERSION=`rpm -q kernel --last | head -n 1 |  cut -c 8-60 | cut -d ' ' -f 1`
-	 echo "CURRENT_UNAME_KERNAL_VERSION=`uname -r | sed  's/\(.*\)...../\1/'`" >> $LOGFILE
-	 CURRENT_UNAME_KERNAL_VERSION=`uname -r | sed  's/\(.*\)...../\1/'`
-	 echo "assert latest rpm kernel = uname -r" >> $LOGFILE
-         #assert "rpm -q kernel-xen | sort -n | tail -n 1 | cut -c 12-50| sed 's/\(.*\)..../\1/'"  $CURRENT_UNAME_KERNAL_VERSION
-	 assert "uname -r | sed  's/\(.*\)...../\1/'"  $LATEST_RPM_KERNEL_VERSION
-	elif [[ $RHEL == 6 ]] && [[ $UNAMEI == "x86_64" ]] ; then
-	 echo "RHEL VERSION IS $RHEL" >> $LOGFILE
-	 echo "LATEST_RPM_KERNEL_VERSION=rpm -q kernel --last | head -n 1 |  cut -c 8-60 | cut -d ' ' -f 1" >> $LOGFILE
-	 LATEST_RPM_KERNEL_VERSION=`rpm -q kernel --last | head -n 1 |  cut -c 8-60 | cut -d ' ' -f 1`
-	 echo "CURRENT_UNAME_KERNAL_VERSION=`uname -r | sed  's/\(.*\)......./\1/'`" >> $LOGFILE
-	 CURRENT_UNAME_KERNAL_VERSION=`uname -r | sed  's/\(.*\)......./\1/'`
-	 echo "assert latest rpm kernel = uname -r" >> $LOGFILE
-         #assert "rpm -q kernel-xen | sort -n | tail -n 1 | cut -c 12-50| sed 's/\(.*\)..../\1/'"  $CURRENT_UNAME_KERNAL_VERSION
-	 assert "uname -r | sed  's/\(.*\)......./\1/'"  $LATEST_RPM_KERNEL_VERSION
+	local rpm_kernel=`_query_rpm_kernel_version`
+	local uname_kernel=`_query_uname_kernel_version`
+	if [ "$rpm_kernel" == "$uname_kernel" ] ; then
+		assert true
+	else
+		assert false
 	fi
 
 	new_test "## Verify latest kenerl is in /boot/grub/menu.1st ... "
-	assert "cat /boot/grub/menu.lst | grep $LATEST_RPM_KERNEL_VERSION"
+	assert "cat /boot/grub/menu.lst | grep $rpm_kernel"
 
 	new_test "## Verify operating system ... "
 	assert "/bin/uname -o" GNU/Linux
 
-        new_test "## Verify /etc/sysconfig/kernel ... "
+    new_test "## Verify /etc/sysconfig/kernel ... "
 	assert "ls /etc/sysconfig/kernel"
 
 	new_test "## Verify /etc/sysconfig/kernel contains UPDATEDEFAULT ... "
@@ -983,7 +1002,6 @@ function test_uname()
 
 	new_test "## Verify system up to date"
 	assert "_check_sys_update_phase1"
-
 }
 
 function test_resize2fs()
