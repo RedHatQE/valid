@@ -164,7 +164,7 @@ qpid_client: /tmp/rhua/qpid/client.crt
 qpid_nss_db: /tmp/rhua/qpid/nss
 [rhua]
 rpm_name: rh-rhua-config
-hostname: $rhua
+hostname: $my_rhua
 ssl_cert: /root/pem/$my_rhua$cert
 ssl_key: /root/pem/server.key
 ca_cert: /root/pem/ca.crt
@@ -174,12 +174,12 @@ ca_cert: /root/pem/ca.crt
 # proxy_server_password: password
 [cds-1]
 rpm_name: rh-cds1-config
-hostname: $cds1
+hostname: $my_cds1
 ssl_cert: /root/pem/$my_cds1$cert
 ssl_key: /root/pem/server.key
 [cds-2]
 rpm_name: rh-cds2-config
-hostname: $cds2
+hostname: $my_cds2
 ssl_cert: /root/pem/$my_cds2$cert
 ssl_key: /root/pem/server.key
 
