@@ -53,7 +53,7 @@ function _rotate_file() {
 		}
 		version=$((version+1)) || return $?
 		# rotate
-		mv $1 $1.$version
+		cp -f $1 $1.$version
 		: > $1 || return $?
 	fi
 	# no file with the name $1 present yet
@@ -489,25 +489,29 @@ function test_selinux()
 function test_package_set()
 {
         new_test  "## Verify no missing packages ... "
-        file=/tmp/rpmqa
+        local file=/tmp/rpmqa
+	local ref=""
         rc "/bin/rpm -qa --queryformat='%{NAME}\n' > ${file}.tmp"
         #/bin/rpm -qa --queryformat="%{NAME}.%{ARCH}\n" > ${file}.tmp
         cat ${file}.tmp  |  sort -f > ${file}
-	if [ $RHEL == 5 ] ; then
-         rc "comm -23 packages_5 ${file}"
-         comm -23 packages_5 ${file} > /tmp/package_diff
-	elif [ $RHEL_FOUND == "6.0" ]; then
-         rc "comm -23 packages_6 ${file}"
-         comm -23 packages_6 ${file} > /tmp/package_diff
-	elif [ $RHEL_FOUND == "6.1" ]; then
-	     rc "comm -23 packages_61 ${file}"
-         comm -23 packages_61 ${file} > /tmp/package_diff
-	elif [ $RHEL_FOUND == "6.2" ]; then
-	     rc "comm -23 packages_62 ${file}"
-         comm -23 packages_62 ${file} > /tmp/package_diff
-	else
-         echo "VERSION NOT FOUND"
-        fi
+	case "$RHEL_FOUND" in
+		5.*)
+			ref=packages_5 ;;
+		6.0)
+			ref=packages_6 ;;
+		6.1)
+			ref=packages_61 ;;
+		6.2)
+			ref=packages_62 ;;
+		6.3)
+			ref=packages_63 ;;
+		*)
+			_err 1 "Unsupported RHEL version: $RHEL_FOUND" ;;
+	esac
+
+		
+        rc "comm -23 $ref ${file}"
+        comm -23 $ref ${file} > /tmp/package_diff || _err $?
 
 	cat /tmp/package_diff >>$LOGFILE
 	COUNT=`cat /tmp/package_diff | wc -l`
@@ -536,7 +540,7 @@ function test_verify_rpms()
 	cat $file >> $LOGFILE
 	cat rpmVerifyTable >> $LOGFILE
 	case $RHEL_FOUND in
-		6.1)
+		6.1|6.3)
 			assert "cat ${file} | wc -l" "5";;
 		6.2)
 			assert "cat ${file} | wc -l" "6";;
@@ -557,15 +561,15 @@ function test_verify_rpms()
 			echo "WARNING: unsupported version: RHEL_FOUND=$RHEL_FOUND" >> $LOGFILE ;;
 	esac
 	new_test "## Verify packager ... "
-        file=/tmp/Packager
-        `cat /dev/null > $file`
-        #echo "for x in $file ;do echo -n $x >> $file; rpm -qi $x | grep Packager >> $file;done" >>$LOGFILE
-        for x in $(cat /tmp/rpmqa);do
-         echo -n $x >>$file
-         rpm -qi $x | grep Packager >>$file
-        done
-        assert "cat $file | grep -v 'Red Hat, Inc.' |  grep -v crash-trace-commandPackager| wc -l" 0
-        cat $file | grep -v 'Red Hat, Inc.' >>$LOGFILE
+	file=/tmp/Packager
+	`cat /dev/null > $file`
+	#echo "for x in $file ;do echo -n $x >> $file; rpm -qi $x | grep Packager >> $file;done" >>$LOGFILE
+	for x in $(cat /tmp/rpmqa);do
+		echo -n $x >>$file
+		rpm -qi $x | grep Packager >>$file
+	done
+	assert "cat $file | grep -v 'Red Hat, Inc.' |  grep -v crash-trace-commandPackager| wc -l" 0
+	cat $file | grep -v 'Red Hat, Inc.' >>$LOGFILE
 }
 
 function test_yum_full_test()
