@@ -117,6 +117,8 @@ function _testlib_init(){
 	TEST_CURRENT=""
 	TEST_FAILED=""
 	echo "IMAGE ID= ${IMAGEID}" >> $LOGFILE
+	rpm -Uvh epel-release-6-6.noarch.rpm >> $LOGFILE
+	yum install -y python-bugzilla >> $LOGFILE
 	__TESTLIB_INIT__=initialized
 }
 
