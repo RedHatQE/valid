@@ -156,8 +156,6 @@ class RootPartFstypeTest(Test):
 		self.expected_result.test = self
 		self.actual_result.test = self
 
-
-
 if __name__ == '__main__':
 	raise RuntimeError("to be used through fabric only\nCheck `fab -h'...")
 

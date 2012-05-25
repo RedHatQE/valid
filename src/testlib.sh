@@ -117,6 +117,8 @@ function _testlib_init(){
 	TEST_CURRENT=""
 	TEST_FAILED=""
 	echo "IMAGE ID= ${IMAGEID}" >> $LOGFILE
+	rpm -Uvh epel-release-6-6.noarch.rpm >> $LOGFILE
+	yum install -y python-bugzilla >> $LOGFILE
 	__TESTLIB_INIT__=initialized
 }
 
@@ -1072,12 +1074,13 @@ function open_bugzilla()
 	#cat /etc/rc.local >> $LOGFILE
 	#echo "######### /etc/rc.local ########" >> $LOGFILE
 
- 	BUGZILLACOMMAND=$DIFFDIR/bugzilla-command
+	#BUGZILLACOMMAND=$DIFFDIR/bugzilla-command
+	BUGZILLACOMMAND='/usr/bin/bugzilla --debug --verbose'
 	new_test "## Open a bugzilla"
 	echo ""
 	echo "Logging into bugilla"
 	echo ""
-	$BUGZILLACOMMAND --bugzilla=https://bugzilla.redhat.com/xmlrpc.cgi --user=$BUG_USERNAME --password=$BUG_PASSWORD login
+	$BUGZILLACOMMAND --user=$BUG_USERNAME --password=$BUG_PASSWORD login
 	if [ -z $BUG_NUM ]; then
 	 BUGZILLA=`$BUGZILLACOMMAND new  -p"Cloud Image Validation" -v"RHEL$RHELV" -a"$UNAMEI" -c"images" -l"initial bug opening" -s"$IMAGEID $RHELV $UNAMEI " | cut -b "2-8"`
 	 echo ""
