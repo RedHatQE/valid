@@ -18,6 +18,7 @@
 # img.run(key_name='id_bv-keypair', instance_type='c1.xlarge', block_device_map=map) 
 from zope.interface import implements
 from fabric.tasks import Task
+from fabric.utils import puts
 
 class Test(Task):
 	"""Test objects have got an expected and actual result attributes and
@@ -43,7 +44,7 @@ class Test(Task):
 		# calls str(self) -> bool(self) -> compares actual and expected result
 		import time
 		self.start_timestamp = time.time()
-		print self
+		puts(self)
 		self.end_timestamp = time.time()
 
 	def __str__(self):
