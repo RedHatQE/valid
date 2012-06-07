@@ -29,3 +29,13 @@ class IFromString(Interface):
 	def from_string(string):
 		"""I reset myself from the string"""
 
+class IFabricHostString(Interface):
+	"""I provide a get_host_string method"""
+	def get_host_string():
+		"""returns an 'user@host' string to be used with fabric's env.host
+		   stuff"""
+
+class ITestFactory(Interface):
+	"""I provide a get_test method"""
+	def get_test():
+		"""generates a test"""

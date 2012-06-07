@@ -3,11 +3,11 @@ from zope.interface import implements
 
 class OSVersion(object):
 	"""An OS version object"""
-	# implements(interfaces.IComparable)
-	# implements(interfaces.IFromString)
+	implements(interfaces.IComparable, interfaces.IFromString)
 
 	major = None
 	minor = None
+	beta = False
 
 	def from_string(self, strversion):
 		parts = str(strversion).split('.')
