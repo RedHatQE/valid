@@ -43,13 +43,14 @@ class Instance(object):
 	hostname = None
 	key_file = None
 	username = None
+	charging = None
 
 	def get_host_string(self):
 		return "%s@%s" % (self.username, self.hostname)
 
 	def __str__(self):
-		return "<instance id %s hostname %s, ami %s, region %s, hw_type %s, arch %s, version %s, key_file %s, username %s>" % \
-			(self.id, self.hostname, self.ami, self.region, self.hw_type, self.arch, self.version, self.key_file, self.username)
+		return "<instance id %s hostname %s, ami %s, region %s, hw_type %s, arch %s, charging %s, version %s, key_file %s, username %s>" % \
+			(self.id, self.hostname, self.ami, self.region, self.hw_type, self.arch, self.charging, self.version, self.key_file, self.username)
 
 	__repr__ = __str__
 
@@ -61,6 +62,7 @@ class Instance(object):
 			ret &= self.region == other.region
 			ret &= self.hw_type == other.hw_type
 			ret &= self.arch == other.arch
+			ret &= self.charging == other.charging
 			ret &= self.version == other.version
 			ret &= self.hostname == other.hostname
 			ret &= self.key_file == other.key_file
@@ -96,10 +98,15 @@ class JsonInstance(Instance):
 		import json
 		dict = json.loads(str)
 		map = {'instanceId': 'id', 'instanceType': 'hw_type', 'architecture': 'arch',
-			'imageId': 'ami'}
+			'imageId': 'ami', 'billingProducts':'charging'}
 		for key in dict.keys():
 			if key in map:
 				setattr(self, map[key], dict[key])
 			else:
 				setattr(self, key, dict[key])
+		# determine charging type:
+		if self.charging[0] == 'bp-63a5400a':
+			self.charging = 'access'
+		elif self.charging[0] == 'bp-6fa54006':
+			self.charging = 'hourly'
 
