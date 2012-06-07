@@ -89,6 +89,6 @@ def read_hosts(filename):
 	puts(env.hosts)
 
 # introduce the tests
-import osversion_test, identity_test
+import osversion_test, identity_test, disk_test
 
 
