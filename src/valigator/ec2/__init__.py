@@ -4,6 +4,7 @@ INSTANCES={}
 #import ConfigParser, boto, time, fabric, image, tests, os
 from fabric.api import settings, run, env, task, abort
 from fabric.tasks import Task
+from valigator.factories import CastedFactory
 #from ..config import AbortedConfigFile
 
 #_example_config="""
@@ -67,6 +68,20 @@ from fabric.tasks import Task
 # 	def run(self):
 # 		pass
 
+def strToBool(str):
+	if str in ('True', 'true', 'Yes', 'yes', 'Y', 'y', '1'):
+		return True
+	else:
+		return False
+
+
+class InstanceCsvFactory(CastedFactory):
+	# staging flag will be casted
+	import instance
+	instance_type = instance.Instance
+	instance_casted_attributes = {'stage': strToBool}
+
+
 @task
 def read_hosts(filename):
 	"""read a csv filename containing instance details and update env.hosts
@@ -74,12 +89,10 @@ def read_hosts(filename):
 	import instance, csv
 	from fabric.api import env
 	reader = csv.DictReader(open(filename))
+	ifactory = InstanceCsvFactory()
 	for line_dict in reader:
 		# read all the instances
-		anInstance = instance.Instance()
-		for key in line_dict.keys():
-			setattr(anInstance, key, line_dict[key])
-			# print key, line_dict[key]
+		anInstance = ifactory(line_dict)
 		INSTANCES[anInstance.get_host_string()] = anInstance
 		# add instance access pem to the keys
 		env.key_filename.append(anInstance.key_file)
@@ -89,6 +102,6 @@ def read_hosts(filename):
 	puts(env.hosts)
 
 # introduce the tests
-import osversion_test, identity_test, disk_test
+import osversion_test, identity_test, disk_test, contents_test
 
 

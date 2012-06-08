@@ -29,11 +29,19 @@ class SimpleCommandResult(SimpleResult):
 	command = None
 	_value = None
 
+	def __init__(self, warn_only=False):
+		self.warn_only = warn_only
+
 	@property
 	def value(self):
 		"""the value property is a cached result of running the command"""
 		if not self._value:
-			self._value = run(self.command)
+			if self.warn_only:
+				from fabric.api import settings
+				with settings(warn_only=True):
+					self._value = run(self.command)
+			else:
+				self._value = run(self.command)
 		return self._value
 
 
