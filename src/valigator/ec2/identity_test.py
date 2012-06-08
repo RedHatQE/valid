@@ -25,6 +25,7 @@ class ActualResult(CastedSimpleCommandResult):
 		self.value.hostname = instance.hostname
 		self.value.key_file = instance.key_file
 		self.value.username = instance.username
+		self.value.stage = instance.stage
 
 
 class IdentityTestFactory(baseFactory):

@@ -44,13 +44,14 @@ class Instance(object):
 	key_file = None
 	username = None
 	charging = None
+	stage = None
 
 	def get_host_string(self):
 		return "%s@%s" % (self.username, self.hostname)
 
 	def __str__(self):
-		return "<instance id %s hostname %s, ami %s, region %s, hw_type %s, arch %s, charging %s, version %s, key_file %s, username %s>" % \
-			(self.id, self.hostname, self.ami, self.region, self.hw_type, self.arch, self.charging, self.version, self.key_file, self.username)
+		return "<instance id %s hostname %s, ami %s, region %s, hw_type %s, arch %s, charging %s, version %s, key_file %s, username %s, stage %s>" % \
+			(self.id, self.hostname, self.ami, self.region, self.hw_type, self.arch, self.charging, self.version, self.key_file, self.username, self.stage)
 
 	__repr__ = __str__
 
@@ -67,6 +68,7 @@ class Instance(object):
 			ret &= self.hostname == other.hostname
 			ret &= self.key_file == other.key_file
 			ret &= self.username == other.username
+			ret &= self.stage == other.stage
 		except AttributeError:
 			return False
 		return ret
