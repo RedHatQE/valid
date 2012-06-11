@@ -1,6 +1,9 @@
 from zope.interface import implements
 import interfaces, test, result
 from osversion import OSVersion
+from test import Test
+from result import SimpleResult
+from result import SimpleCommandResult
 
 FACTORIES = []
 
@@ -12,13 +15,14 @@ class Factory(object):
 			print cls, name, bases
 			type.__init__(cls, name, bases, dict)
 			# avoid abstract factories
-			if cls.__module__ != 'valigator.factories' or cls.__name__ not in ('Factory', 'RetValueCheckFactory'):
+			if cls.__module__ != 'valigator.factories' or cls.__name__ not in ('Factory', 'RetValueTestFactory',
+					'SimpleCommandTestFactory'):
 				FACTORIES.append((name, cls))
 	def get_test(self):
 		"""return a test instance"""
 		return test.Test()
 
-class RetValueCheckFactory(Factory):
+class RetValueTestFactory(Factory):
 	"""To use, just set a command and test_name.
 	   If needed, set return_value as well.
 	   Produces a very basic simple-result vs simple-command-result checking
@@ -28,17 +32,18 @@ class RetValueCheckFactory(Factory):
 	failed = False
 	command = None
 	test_name = None
+	expected_output = None
+
+
 	def get_test(self):
-		from test import Test
 		ret = Test()
 		ret.name = self.test_name
-		from result import SimpleResult
 		ret.expected_result = SimpleResult()
 		from value import RetCodeValue
 		ret.expected_result.value = RetCodeValue()
 		ret.expected_result.value.return_code = self.return_code
 		ret.expected_result.value.failed = self.failed
-		from result import SimpleCommandResult
+		ret.expected_result.value.expected_output = self.expected_output
 		if self.failed:
 			# in case command failure is expected, switch the setting
 			# warn_only to True
@@ -48,7 +53,20 @@ class RetValueCheckFactory(Factory):
 		ret.actual_result.command = self.command
 		return ret
 
+class SimpleCommandTestFactory(Factory):
+	"""just simple command result compared to an expected_result string"""
+	expected_result = None
+	command = None
+	test_name = None
 
+	def get_test(self):
+		ret = Test()
+		ret.name = self.test_name
+		ret.expected_result = SimpleResult()
+		ret.expected_result.value = self.expected_result
+		ret.actual_result = SimpleCommandResult()
+		ret.actual_result.command = self.command
+		return ret
 
 class CastedFactory(object):
 	"""An attribute value type-casting and name-converting factory"""
