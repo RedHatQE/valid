@@ -1,30 +1,32 @@
-from valigator.factories import RetValueCheckFactory
+from valigator.factories import RetValueTestFactory
 
-class RepolistFactory(RetValueCheckFactory):
+class RepolistFactory(RetValueTestFactory):
 	command = '/usr/bin/yum repolist'
 	test_name = 'ec2.repolist_test'
 
 
-class ZshSearch(RetValueCheckFactory):
+class ZshSearch(RetValueTestFactory):
 	command = '/usr/bin/yum search zsh'
 	test_name = 'ec2.yum_search_zsh'
 
 
-class ZshInstall(RetValueCheckFactory):
+class ZshInstall(RetValueTestFactory):
 	command = '/usr/bin/yum -y install zsh'
 	test_name = 'ec2.yum_install_zsh'
 
 
-class RpmQueryZsh(RetValueCheckFactory):
+class RpmQueryZsh(RetValueTestFactory):
 	command = "/bin/rpm -q --queryformat '%{NAME}\n' zsh"
 	test_name = 'ec2.yum_rpm_querry_zsh'
 
 
-class GroupList(RetValueCheckFactory):
+class GroupList(RetValueTestFactory):
 	command = '/usr/bin/yum grouplist'
 	test_name = 'ec2.yum_grouplist'
 
-class DevelopmentTools(RetValueCheckFactory):
+class DevelopmentTools(RetValueTestFactory):
 	command = "/usr/bin/yum -y groupinstall 'Development tools'"
 	test_name = 'ec2.yum_install_development_tools'
+
+
 
