@@ -117,8 +117,23 @@ function _testlib_init(){
 	TEST_CURRENT=""
 	TEST_FAILED=""
 	echo "IMAGE ID= ${IMAGEID}" >> $LOGFILE
-	rpm -Uvh epel-release-6-6.noarch.rpm >> $LOGFILE
-	yum install -y python-bugzilla >> $LOGFILE
+	case $RHEL_FOUND in
+		5.*)
+			EPEL_PACKAGE=`ls epel-release-5-*.rpm | tail -1`
+			;;
+		6.*)
+			EPEL_PACKAGE=`ls epel-release-6-*.rpm | tail -1`
+			;;
+		*)
+			_err 1 "Unsupported RHEL release: $RHEL_FOUND"
+			;;
+	esac
+	if [ -n $EPEL_PACKAGE ] ; then
+		rpm -Uvh $EPEL_PACKAGE >> $LOGFILE || _err $?
+		yum install -y python-bugzilla >> $LOGFILE || _err $?
+		BUGZILLACOMMAND='/usr/bin/bugzilla --debug --verbose'
+	fi
+	[ -z "$BUGZILLACOMMAND" ] && BUGZILLACOMMAND=$DIFFDIR/bugzilla-command
 	__TESTLIB_INIT__=initialized
 }
 
@@ -747,7 +762,7 @@ function test_shells()
 function test_repos()
 {
 	new_test "## test repo files ... "
-	assert "ls /etc/yum.repos.d/ | wc -l " 4
+	assert "ls -I 'epel*'  /etc/yum.repos.d/ | wc -l " 4
 	assert "ls /etc/yum.repos.d/redhat* | wc -l" 2
 	case $RHEL_FOUND in
 		5.*)
@@ -768,18 +783,13 @@ function test_yum_plugin()
 
 function test_gpg_keys()
 {
-        new_test "## Verify GPG checking ... "
+	new_test "## Verify GPG checking ... "
 	assert "grep '^gpgcheck=1' /etc/yum.repos.d/redhat-*.repo | cut -d\= -f2 | sort -f | uniq" 1
 
-	new_test "## Verify GPG Keys ... "
 	if [ $BETA == 1 ]; then
-	 assert "rpm -qa gpg-pubkey* | wc -l " 2
-	elif [ $RHEL_FOUND == "6.1" ]; then
-	 assert "rpm -qa gpg-pubkey* | wc -l " 2
-	else
-	 assert "rpm -qa gpg-pubkey* | wc -l " 2
+		echo "SKIPPING GPG RPM TEST, BETA DETECTED" >> $LOGFILE
+		return
 	fi
-
 
 	new_test "## Verify GPG RPMS ... "
 	assert "rpm -qa gpg-pubkey* | wc -l" 2
