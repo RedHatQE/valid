@@ -117,24 +117,7 @@ function _testlib_init(){
 	TEST_CURRENT=""
 	TEST_FAILED=""
 	echo "IMAGE ID= ${IMAGEID}" >> $LOGFILE
-	case $RHEL_FOUND in
-		5.*)
-			EPEL_PACKAGE=`ls epel-release-5-*.rpm | tail -1`
-			;;
-		6.*)
-			EPEL_PACKAGE=`ls epel-release-6-*.rpm | tail -1`
-			;;
-		*)
-			_err 1 "Unsupported RHEL release: $RHEL_FOUND"
-			;;
-	esac
-	if [ -n $EPEL_PACKAGE ] ; then
-		rpm -Uvh $EPEL_PACKAGE >> $LOGFILE || _err $?
-		yum install -y python-bugzilla >> $LOGFILE || _err $?
-		BUGZILLACOMMAND='/usr/bin/bugzilla --debug --verbose'
-	fi
-	[ -z "$BUGZILLACOMMAND" ] && BUGZILLACOMMAND=$DIFFDIR/bugzilla-command
-	__TESTLIB_INIT__=initialized
+		__TESTLIB_INIT__=initialized
 }
 
 # report a testcase error including a stack trace
@@ -166,9 +149,9 @@ _exit() {
 	# call the error reporter
 	_err $ret "${@}"
 	# provide a bugzilla status report
-	open_bugzilla
-	bugzilla_comments
-	verify_bugzilla
+	#open_bugzilla
+	#bugzilla_comments
+	#verify_bugzilla
 	# terminate the execution
 	im_exit
 }
@@ -1148,10 +1131,10 @@ function setup_rc.local()
 {
 	echo "####################### cat of /etc/rc.local ##################" >> $LOGFILE
 	echo "cd /root/valid/src" >> /etc/rc.local
-	if [ ${BUGZILLA:-1} -gt 0 ] ; then
+	if [ ${BUGZILLA} -gt 0 ] ; then
 		echo "./image_validation_postreboot.sh --imageID=${IMAGEID} --RHEL=$RHELV --full-yum-suite=no --skip-questions=yes --bugzilla-username=$BUG_USERNAME --bugzilla-password=$BUG_PASSWORD --bugzilla-num=$BUGZILLA --failures=$FAILURES --memory=$MEM_HWP >> /var/log/messages" >> /etc/rc.local
 	else
-		echo "./image_validation_postreboot.sh --imageID=${IMAGEID} --RHEL=$RHELV --full-yum-suite=no --skip-questions=yes --no-bugzilla --failures=$FAILURES --memory=$MEM_HWP >> /var/log/messages" >> /etc/rc.local
+		echo "./image_validation_postreboot.sh --imageID=${IMAGEID} --RHEL=$RHELV --full-yum-suite=no --skip-questions=yes --failures=$FAILURES --memory=$MEM_HWP >> /var/log/messages" >> /etc/rc.local
 	fi
 
 	cat /etc/rc.local >> $LOGFILE
