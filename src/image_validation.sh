@@ -18,7 +18,7 @@
 
 FAILURES=0
 MEM_HWP=0
-BUGZILLA=1
+BUG_NUM=0
 POSTREBOOT=1
 
 # try to pushd to a `valid' source tree
@@ -27,6 +27,24 @@ POSTREBOOT=1
 pushd $BASEDIR > /dev/null
 source testlib.sh
 _testlib_init
+
+# install bugzilla
+case $RHEL_FOUND in
+	5.*)
+		EPEL_PACKAGE=`ls epel-release-5-*.rpm | tail -1`
+		;;
+	6.*)
+		EPEL_PACKAGE=`ls epel-release-6-*.rpm | tail -1`
+		;;
+	*)
+		_err 1 "Unsupported RHEL release: $RHEL_FOUND"
+		;;
+esac
+if [ -n $EPEL_PACKAGE ] ; then
+	rpm -Uvh $EPEL_PACKAGE >> $LOGFILE
+	yum install -y python-bugzilla >> $LOGFILE || _err $?
+fi
+
 #set -x
 echo =====`basename $0; date`===== | $DLOG
 function list_tests(){
@@ -144,13 +162,10 @@ for i in $*
 	  ;;
       --staging)
 	 _testlib_init_staging
-          ;;
-      --no-bugzilla)
-         BUGZILLA=0
-	 ;;
+      ;;
       --no-postreboot)
-        POSTREBOOT=0
-	;;
+      POSTREBOOT=0
+	  ;;
 
         *)
          # unknown option
@@ -169,7 +184,7 @@ if [[ -z $IMAGEID ]] || [[ -z $RHELV ]] ||  [[ -z $yum_test ]] || [[ -z $MEM_HWP
  exit 1
 fi
 
-if [ ${BUGZILLA:-1} -gt 0 ] ; then
+if [ ${BUG_NUM} -gt 0 ] ; then
 	if [[ -z $BUG_USERNAME ]] || [[ -z $BUG_PASSWORD ]] ; then
 		usage
 		exit 1
@@ -180,7 +195,7 @@ fi
 
 
 ### DONT REMOVE OR COMMENT OUT ###
-if [ ${BUGZILLA} -gt 0 ] ; then
+if [ ${BUG_NUM} -gt 0 ] ; then
 	echo "opening a bugzilla for logging purposes"
 	open_bugzilla
 fi
@@ -215,7 +230,7 @@ done
 
 ### DONT REMOVE OR COMMENT OUT ###
 show_failures
-if [ ${BUGZILLA} -gt 0 ] ; then
+if [ ${BUG_NUM} -gt 0 ] ; then
 	open_bugzilla
 	bugzilla_comments
 fi

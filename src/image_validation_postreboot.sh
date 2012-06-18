@@ -16,7 +16,7 @@
 # modified by kbidarka@redhat.com for RHEL 6
 
 FAILURES=0
-BUGZILLA=1
+BUG_NUM=0
 
 source $PWD/testlib.sh
 
@@ -72,6 +72,7 @@ for i in $*
 	  ;;
       --bugzilla-num=*)
 	  BUG_NUM="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
+	  echo BUG: $BUG_NUM
 	  ;;
       --failures=*)
 	  FAILURES="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
@@ -79,9 +80,6 @@ for i in $*
       --memory=*)
 	  MEM_HWP="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
           ;;
-	  --no-bugzilla)
-	  BUGZILLA=0
-	  ;;
         *)
          # unknown option
 	   usage
@@ -99,7 +97,7 @@ if [[ -z $IMAGEID ]] || [[ -z $RHELV ]] ||  [[ -z $yum_test ]] ; then
  exit 1
 fi
 
-if [ ${BUGZILLA:-1} -gt 0 ] ; then
+if [ ${BUG_NUM} -gt 0 ] ; then
 	if [[ -z $BUG_USERNAME ]] || [[ -z $BUG_PASSWORD ]] ; then
 		usage
 		exit 1
@@ -132,7 +130,7 @@ print_rhel_version
 
 ### DONT REMOVE OR COMMENT OUT ###
 show_failures
-if [ ${BUGZILLA:-1} -gt 0 ] ; then
+if [ ${BUG_NUM} -gt 0 ] ; then
 	sleep 360
 	open_bugzilla
 	bugzilla_comments
