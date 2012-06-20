@@ -27,6 +27,32 @@ POSTREBOOT=1
 pushd $BASEDIR > /dev/null
 source testlib.sh
 _testlib_init
+
+function build_python() {
+	# build in $1
+	echo BUILDING python package in $1 >> $LOGFILE
+	pushd $1 || exit 1
+	python setup.py install >> $LOGFILE 2>&1 || exit $?
+	popd
+}
+
+function build_python_bugzilla() {
+	# build python-bugzilla
+	# updates PATH env var with a built bugzilla command
+	# if source tarball not found, nothing happens
+	local tarball=$( ls -tr python-bugzilla*.tar.bz2 | tail -1 )
+	if [ $? -ne 0 ] ; then
+		cat <<__BZ_BUILD_ERROR_MSG >> $LOGFILE
+No python-bugzilla tarballs found in `pwd`
+Get yourself an up-to-date copy:
+http://git.fedorahosted.org/git/?p=python-bugzilla.git
+__BZ_BUILD_ERROR_MSG
+		exit 1
+	fi
+	tar -xjf $tarball || exit $?
+	build_python ${tarball%.tar.bz2} || exit $?
+}
+
 #set -x
 echo =====`basename $0; date`===== | $DLOG
 function list_tests(){
@@ -90,6 +116,11 @@ function usage()
                                     test_repos,test_yum_full_test,test_IPv6"
 	   echo "--list-tests    :: list available tests"
 }
+
+
+### MAIN
+##  Main
+#   main
 
 #cli
 #set -x
@@ -177,6 +208,8 @@ if [ ${BUGZILLA:-1} -gt 0 ] ; then
 fi
 
 
+## provide python-bugzilla's bugzilla command
+build_python_bugzilla || exit $?
 
 
 ### DONT REMOVE OR COMMENT OUT ###

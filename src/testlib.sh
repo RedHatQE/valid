@@ -779,20 +779,19 @@ function test_gpg_keys()
 	fi
 
 
-	if [ $BETA == 1 ]; then
- 	 echo "SKIPPING TEST, BETA DETECTED" >> $LOGFILE
-	elif [[ $RHEL == 5 ]] && [[ $BETA == 0 ]]; then
-	 new_test "## Verify GPG RPMS ... "
-	 assert "rpm -qa gpg-pubkey* | sort -f | tail -n 1" "gpg-pubkey-37017186-45761324"
-	 assert "rpm -qa gpg-pubkey* |  grep 2fa6" "gpg-pubkey-2fa658e0-45700c69"
-	elif [[ $RHEL_FOUND == "6.1" ]] && [[ $BETA == 0 ]]; then
-         assert "rpm -qa gpg-pubkey* | sort -f | tail -n 1" "gpg-pubkey-fd431d51-4ae0493b"
-         assert "rpm -qa gpg-pubkey* | sort -f | head -n 1" "gpg-pubkey-2fa658e0-45700c69"
-        else
-	 new_test "## Verify GPG RPMS ... "
-	 assert "rpm -qa gpg-pubkey* | sort -f | tail -n 1" "gpg-pubkey-fd431d51-4ae0493b"
-	 assert "rpm -qa gpg-pubkey* |  grep 2fa6" "gpg-pubkey-2fa658e0-45700c69"
-    	fi
+	new_test "## Verify GPG RPMS ... "
+	assert "rpm -qa gpg-pubkey* | wc -l" 2
+	assert "rpm -qa gpg-pubkey* | grep -o -F gpg-pubkey-2fa658e0-45700c69" gpg-pubkey-2fa658e0-45700c69
+	case $RHEL_FOUND in
+		5.*)
+			assert "rpm -qa gpg-pubkey* | grep -o -F gpg-pubkey-37017186-45761324" gpg-pubkey-37017186-45761324
+			;;
+		6.*)
+			assert "rpm -qa gpg-pubkey* | grep -o -F gpg-pubkey-fd431d51-4ae0493b" gpg-pubkey-fd431d51-4ae0493b
+			;;
+		*)
+			_err 1 "Unsupported RHEL version: $RHEL_FOUND"
+	esac
 }
 
 function test_IPv6()
@@ -1071,15 +1070,13 @@ function open_bugzilla()
 	#echo "######### /etc/rc.local ########" >> $LOGFILE
 	#cat /etc/rc.local >> $LOGFILE
 	#echo "######### /etc/rc.local ########" >> $LOGFILE
-
- 	BUGZILLACOMMAND=$DIFFDIR/bugzilla-command
 	new_test "## Open a bugzilla"
 	echo ""
 	echo "Logging into bugilla"
 	echo ""
-	$BUGZILLACOMMAND --bugzilla=https://bugzilla.redhat.com/xmlrpc.cgi --user=$BUG_USERNAME --password=$BUG_PASSWORD login
+	bugzilla --user=$BUG_USERNAME --password=$BUG_PASSWORD login
 	if [ -z $BUG_NUM ]; then
-	 BUGZILLA=`$BUGZILLACOMMAND new  -p"Cloud Image Validation" -v"RHEL$RHELV" -a"$UNAMEI" -c"images" -l"initial bug opening" -s"$IMAGEID $RHELV $UNAMEI " | cut -b "2-8"`
+	 BUGZILLA=`bugzilla new  -p"Cloud Image Validation" -v"RHEL$RHELV" -a"$UNAMEI" -c"images" -l"initial bug opening" -s"$IMAGEID $RHELV $UNAMEI " | cut -b "2-8"`
 	 echo ""
 	 echo "new bug created: $BUGZILLA https://bugzilla.redhat.com/show_bug.cgi?id=$BUGZILLA"
 	 echo ""
@@ -1097,13 +1094,13 @@ function bugzilla_comments()
 	cp -f ${LOGFILE} /tmp 2> /dev/null
 	for part in $(ls splitValid.log*);do
 		 BUG_COMMENTS=`cat $part`
-		 $BUGZILLACOMMAND modify $BUGZILLA -l "${BUG_COMMENTS}"
+		 bugzilla modify $BUGZILLA -l "${BUG_COMMENTS}"
 	done
         #BUG_COMMENTS02=`tail -n $(expr $(cat ${LOGFILE} | wc -l ) / 3) ${LOGFILE}`
         #BUG_COMMENTS03=`tail -n $(expr $(cat ${LOGFILE} | wc -l ) / 3) ${LOGFILE}`
-        #$BUGZILLACOMMAND modify $BUGZILLA -l "${BUG_COMMENTS01}"
-        #$BUGZILLACOMMAND modify $BUGZILLA -l "${BUG_COMMENTS02}"
-        #$BUGZILLACOMMAND modify $BUGZILLA -l "${BUG_COMMENTS03}"
+        #bugzilla modify $BUGZILLA -l "${BUG_COMMENTS01}"
+        #bugzilla modify $BUGZILLA -l "${BUG_COMMENTS02}"
+        #bugzilla modify $BUGZILLA -l "${BUG_COMMENTS03}"
 
 	echo "Finished with the bugzilla https://bugzilla.redhat.com/show_bug.cgi?id=$BUGZILLA"
 
@@ -1114,10 +1111,10 @@ function verify_bugzilla()
 	echo "If no failures found move bug to verified"
 	if [ $FAILURES == 0 ];then
           echo "MOVING BUG TO VERIFIED: test has $FAILURES failures"
-	  $BUGZILLACOMMAND modify --status="VERIFIED" $BUGZILLA
+	  bugzilla modify --status VERIFIED $BUGZILLA
 	else
 	   echo "MOVING BUG TO ON_QA: test has $FAILURES failures"
-	  $BUGZILLACOMMAND modify --status="ON_QA" $BUGZILLA
+	  bugzilla modify --status ON_QA $BUGZILLA
 	fi
 
 }
