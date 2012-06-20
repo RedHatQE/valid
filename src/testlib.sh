@@ -1065,6 +1065,7 @@ function open_bugzilla()
 	#echo "######### /etc/rc.local ########" >> $LOGFILE
 	#cat /etc/rc.local >> $LOGFILE
 	#echo "######### /etc/rc.local ########" >> $LOGFILE
+
 	new_test "## Open a bugzilla"
 	echo ""
 	echo "Logging into bugilla"
