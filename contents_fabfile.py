@@ -11,15 +11,15 @@ def manifest_cdn_package_set(manifest):
 			packages += manifest['cdn']['products'][product]['Repo Paths'][path]
 	return set(packages)
 
-def to_bool(str):
+def to_bool(value):
 	ret = False
-	ret |= str == 'y'
-	ret |= str == 'Y'
-	ret |= str == 'Yes'
-	ret |= str == 'yes'
-	ret |= str == 'True'
-	ret |= str == 'true'
-	ret |= str == '1'
+	ret |= value == 'y'
+	ret |= value == 'Y'
+	ret |= value == 'Yes'
+	ret |= value == 'yes'
+	ret |= value == 'True'
+	ret |= value == 'true'
+	ret |= value == '1'
 	return ret
 
 @task
@@ -30,19 +30,20 @@ def prepare_staging():
 	run('echo rhui2-cds01-stage.us-east-1.aws.ce.redhat.com > /etc/yum.repos.d/rhui-load-balancers.conf')
 
 @task
-def update(stage=False):
+def update(stage=False,reboot=False):
 	"""perform system update"""
 	if stage:
 		execute(prepare_staging)
-	run('/usr/bin/yum update -y')
-	reboot(wait=180)
+	run('/usr/bin/yum update -y --disablerepo="*" --enablerepo="*rhel-server-releases*"')
+	if reboot:
+		reboot(wait=180)
 
 @task
-def contents_check(manifest, stage=False):
+def contents_check(manifest, stage='False', reboot='False'):
 	"""print packages not provided by given CDN manifest URL"""
 	manifest_j = json.load(urllib.urlopen(manifest))
 	packages = manifest_cdn_package_set(manifest_j)
-	execute(update, stage=to_bool(stage))
+	execute(update, stage=to_bool(stage), reboot=to_bool(reboot))
 	installed_packages = set(run("/bin/rpm -qa | sed -e 's/$/.rpm/'").split('\r\n'))
 	print "# --\n# %s" % (env.host_string,)
 	pprint (installed_packages - packages)
