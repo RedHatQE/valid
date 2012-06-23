@@ -22,6 +22,12 @@ def to_bool(value):
 	ret |= value == '1'
 	return ret
 
+def failed_to_update_or_missing(before, after, manifest):
+	return before.intersection(after) - manifest
+
+def updated_over(before, after, manifest):
+	return (after - before) - manifest
+
 @task
 def prepare_staging():
 	"""modify system to work with stage RHUI"""
@@ -42,8 +48,13 @@ def update(stage=False,reboot=False):
 def contents_check(manifest, stage='False', reboot='False'):
 	"""print packages not provided by given CDN manifest URL"""
 	manifest_j = json.load(urllib.urlopen(manifest))
-	packages = manifest_cdn_package_set(manifest_j)
+	manifest_packages = manifest_cdn_package_set(manifest_j)
+	before_packages = set(run("/bin/rpm -qa | sed -e 's/$/.rpm/'").split('\r\n'))
 	execute(update, stage=to_bool(stage), reboot=to_bool(reboot))
-	installed_packages = set(run("/bin/rpm -qa | sed -e 's/$/.rpm/'").split('\r\n'))
-	print "# --\n# %s" % (env.host_string,)
-	pprint (installed_packages - packages)
+	after_packages = set(run("/bin/rpm -qa | sed -e 's/$/.rpm/'").split('\r\n'))
+	print "# --\n# %s\n\tdiff=\\" % (env.host_string,),
+	pprint (after_packages - manifest_packages)
+	print "\tfailed_or_missing=",
+	pprint(failed_to_update_or_missing(before_packages, after_packages, manifest_packages))
+	print "\tupdated_over=",
+	pprint (updated_over(before_packages, after_packages, manifest_packages))
