@@ -36,25 +36,30 @@ def prepare_staging():
 	run('echo rhui2-cds01-stage.us-east-1.aws.ce.redhat.com > /etc/yum.repos.d/rhui-load-balancers.conf')
 
 @task
-def update(stage=False,reboot=False):
+def update(stage=False):
 	"""perform system update"""
 	if stage:
 		execute(prepare_staging)
 	run('/usr/bin/yum update -y --disablerepo="*" --enablerepo="*rhel-server-releases*"')
-	if reboot:
-		reboot(wait=180)
+	reboot(wait=180)
+	run('/usr/bin/package-cleanup -y --oldkernels --count=1')
+
+def remote_packages(filter_pass='.*', filter_block='gpg-pubkey-.*|rh-amazon-rhui-client-.*'):
+	return set(run("/bin/rpm -qa | egrep '%s' | egrep -v '%s' | sed -e 's/$/.rpm/'" % (filter_pass, filter_block)).split('\r\n'))
+
 
 @task
-def contents_check(manifest, stage='False', reboot='False'):
+def contents_check(manifest, stage='False'):
 	"""print packages not provided by given CDN manifest URL"""
 	manifest_j = json.load(urllib.urlopen(manifest))
 	manifest_packages = manifest_cdn_package_set(manifest_j)
-	before_packages = set(run("/bin/rpm -qa | sed -e 's/$/.rpm/'").split('\r\n'))
-	execute(update, stage=to_bool(stage), reboot=to_bool(reboot))
-	after_packages = set(run("/bin/rpm -qa | sed -e 's/$/.rpm/'").split('\r\n'))
-	print "# --\n# %s\n\tdiff=\\" % (env.host_string,),
-	pprint (after_packages - manifest_packages)
-	print "\tfailed_or_missing=",
+	before_packages = remote_packages()
+	execute(update, stage=to_bool(stage))
+	after_packages = remote_packages()
+	print "# --\n# %s" % (env.host_string,)
+	print "failed_or_missing= ",
 	pprint(failed_to_update_or_missing(before_packages, after_packages, manifest_packages))
-	print "\tupdated_over=",
+	print "\nupdated_over= ",
 	pprint (updated_over(before_packages, after_packages, manifest_packages))
+	print "\ndiff= ",
+	pprint (after_packages - manifest_packages)
