@@ -137,17 +137,7 @@ def startInstance(ec2connection, hardwareProfile, ARCH, RHEL, AMI, SSHKEYNAME):
     #blockDeviceMap = []
     #blockDeviceMap.append( {'DeviceName':'/dev/sda', 'Ebs':{'VolumeSize' : '100'} })
 
-    if ARCH == 'i386' and RHEL == '6.1':
-        reservation = conn_region.run_instances(AMI, instance_type=hardwareProfile, key_name=SSHKEYNAME, block_device_map=map )
-    elif ARCH == 'x86_64' and RHEL == '6.1':
-        reservation = conn_region.run_instances(AMI, instance_type=hardwareProfile, key_name=SSHKEYNAME, block_device_map=map )
-    elif ARCH == 'i386':
-        reservation = conn_region.run_instances(AMI, instance_type=hardwareProfile, key_name=SSHKEYNAME, block_device_map=map )
-    elif ARCH == 'x86_64':
-        reservation = conn_region.run_instances(AMI, instance_type=hardwareProfile, key_name=SSHKEYNAME, block_device_map=map)
-    else:
-        print "arch type is neither i386 or x86_64.. will exit"
-        exit(1)
+    reservation = conn_region.run_instances(AMI, instance_type=hardwareProfile, key_name=SSHKEYNAME, block_device_map=map )
 
     myinstance = reservation.instances[0]
 
@@ -170,17 +160,14 @@ def executeValidScript(SSHKEY, publicDNS, hwp, BZ, ARCH, AMI, REGION, RHEL, SKIP
     serverpath = "/root/valid"
     commandPath = "/root/valid/src"
 
+    if hwp["name"] == 't1.micro':
+        os.system("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" touch /root/noswap")
     if NOGIT == 'false':
-        if hwp["name"] == 't1.micro':
-            os.system("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" mkdir -p /root/valid")
-            os.system("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" touch /root/noswap")
-        else:
-            os.system("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" mkdir -p /root/valid")
-        print "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " -r " + filepath + " root@"+publicDNS+":"+serverpath+"\n"
-        os.system("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " -r " + filepath + " root@"+publicDNS+":"+serverpath)
+        os.system("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" mkdir -p /root/valid")
+        command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " -r " + filepath + " root@"+publicDNS+":"+serverpath
+        print command+"\n"
+        os.system(command)
     elif NOGIT == 'true':
-        if hwp["name"] == 't1.micro':
-            os.system("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" touch /root/noswap")
         os.system("ssh  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" yum -y install git")
         os.system("ssh  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" git clone git://github.com/RedHatQE/valid.git")
 
@@ -188,24 +175,17 @@ def executeValidScript(SSHKEY, publicDNS, hwp, BZ, ARCH, AMI, REGION, RHEL, SKIP
     # COPY KERNEL if there
     serverpath = "/root/kernel"
     os.system("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" mkdir -p /root/kernel")
-    if ARCH == 'i386':
-        filepath = BASEDIR+"/kernel/i386/*"
-        print "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " -r " + filepath + " root@"+publicDNS+":"+serverpath+"\n"
-        os.system("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " -r " + filepath + " root@"+publicDNS+":"+serverpath)
-    if ARCH == 'x86_64':
-        filepath = BASEDIR+"/kernel/x86_64/*"
-        print "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " -r " + filepath + " root@"+publicDNS+":"+serverpath+"\n"
-        os.system("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " -r " + filepath + " root@"+publicDNS+":"+serverpath)
-
-
+    filepath = BASEDIR+"/kernel/"+ARCH+"/*"
+    command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " -r " + filepath + " root@"+publicDNS+":"+serverpath
+    print command+"\n"
+    os.system(command)
 
 #    command = commandPath+"/image_validation.sh --imageID="+IGNORE+AMI+"_"+REGION+"_"+hwp["name"]+" --RHEL="+RHEL+" --full-yum-suite=yes --skip-questions=yes --bugzilla-username="+BZUSER+" --bugzilla-password="+BZPASS+" --bugzilla-num="+BZ+ " --memory="+hwp["memory"]
     command = commandPath+"/image_validation.sh --skip-list='"+SKIPLIST+"' --imageID="+AMI+"_"+REGION+"_"+hwp["name"]+" --RHEL="+RHEL+" --full-yum-suite=yes --skip-questions=yes --bugzilla-username="+BZUSER+" --bugzilla-password='"+BZPASS+"' --bugzilla-num="+BZ+ " --memory="+hwp["memory"]+" --public-dns="+publicDNS+" --ami-id="+AMI+" --arch-id="+ARCH
 
-    print "nohup ssh -n -f -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" "+command
-    print ""
-    os.system("nohup ssh -n -f -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" "+command)
-
+    command = "nohup ssh -n -f -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" "+command
+    print command+"\n"
+    os.system(command)
 
 def printValues(hwp):
     print "+++++++"
@@ -289,60 +269,31 @@ if CSV == 'true':
             SSHKEYNAME = SSHKEY_NAME_SA_E
 
 
-        publicDNS = []
-        if ARCH == 'i386':
-            for hwp in hwp_i386:
-                printValues(hwp)
-                myConn = getConnection(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, REGION)
-                this_hostname = startInstance(myConn, hwp["name"], ARCH, RHEL, AMI, SSHKEYNAME)
-                map = {"hostname":this_hostname,"hwp":hwp}
-                publicDNS.append(map)
-        elif ARCH == 'x86_64':
-            for hwp in hwp_x86_64:
-                printValues(hwp)
-                myConn = getConnection(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, REGION)
-                this_hostname = startInstance(myConn, hwp["name"], ARCH, RHEL, AMI, SSHKEYNAME)
-                map = {"hostname":this_hostname,"hwp":hwp}
-                publicDNS.append(map)
-
-        lock = thread.allocate_lock()
-#        print "sleep for 130 seconds"
-#        time.sleep(130)
-        print "Trying to fetch a file to make sure the SSH works, before proceeding ahead."
-        f_path = "/tmp/network"
-        l_path = "/etc/init.d/network"
-        for host in publicDNS:
-            keystat = rhui_lib.putfile(host["hostname"], SSHKEY, l_path, f_path)
-            if not keystat:
-                executeValidScript(SSHKEY, host["hostname"], host["hwp"], BID, ARCH, AMI, REGION, RHEL, SKIPLIST)
-            else:
-	            print "The Amazon node : "+host["hostname"]+" is not accessible, waited for 210 sec. Skipping and proceeding with the next Profile"
+publicDNS = []
+if ARCH == 'i386':
+    hwp_items = hwp_i386
+elif ARCH == 'x86_64':
+    hwp_items = hwp_x86_64
 else:
-    publicDNS = []
-    if ARCH == 'i386':
-        for hwp in hwp_i386:
-            printValues(hwp)
-            myConn = getConnection(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, REGION)
-            this_hostname = startInstance(myConn, hwp["name"], ARCH, RHEL, AMI, SSHKEYNAME)
-            map = {"hostname":this_hostname,"hwp":hwp}
-            publicDNS.append(map)
-    elif ARCH == 'x86_64':
-        for hwp in hwp_x86_64:
-            printValues(hwp)
-            myConn = getConnection(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, REGION)
-            this_hostname = startInstance(myConn, hwp["name"], ARCH, RHEL, AMI, SSHKEYNAME)
-            map = {"hostname":this_hostname,"hwp":hwp}
-            publicDNS.append(map)
+    print "Arch type is neither i386 nor x86_64. Exiting..."
+    exit(1)
 
-    lock = thread.allocate_lock()
-#    print "sleep for 130 seconds"
-#    time.sleep(130)
-    print "Trying to fetch a file and make sure the SSH works, before proceeding ahead."
-    f_path = "/tmp/network"
-    l_path = "/etc/init.d/network"
-    for host in publicDNS:
-        keystat = rhui_lib.putfile(host["hostname"], SSHKEY, l_path, f_path)
-        if not keystat:
-            executeValidScript(SSHKEY, host["hostname"],host["hwp"], BID, ARCH, AMI, REGION, RHEL, SKIPLIST)
-        else:
-	        print "The Amazon node : "+host["hostname"]+" is not accessible, waited for 210 sec. Skipping and proceeding with the next Profile"
+for hwp in hwp_items:
+    printValues(hwp)
+    myConn = getConnection(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, REGION)
+    this_hostname = startInstance(myConn, hwp["name"], ARCH, RHEL, AMI, SSHKEYNAME)
+    map = {"hostname":this_hostname,"hwp":hwp}
+    publicDNS.append(map)
+
+lock = thread.allocate_lock()
+#print "sleep for 130 seconds"
+#time.sleep(130)
+print "Trying to fetch a file to make sure the SSH works, before proceeding ahead."
+f_path = "/tmp/network"
+l_path = "/etc/init.d/network"
+for host in publicDNS:
+    keystat = rhui_lib.putfile(host["hostname"], SSHKEY, l_path, f_path)
+    if not keystat:
+        executeValidScript(SSHKEY, host["hostname"], host["hwp"], BID, ARCH, AMI, REGION, RHEL, SKIPLIST)
+    else:
+        print "The Amazon node : "+host["hostname"]+" is not accessible, waited for 210 sec. Skipping and proceeding with the next Profile"
