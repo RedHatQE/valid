@@ -108,17 +108,8 @@ def addBugzilla(BZ, AMI, RHEL, ARCH, REGION):
         print "Already opened Buzilla # = https://bugzilla.redhat.com/show_bug.cgi?id="+ BZ
         return BZ
 
-    file = open('/tmp/bugzilla',"a")
-    file.write("\n")
-    file.write(BZ)
-    file.write("\t")
-    file.write(mySummary)
-    file.close()
-    os.system("cp "+BASEDIR+"/nohup.out "+BASEDIR+"/nohup_"+AMI+".out ; cat /dev/null > "+BASEDIR+"/nohup.out")
-
 if CSV == 'false':
     BID = addBugzilla(BZ, AMI, RHEL, ARCH, REGION)
-
 
 def getConnection(key, secret, region):
     """establish a connection with ec2"""
@@ -199,18 +190,6 @@ def printValues(hwp):
     print hwp
     print "+++++++\n"
 
-def myfunction(string, sleeptime,lock,SSHKEY,publicDNS):
-        #entering critical section
-        lock.acquire()
-        print string," Now Sleeping after Lock acquired for ",sleeptime
-        time.sleep(sleeptime)
-
-        print string," Now releasing lock and then sleeping again"
-        lock.release()
-
-        #exiting critical section
-        time.sleep(sleeptime) # why?
-
 # Define hwp
 m1Small = {"name":"m1.small","memory":"1700000","cpu":"1","arch":"i386"}
 m1Large = {"name":"m1.large","memory":"7500000","cpu":"2","arch":"x86_64"}
@@ -221,7 +200,6 @@ m22Xlarge = {"name":"m2.2xlarge","memory":"34200000","cpu":"4","arch":"x86_64"}
 m24Xlarge = {"name":"m2.4xlarge","memory":"68400000","cpu":"8","arch":"x86_64"}
 c1Medium = {"name":"c1.medium","memory":"1700000","cpu":"2","arch":"i386"}
 c1Xlarge = {"name":"c1.xlarge","memory":"7000000","cpu":"8","arch":"x86_64"}
-
 
 #Use all hwp types for ec2 memory tests, other hwp tests
 hwp_i386 = [c1Medium, t1Micro , m1Small ]
@@ -288,7 +266,6 @@ for hwp in hwp_items:
     map = {"hostname":this_hostname,"hwp":hwp}
     publicDNS.append(map)
 
-lock = thread.allocate_lock()
 #print "sleep for 130 seconds"
 #time.sleep(130)
 print "Trying to fetch a file to make sure the SSH works, before proceeding ahead."
