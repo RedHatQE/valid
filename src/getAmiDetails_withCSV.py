@@ -2,51 +2,54 @@
 
 from pprint import pprint
 from boto import ec2
-import boto, thread
-import sys, time, argparse, os
-import csv
-#from boto.ec2.blockdevicemapping import BlockDeviceMapping
-from boto.ec2.blockdevicemapping import EBSBlockDeviceType, BlockDeviceMapping
+from boto.ec2.blockdevicemapping import EBSBlockDeviceType
+from boto.ec2.blockdevicemapping import BlockDeviceMapping
 from bugzilla.bugzilla3 import Bugzilla36
+import boto
+import thread
+import sys
+import time
+import argparse
+import os
+import csv
 import rhui_lib
 import ConfigParser
 
 config = ConfigParser.ConfigParser()
 config.read('/etc/validation.cfg')
 
-argparser = argparse.ArgumentParser(description=\
-		'Remotely execute validation testcases')
-argparser.add_argument('--skip-tests', metavar='<expr>',nargs="*",
-		help="space-separated expressions describing tests to skip")
+argparser = argparse.ArgumentParser(description='Remotely execute validation testcases')
+argparser.add_argument('--skip-tests', metavar='<expr>', nargs="*",
+                       help="space-separated expressions describing tests to skip")
 argparser.add_argument('--list-tests', action='store_const', const=True,
-		default=False, help='display available test names and exit')
+                       default=False, help='display available test names and exit')
 argparser.add_argument('--csv-file',
-		default="test1.csv", help='use supplied csv file')
+                       default="test1.csv", help='use supplied csv file')
 
 args = argparser.parse_args()
 
 CSVFILE = args.csv_file
 
 if args.skip_tests:
-	SKIPLIST=",".join(args.skip_tests)
+        SKIPLIST = ",".join(args.skip_tests)
 else:
-	SKIPLIST=""
+        SKIPLIST = ""
 
 if args.list_tests:
-	os.system("./image_validation.sh --list-tests")
-	sys.exit()
+        os.system("./image_validation.sh --list-tests")
+        sys.exit()
 
 #us-west-2 has been used as SSHKEY_US_O and SSHKEY_NAME_US_O,  O stands for
 #Oregon
 
 SSHKEY_NAME_AP_S = config.get('SSH-Info', 'ssh-key-name_apsouth')
-SSHKEY_AP_S  = config.get('SSH-Info', 'ssh-key-path_apsouth')
+SSHKEY_AP_S = config.get('SSH-Info', 'ssh-key-path_apsouth')
 SSHKEY_NAME_AP_N = config.get('SSH-Info', 'ssh-key-name_apnorth')
-SSHKEY_AP_N  = config.get('SSH-Info', 'ssh-key-path_apnorth')
+SSHKEY_AP_N = config.get('SSH-Info', 'ssh-key-path_apnorth')
 SSHKEY_NAME_EU_W = config.get('SSH-Info', 'ssh-key-name_euwest')
-SSHKEY_EU_W  = config.get('SSH-Info', 'ssh-key-path_euwest')
+SSHKEY_EU_W = config.get('SSH-Info', 'ssh-key-path_euwest')
 SSHKEY_NAME_US_W = config.get('SSH-Info', 'ssh-key-name_uswest')
-SSHKEY_US_W  = config.get('SSH-Info', 'ssh-key-path_uswest')
+SSHKEY_US_W = config.get('SSH-Info', 'ssh-key-path_uswest')
 SSHKEY_NAME_US_E = config.get('SSH-Info', 'ssh-key-name_useast')
 SSHKEY_US_E = config.get('SSH-Info', 'ssh-key-path_useast')
 SSHKEY_NAME_US_O = config.get('SSH-Info', 'ssh-key-name_uswest-oregon')
@@ -93,23 +96,26 @@ for v in val1:
         print "The value ", v, "is missing in .cfg file."
         sys.exit()
 
+
 def addBugzilla(BZ, AMI, RHEL, ARCH, REGION):
+    mySummary = AMI + " " + RHEL + " " + ARCH + " " + REGION
     if BZ is None:
         print "**** No bugzilla # was passed, will open one here ****"
-        bugzilla=Bugzilla36(url='https://bugzilla.redhat.com/xmlrpc.cgi',user=BZUSER,password=BZPASS)
-        mySummary=AMI+" "+RHEL+" "+ARCH+" "+REGION
-        RHV = "RHEL"+RHEL
-        BZ_Object=bugzilla.createbug(product="Cloud Image Validation",component="images",version=RHV,rep_platform=ARCH,summary=mySummary)
+        bugzilla = Bugzilla36(url='https://bugzilla.redhat.com/xmlrpc.cgi', user=BZUSER, password=BZPASS)
+        RHV = "RHEL" + RHEL
+        BZ_Object = bugzilla.createbug(product="Cloud Image Validation",\
+                    component="images", version=RHV, rep_platform=ARCH,\
+                    summary=mySummary)
         BZ = str(BZ_Object.bug_id)
-        print "Buzilla # = https://bugzilla.redhat.com/show_bug.cgi?id="+ BZ
+        print "Buzilla # = https://bugzilla.redhat.com/show_bug.cgi?id=" + BZ
         return BZ
     else:
-        mySummary=AMI+" "+RHEL+" "+ARCH+" "+REGION
-        print "Already opened Buzilla # = https://bugzilla.redhat.com/show_bug.cgi?id="+ BZ
+        print "Already opened Buzilla # = https://bugzilla.redhat.com/show_bug.cgi?id=" + BZ
         return BZ
 
 if CSV == 'false':
     BID = addBugzilla(BZ, AMI, RHEL, ARCH, REGION)
+
 
 def getConnection(key, secret, region):
     """establish a connection with ec2"""
@@ -119,6 +125,7 @@ def getConnection(key, secret, region):
 #east# reservation = ec2conn.run_instances('ami-8c8a7de5', instance_type='t1.micro', key_name='cloude-key')
 #block_device_map
 #'/dev/sda=:20'
+
 
 def startInstance(ec2connection, hardwareProfile, ARCH, RHEL, AMI, SSHKEYNAME):
     conn_region = ec2connection
@@ -131,7 +138,8 @@ def startInstance(ec2connection, hardwareProfile, ARCH, RHEL, AMI, SSHKEYNAME):
     #blockDeviceMap = []
     #blockDeviceMap.append( {'DeviceName':'/dev/sda', 'Ebs':{'VolumeSize' : '100'} })
 
-    reservation = conn_region.run_instances(AMI, instance_type=hardwareProfile, key_name=SSHKEYNAME, block_device_map=map )
+    reservation = conn_region.run_instances(AMI, instance_type=hardwareProfile,\
+                                            key_name=SSHKEYNAME, block_device_map=map)
 
     myinstance = reservation.instances[0]
 
@@ -149,37 +157,43 @@ def startInstance(ec2connection, hardwareProfile, ARCH, RHEL, AMI, SSHKEYNAME):
     # check for console output here to make sure ssh is up
     return publicDNS
 
+
 def executeValidScript(SSHKEY, publicDNS, hwp, BZ, ARCH, AMI, REGION, RHEL, SKIPLIST=""):
     filepath = BASEDIR
     serverpath = "/root/valid"
     commandPath = "/root/valid/src"
-
+    ssh_command = "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i " + SSHKEY + " root@" + publicDNS
+    scp_command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i " + SSHKEY + " -r "
     if hwp["name"] == 't1.micro':
-        os.system("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" touch /root/noswap")
+        os.system(ssh_command + " touch /root/noswap")
     if NOGIT == 'false':
-        os.system("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" mkdir -p /root/valid")
-        command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " -r " + filepath + " root@"+publicDNS+":"+serverpath
-        print command+"\n"
+        os.system(ssh_command + " mkdir -p /root/valid")
+        command = scp_command + filepath + " root@" + publicDNS + ":" + serverpath
+        print command + "\n"
         os.system(command)
     elif NOGIT == 'true':
-        os.system("ssh  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" yum -y install git")
-        os.system("ssh  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" git clone git://github.com/RedHatQE/valid.git")
-
+        os.system(ssh_command + " yum -y install git")
+        os.system(ssh_command + " git clone git://github.com/RedHatQE/valid.git")
 
     # COPY KERNEL if there
     serverpath = "/root/kernel"
-    os.system("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" mkdir -p /root/kernel")
-    filepath = BASEDIR+"/kernel/"+ARCH+"/*"
-    command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " -r " + filepath + " root@"+publicDNS+":"+serverpath
-    print command+"\n"
+    os.system(ssh_command + " mkdir -p /root/kernel")
+    filepath = BASEDIR + "/kernel/" + ARCH + "/*"
+    command = scp_command + filepath + " root@" + publicDNS + ":" + serverpath
+    print command + "\n"
     os.system(command)
 
-#    command = commandPath+"/image_validation.sh --imageID="+IGNORE+AMI+"_"+REGION+"_"+hwp["name"]+" --RHEL="+RHEL+" --full-yum-suite=yes --skip-questions=yes --bugzilla-username="+BZUSER+" --bugzilla-password="+BZPASS+" --bugzilla-num="+BZ+ " --memory="+hwp["memory"]
-    command = commandPath+"/image_validation.sh --skip-list='"+SKIPLIST+"' --imageID="+AMI+"_"+REGION+"_"+hwp["name"]+" --RHEL="+RHEL+" --full-yum-suite=yes --skip-questions=yes --bugzilla-username="+BZUSER+" --bugzilla-password='"+BZPASS+"' --bugzilla-num="+BZ+ " --memory="+hwp["memory"]+" --public-dns="+publicDNS+" --ami-id="+AMI+" --arch-id="+ARCH
+    command = commandPath + "/image_validation.sh --skip-list='" + SKIPLIST + "' --imageID=" + AMI +\
+                            "_" + REGION + "_" + hwp["name"] + " --RHEL=" + RHEL + \
+                            " --full-yum-suite=yes --skip-questions=yes --bugzilla-username=" + \
+                            BZUSER + " --bugzilla-password='" + BZPASS + "' --bugzilla-num=" + BZ + \
+                            " --memory=" + hwp["memory"] + " --public-dns=" + publicDNS + \
+                            " --ami-id=" + AMI + " --arch-id=" + ARCH
 
-    command = "nohup ssh -n -f -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "+SSHKEY+ " root@"+publicDNS+" "+command
-    print command+"\n"
+    command = "nohup ssh -n -f -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i " + SSHKEY + " root@" + publicDNS + " " + command
+    print command + "\n"
     os.system(command)
+
 
 def printValues(hwp):
     print "+++++++"
@@ -191,27 +205,27 @@ def printValues(hwp):
     print "+++++++\n"
 
 # Define hwp
-m1Small = {"name":"m1.small","memory":"1700000","cpu":"1","arch":"i386"}
-m1Large = {"name":"m1.large","memory":"7500000","cpu":"2","arch":"x86_64"}
-m1Xlarge = {"name":"m1.xlarge","memory":"15000000","cpu":"4","arch":"x86_64"}
-t1Micro = {"name":"t1.micro","memory":"600000","cpu":"1","arch":"both"}
-m2Xlarge = {"name":"m2.xlarge","memory":"17100000","cpu":"2","arch":"x86_64"}
-m22Xlarge = {"name":"m2.2xlarge","memory":"34200000","cpu":"4","arch":"x86_64"}
-m24Xlarge = {"name":"m2.4xlarge","memory":"68400000","cpu":"8","arch":"x86_64"}
-c1Medium = {"name":"c1.medium","memory":"1700000","cpu":"2","arch":"i386"}
-c1Xlarge = {"name":"c1.xlarge","memory":"7000000","cpu":"8","arch":"x86_64"}
+m1Small = {"name": "m1.small", "memory": "1700000", "cpu": "1", "arch": "i386"}
+m1Large = {"name": "m1.large", "memory": "7500000", "cpu": "2", "arch": "x86_64"}
+m1Xlarge = {"name": "m1.xlarge", "memory": "15000000", "cpu": "4", "arch": "x86_64"}
+t1Micro = {"name": "t1.micro", "memory": "600000", "cpu": "1", "arch": "both"}
+m2Xlarge = {"name": "m2.xlarge", "memory": "17100000", "cpu": "2", "arch": "x86_64"}
+m22Xlarge = {"name": "m2.2xlarge", "memory": "34200000", "cpu": "4", "arch": "x86_64"}
+m24Xlarge = {"name": "m2.4xlarge", "memory": "68400000", "cpu": "8", "arch": "x86_64"}
+c1Medium = {"name": "c1.medium", "memory": "1700000", "cpu": "2", "arch": "i386"}
+c1Xlarge = {"name": "c1.xlarge", "memory": "7000000", "cpu": "8", "arch": "x86_64"}
 
 #Use all hwp types for ec2 memory tests, other hwp tests
-hwp_i386 = [c1Medium, t1Micro , m1Small ]
+hwp_i386 = [c1Medium, t1Micro, m1Small]
 #hwp_i386 = [c1Medium]
-hwp_x86_64 = [m1Xlarge, t1Micro , m1Large , m2Xlarge, m22Xlarge, m24Xlarge , c1Xlarge]
+hwp_x86_64 = [m1Xlarge, t1Micro, m1Large, m2Xlarge, m22Xlarge, m24Xlarge, c1Xlarge]
 #hwp_x86_64 = [m24Xlarge]
 
 #Use just one hwp for os tests
 #hwp_i386 = [c1Medium]
 #hwp_x86_64 = [m1Xlarge,m22Xlarge]
 if CSV == 'true':
-    reader = csv.reader(open(CSVFILE,"rb"))
+    reader = csv.reader(open(CSVFILE, "rb"))
     fields = reader.next()
     ami = [(row[0], row[1], row[2], row[3], row[4], row[5]) for row in reader]
     for x in range(len(ami)):
@@ -263,7 +277,7 @@ for hwp in hwp_items:
     printValues(hwp)
     myConn = getConnection(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, REGION)
     this_hostname = startInstance(myConn, hwp["name"], ARCH, RHEL, AMI, SSHKEYNAME)
-    map = {"hostname":this_hostname,"hwp":hwp}
+    map = {"hostname": this_hostname, "hwp": hwp}
     publicDNS.append(map)
 
 #print "sleep for 130 seconds"
@@ -274,6 +288,11 @@ l_path = "/etc/init.d/network"
 for host in publicDNS:
     keystat = rhui_lib.putfile(host["hostname"], SSHKEY, l_path, f_path)
     if not keystat:
-        executeValidScript(SSHKEY, host["hostname"], host["hwp"], BID, ARCH, AMI, REGION, RHEL, SKIPLIST)
+        executeValidScript(SSHKEY, host["hostname"], \
+                           host["hwp"], BID, ARCH, AMI,\
+                           REGION, RHEL, SKIPLIST)
     else:
-        print "The Amazon node : "+host["hostname"]+" is not accessible, waited for 210 sec. Skipping and proceeding with the next Profile"
+        print "The Amazon node : " + \
+              host["hostname"] + \
+              " is not accessible, waited for 210 sec. \
+              Skipping and proceeding with the next Profile"
