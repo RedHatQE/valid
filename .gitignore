@@ -1,3 +1,4 @@
+*.pyc
 src/test01.csv
 src/test.csv
 src/kernel
