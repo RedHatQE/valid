@@ -21,6 +21,8 @@ config.read('/etc/validation.cfg')
 argparser = argparse.ArgumentParser(description='Remotely execute validation testcases')
 argparser.add_argument('--skip-tests', metavar='<expr>', nargs="*",
                        help="space-separated expressions describing tests to skip")
+argparser.add_argument('--no-bugzilla', action='store_const', const=True,
+                       default=False, help='skip adding bug to the bugzilla')
 argparser.add_argument('--list-tests', action='store_const', const=True,
                        default=False, help='display available test names and exit')
 argparser.add_argument('--csv-file',
@@ -113,9 +115,6 @@ def addBugzilla(BZ, AMI, RHEL, ARCH, REGION):
         print "Already opened Buzilla # = https://bugzilla.redhat.com/show_bug.cgi?id=" + BZ
         return BZ
 
-if CSV == 'false':
-    BID = addBugzilla(BZ, AMI, RHEL, ARCH, REGION)
-
 
 def getConnection(key, secret, region):
     """establish a connection with ec2"""
@@ -185,10 +184,14 @@ def executeValidScript(SSHKEY, publicDNS, hwp, BZ, ARCH, AMI, REGION, RHEL, SKIP
 
     command = commandPath + "/image_validation.sh --skip-list='" + SKIPLIST + "' --imageID=" + AMI +\
                             "_" + REGION + "_" + hwp["name"] + " --RHEL=" + RHEL + \
-                            " --full-yum-suite=yes --skip-questions=yes --bugzilla-username=" + \
-                            BZUSER + " --bugzilla-password='" + BZPASS + "' --bugzilla-num=" + BZ + \
+                            " --full-yum-suite=yes --skip-questions=yes" + \
                             " --memory=" + hwp["memory"] + " --public-dns=" + publicDNS + \
                             " --ami-id=" + AMI + " --arch-id=" + ARCH
+                            
+    if args.no_bugzilla:
+        command += " --no-bugzilla"
+    else:
+        command += " --bugzilla-username=" + BZUSER + " --bugzilla-password='" + BZPASS + "' --bugzilla-num=" + BZ
 
     command = "nohup ssh -n -f -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i " + SSHKEY + " root@" + publicDNS + " " + command
     print command + "\n"
@@ -224,6 +227,7 @@ hwp_x86_64 = [m1Xlarge, t1Micro, m1Large, m2Xlarge, m22Xlarge, m24Xlarge, c1Xlar
 #Use just one hwp for os tests
 #hwp_i386 = [c1Medium]
 #hwp_x86_64 = [m1Xlarge,m22Xlarge]
+BZ = None
 if CSV == 'true':
     reader = csv.reader(open(CSVFILE, "rb"))
     fields = reader.next()
@@ -238,8 +242,6 @@ if CSV == 'true':
         if BZ == '??':
             BZ = None
         AMI = myRow[5]
-
-        BID = addBugzilla(BZ, AMI, RHEL, ARCH, REGION)
 
         if REGION == "us-east-1":
             SSHKEY = SSHKEY_US_E
@@ -263,6 +265,10 @@ if CSV == 'true':
             SSHKEY = SSHKEY_SA_E
             SSHKEYNAME = SSHKEY_NAME_SA_E
 
+if not args.no_bugzilla:
+    BID = addBugzilla(BZ, AMI, RHEL, ARCH, REGION)
+else:
+    BID = None
 
 publicDNS = []
 if ARCH == 'i386':
