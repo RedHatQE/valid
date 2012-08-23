@@ -20,7 +20,12 @@ argparser.add_argument('--skip-tests', metavar='<expr>',nargs="*",
 		help="space-separated expressions describing tests to skip")
 argparser.add_argument('--list-tests', action='store_const', const=True,
 		default=False, help='display available test names and exit')
+argparser.add_argument('--csv-file',
+		default="test1.csv", help='use supplied csv file')
+
 args = argparser.parse_args()
+
+CSVFILE = args.csv_file
 
 if args.skip_tests:
 	SKIPLIST=",".join(args.skip_tests)
@@ -87,8 +92,6 @@ for v in val1:
     if not val1[v]:
         print "The value ", v, "is missing in .cfg file."
         sys.exit()
-
-CSVFILE = "test1.csv"
 
 def addBugzilla(BZ, AMI, RHEL, ARCH, REGION):
     if BZ is None:
