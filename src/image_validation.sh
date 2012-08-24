@@ -37,20 +37,11 @@ function build_python() {
 }
 
 function build_python_bugzilla() {
-	# build python-bugzilla
-	# updates PATH env var with a built bugzilla command
-	# if source tarball not found, nothing happens
-	local tarball=$( ls -tr python-bugzilla*.tar.bz2 | tail -1 )
-	if [ $? -ne 0 ] ; then
-		cat <<__BZ_BUILD_ERROR_MSG >> $LOGFILE
-No python-bugzilla tarballs found in `pwd`
-Get yourself an up-to-date copy:
-http://git.fedorahosted.org/git/?p=python-bugzilla.git
-__BZ_BUILD_ERROR_MSG
-		exit 1
-	fi
-	tar -xjf $tarball || exit $?
-	build_python ${tarball%.tar.bz2} || exit $?
+	# get python-bugzilla from fedorahosted
+	BZTAR=python-bugzilla-0.7.0.tar.bz2
+	wget http://git.fedorahosted.org/cgit/python-bugzilla.git/snapshot/$BZTAR
+	tar -jxvf $BZTAR || exit $?
+	build_python ${BZTAR%.tar.bz2} || exit $?
 }
 
 #set -x
