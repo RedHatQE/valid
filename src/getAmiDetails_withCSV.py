@@ -14,6 +14,8 @@ import os
 import csv
 import rhui_lib
 import ConfigParser
+import subprocess
+import tempfile
 
 config = ConfigParser.ConfigParser()
 config.read('/etc/validation.cfg')
@@ -193,9 +195,18 @@ def executeValidScript(SSHKEY, publicDNS, hwp, BZ, ARCH, AMI, REGION, RHEL, SKIP
     else:
         command += " --bugzilla-username=" + BZUSER + " --bugzilla-password='" + BZPASS + "' --bugzilla-num=" + BZ
 
-    command = "nohup ssh -n -f -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i " + SSHKEY + " root@" + publicDNS + " " + command
-    print command + "\n"
-    os.system(command)
+    log = tempfile.NamedTemporaryFile(delete=False)
+
+    if not log:
+        print "Failed to create temporary file!"
+        return None
+    else:
+        print "Logging "+ publicDNS +" to " + log.name
+
+    command_popen = ["/usr/bin/ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-i", SSHKEY, "root@" + publicDNS, command]
+    popen = subprocess.Popen(command_popen, stdout=log, stderr=log)
+    print str(command_popen) + "\n"
+    return popen
 
 
 def printValues(hwp):
@@ -291,14 +302,36 @@ for hwp in hwp_items:
 print "Trying to fetch a file to make sure the SSH works, before proceeding ahead."
 f_path = "/tmp/network"
 l_path = "/etc/init.d/network"
+popens = []
 for host in publicDNS:
     keystat = rhui_lib.putfile(host["hostname"], SSHKEY, l_path, f_path)
     if not keystat:
-        executeValidScript(SSHKEY, host["hostname"], \
-                           host["hwp"], BID, ARCH, AMI,\
-                           REGION, RHEL, SKIPLIST)
+        popen = executeValidScript(SSHKEY, host["hostname"], \
+                                   host["hwp"], BID, ARCH, AMI,\
+                                   REGION, RHEL, SKIPLIST)
+        if popen:
+            popens.append({"hostname": host["hostname"],"popen": popen})   
+        else:
+            print "Failed to execute ssh to "+AMI 
     else:
         print "The Amazon node : " + \
               host["hostname"] + \
               " is not accessible, waited for 210 sec. \
               Skipping and proceeding with the next Profile"
+
+print "Now waiting for all ssh processes to finish..."
+while True:
+    to_wait = False
+    for i in range(len(popens)):
+        if popens[i]["popen"]:
+            res = popens[i]["popen"].poll()
+            if res!=None:
+                print str(popens[i]["hostname"])+" terminated with exit code "+str(res)
+                popens[i]["popen"]=None
+            else:
+                to_wait = True
+    if to_wait:
+        time.sleep(5)
+    else:
+        break
+    
