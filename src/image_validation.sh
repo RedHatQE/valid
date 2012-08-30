@@ -38,10 +38,10 @@ function build_python() {
 
 function build_python_bugzilla() {
 	# get python-bugzilla from fedorahosted
-	BZTAR=python-bugzilla-0.7.0.tar.bz2
-	wget http://git.fedorahosted.org/cgit/python-bugzilla.git/snapshot/$BZTAR
-	tar -jxvf $BZTAR || exit $?
-	build_python ${BZTAR%.tar.bz2} || exit $?
+	GZTAR=python-bugzilla-0.7.0.tar.gz
+	wget -c https://fedorahosted.org/releases/p/y/python-bugzilla/$GZTAR
+	tar -zxvf $GZTAR || exit $?
+	build_python ${GZTAR%.tar.gz} || exit $?
 }
 
 #set -x
