@@ -133,6 +133,8 @@ def startInstance(ec2connection, hardwareProfile, ARCH, RHEL, AMI, SSHKEYNAME):
     map = BlockDeviceMapping()
     t = EBSBlockDeviceType()
     t.size = '15'
+    t.delete_on_termination = True
+
     #map = {'DeviceName':'/dev/sda','VolumeSize':'15'}
     map['/dev/sda1'] = t
 
