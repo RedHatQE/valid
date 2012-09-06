@@ -336,19 +336,18 @@ function print_rhel_version()
 
 function ami_parameter()
 {
-	wget -q -O - http://169.254.169.254/latest/dynamic/instance-identity/document | grep -i $1 | gawk $( [ "$2" = "true" ] && echo '-F":"' ) '{print $NF}'| gawk -F"\"" '{print $2}'
+	curl http://169.254.169.254/latest/dynamic/instance-identity/document | grep -i $1 | gawk $( [ "$2" = "true" ] && echo '-F":"' ) '{print $NF}'| gawk -F"\"" '{print $2}'
 }
 
 function test_fetch_host_details()
 {
-	yum install -y wget > /dev/null
 	BP_ID=`ami_parameter billingProducts true`
 	INS_ID=`ami_parameter instanceId`
 	IMG_ID=`ami_parameter imageId`
 	INS_TYP=`ami_parameter instanceType`
 	ARCH=`ami_parameter architecture`
 	REG=`ami_parameter zone`
-	SIGN1=`wget -q  -O - http://169.254.169.254/latest/dynamic/instance-identity/signature`
+	SIGN1=`curl http://169.254.169.254/latest/dynamic/instance-identity/signature`
 
 	new_test "Fetching the identity doc Details"
 	echo "Verifying that signature exists" >> $LOGFILE
@@ -552,7 +551,7 @@ function test_verify_rpms()
 		6.2)
 			assert "cat ${file} | wc -l" "6"
 			;;
-		5.8)
+		5.8|5.9)
 			assert "cat ${file} | wc -l" "3"
 			;;
 		5.*)
