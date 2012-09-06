@@ -17,8 +17,6 @@ import ConfigParser
 import subprocess
 import tempfile
 
-config = ConfigParser.ConfigParser()
-config.read('/etc/validation.cfg')
 
 argparser = argparse.ArgumentParser(description='Remotely execute validation testcases')
 argparser.add_argument('--skip-tests', metavar='<expr>', nargs="*",
@@ -29,10 +27,15 @@ argparser.add_argument('--list-tests', action='store_const', const=True,
                        default=False, help='display available test names and exit')
 argparser.add_argument('--csv-file',
                        default="test1.csv", help='use supplied csv file')
+argparser.add_argument('--config',
+                       default="/etc/validation.cfg", help='use supplied config file')
 
 args = argparser.parse_args()
 
 CSVFILE = args.csv_file
+
+config = ConfigParser.ConfigParser()
+config.read(args.config)
 
 if args.skip_tests:
         SKIPLIST = ",".join(args.skip_tests)
