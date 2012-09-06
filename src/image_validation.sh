@@ -28,20 +28,14 @@ pushd $BASEDIR > /dev/null
 source testlib.sh
 _testlib_init
 
-function build_python() {
-	# build in $1
-	echo BUILDING python package in $1 >> $LOGFILE
-	pushd $1 || exit 1
-	python setup.py install >> $LOGFILE 2>&1 || exit $?
-	popd
-}
-
 function build_python_bugzilla() {
 	# get python-bugzilla from fedorahosted
-	GZTAR=python-bugzilla-0.7.0.tar.gz
-	wget -c https://fedorahosted.org/releases/p/y/python-bugzilla/$GZTAR
-	tar -zxvf $GZTAR || exit $?
-	build_python ${GZTAR%.tar.gz} || exit $?
+	if [ -z ${RHELV%5.*} ]; then
+	    rpm -i http://dl.fedoraproject.org/pub/epel/5/i386/python-bugzilla-0.7.0-1.el5.noarch.rpm
+	    perl -pi -e "s/except (.*) as (.*):/except \$1, \$2:/g" /usr/lib/python2.4/site-packages/bugzilla/util.py
+	else
+	    rpm -i http://dl.fedoraproject.org/pub/epel/6/i386/python-bugzilla-0.7.0-1.el6.noarch.rpm
+	fi
 }
 
 #set -x
@@ -198,13 +192,11 @@ if [ ${BUGZILLA:-1} -gt 0 ] ; then
 	fi
 fi
 
-
-## provide python-bugzilla's bugzilla command
-build_python_bugzilla || exit $?
-
-
 ### DONT REMOVE OR COMMENT OUT ###
 if [ ${BUGZILLA} -gt 0 ] ; then
+	## provide python-bugzilla's bugzilla command
+	build_python_bugzilla || exit $?
+	## open bugzilla
 	echo "opening a bugzilla for logging purposes"
 	open_bugzilla
 fi
