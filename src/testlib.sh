@@ -640,7 +640,7 @@ function test_yum_general_test()
 function test_bash_history()
 {
 	new_test "## Verify bash_history ... "
-	assert "cat ~/.bash_history | wc -l " 0
+	assert "[ $( cat ~/.bash_history | wc -l ) -eq 0 ]"
 }
 
 
