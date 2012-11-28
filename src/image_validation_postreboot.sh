@@ -139,7 +139,8 @@ if [ ${BUGZILLA:-1} -gt 0 ] ; then
 	verify_bugzilla
 fi
 #sos_report
-im_exit
+
+poweroff
 ##################################
 
 
