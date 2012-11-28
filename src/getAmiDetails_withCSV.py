@@ -63,6 +63,8 @@ SSHKEY_NAME_US_O = config.get('SSH-Info', 'ssh-key-name_uswest-oregon')
 SSHKEY_US_O = config.get('SSH-Info', 'ssh-key-path_uswest-oregon')
 SSHKEY_SA_E = config.get('SSH-Info', 'ssh-key-path_saeast')
 SSHKEY_NAME_SA_E = config.get('SSH-Info', 'ssh-key-name_saeast')
+SSHKEY_AP_S_SYDNEY = config.get('SSH-Info', 'ssh-key-path_apsouth-sydney')
+SSHKEY_NAME_AP_S_SYDNEY = config.get('SSH-Info', 'ssh-key-name_apsouth-sydney')
 
 BZUSER = config.get('Bugzilla-Info', 'bugzilla_usr')
 BZPASS = config.get('Bugzilla-Info', 'bugzilla_pwd')
@@ -89,6 +91,8 @@ val1 = {
     'SSHKEY_NAME_AP_S':      SSHKEY_NAME_AP_S,
     'SSHKEY_SA_E':           SSHKEY_SA_E,
     'SSHKEY_NAME_SA_E':      SSHKEY_NAME_SA_E,
+    'SSHKEY_AP_S_SYDNEY':    SSHKEY_AP_S_SYDNEY,
+    'SSHKEY_NAME_AP_S_SYDNEY': SSHKEY_NAME_AP_S_SYDNEY,
     'BZUSER':                BZUSER,
     'BZPASS':                BZPASS,
     'AWS_ACCESS_KEY_ID':     AWS_ACCESS_KEY_ID,
@@ -194,7 +198,7 @@ def executeValidScript(SSHKEY, publicDNS, hwp, BZ, ARCH, AMI, REGION, RHEL, SKIP
                             " --full-yum-suite=yes --skip-questions=yes" + \
                             " --memory=" + hwp["memory"] + " --public-dns=" + publicDNS + \
                             " --ami-id=" + AMI + " --arch-id=" + ARCH
-                            
+
     if args.no_bugzilla:
         command += " --no-bugzilla"
     else:
@@ -280,6 +284,9 @@ if CSV == 'true':
         elif REGION == "sa-east-1":
             SSHKEY = SSHKEY_SA_E
             SSHKEYNAME = SSHKEY_NAME_SA_E
+        elif REGION == "ap-southeast-2":
+            SSHKEY = SSHKEY_AP_S_SYDNEY
+            SSHKEYNAME = SSHKEY_NAME_AP_S_SYDNEY
 
 if not args.no_bugzilla:
     BID = addBugzilla(BZ, AMI, RHEL, ARCH, REGION)
@@ -339,4 +346,4 @@ while True:
         time.sleep(5)
     else:
         break
-    
+
