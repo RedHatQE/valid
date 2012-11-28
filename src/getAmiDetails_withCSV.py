@@ -316,7 +316,9 @@ f_path = "/tmp/network"
 l_path = "/etc/init.d/network"
 popens = []
 for host in publicDNS:
-    keystat = rhui_lib.putfile(host["hostname"], SSHKEY, l_path, f_path)
+    #keystat = rhui_lib.putfile(host["hostname"], SSHKEY, l_path, f_path)
+    time.sleep(30)
+    keystat = False
     if not keystat:
         popen = executeValidScript(SSHKEY, host["hostname"], \
                                    host["hwp"], BID, ARCH, AMI,\
