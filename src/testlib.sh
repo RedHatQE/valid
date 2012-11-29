@@ -928,38 +928,44 @@ function test_syslog()
 
 function test_auditd()
 {
-	new_test "## Verify auditd is on ... "
-	assert "/sbin/chkconfig --list auditd | grep 3:on"
-	assert "/sbin/chkconfig --list auditd | grep 5:on"
+    new_test "## Verify auditd is on ... "
+    assert "/sbin/chkconfig --list auditd | grep 3:on"
+    assert "/sbin/chkconfig --list auditd | grep 5:on"
 
-	new_test "## Verify audit.rules ... "
-	assert "md5sum /etc/audit/audit.rules | cut -f 1 -d  \" \"" "f9869e1191838c461f5b9051c78a638d"
+    new_test "## Verify audit.rules ... "
+    assert "md5sum /etc/audit/audit.rules | cut -f 1 -d  \" \"" "f9869e1191838c461f5b9051c78a638d"
 
-	new_test "## Verify auditd.conf ... "
-	case "$RHEL_FOUND" in
-		6.*)
-			assert "md5sum /etc/audit/auditd.conf | cut -f 1 -d  \" \"" "e1886162554c18906df2ecd258aa4794"
-			;;
-		5.*)
-			assert "md5sum /etc/audit/auditd.conf | cut -f 1 -d  \" \"" "612ddf28c3916530d47ef56a1b1ed1ed"
-			;;
-		*)
-			_err 1 "Error: unsupported RHEL version: $RHEL_FOUND"
-		;;
-	esac
+    new_test "## Verify auditd.conf ... "
+    case "$RHEL_FOUND" in
+        6.1)
+            assert "md5sum /etc/audit/auditd.conf | cut -f 1 -d  \" \"" "612ddf28c3916530d47ef56a1b1ed1ed"
+            ;;
+        6.*)
+            assert "md5sum /etc/audit/auditd.conf | cut -f 1 -d  \" \"" "e1886162554c18906df2ecd258aa4794"
+            ;;
+        5.*)
+            assert "md5sum /etc/audit/auditd.conf | cut -f 1 -d  \" \"" "612ddf28c3916530d47ef56a1b1ed1ed"
+            ;;
+        *)
+            _err 1 "Error: unsupported RHEL version: $RHEL_FOUND"
+        ;;
+    esac
 
-	new_test "## Verify auditd sysconfig ... "
-	case "$RHEL_FOUND" in
-		6.*)
-			assert "md5sum /etc/sysconfig/auditd | cut -f 1 -d  \" \"" "d4d43637708e30418c30003e212f76fc"
-			;;
-		5.*)
-			assert "md5sum /etc/sysconfig/auditd | cut -f 1 -d  \" \"" "123beb3a97a32d96eba4f11509e39da2"
-			;;
-		*)
-			_err 1 "Error: unsupported RHEL version: $RHEL_FOUND"
-			;;
-	esac
+    new_test "## Verify auditd sysconfig ... "
+    case "$RHEL_FOUND" in
+        6.1)
+            assert "md5sum /etc/sysconfig/auditd | cut -f 1 -d  \" \"" "123beb3a97a32d96eba4f11509e39da2"
+            ;;
+        6.*)
+            assert "md5sum /etc/sysconfig/auditd | cut -f 1 -d  \" \"" "d4d43637708e30418c30003e212f76fc"
+            ;;
+        5.*)
+            assert "md5sum /etc/sysconfig/auditd | cut -f 1 -d  \" \"" "123beb3a97a32d96eba4f11509e39da2"
+            ;;
+        *)
+            _err 1 "Error: unsupported RHEL version: $RHEL_FOUND"
+            ;;
+    esac
 }
 
 function _query_rpm_kernel_version() {
