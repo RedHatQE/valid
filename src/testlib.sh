@@ -756,17 +756,36 @@ function test_shells()
 
 function test_repos()
 {
-	new_test "## test repo files ... "
-	assert "ls /etc/yum.repos.d/ | wc -l " 4
-	assert "ls /etc/yum.repos.d/redhat* | wc -l" 2
-	case $RHEL_FOUND in
-		5.*)
-			assert "ls /etc/yum.repos.d/rhel* | wc -l" 1
-		;;
-		6.*)
-			assert "ls /etc/yum.repos.d/rhel* | wc -l" 0
-		;;
-	esac
+    new_test "## test repo files ... "
+    case $RHEL_FOUND in
+        5.5|5.8)
+            assert "ls /etc/yum.repos.d/redhat-rhui-client-config.repo"
+            assert "ls /etc/yum.repos.d/redhat-rhui.repo"
+            assert "ls /etc/yum.repos.d/rhui-load-balancers.conf"
+
+            assert "ls /etc/yum.repos.d/rhel-debuginfo.repo"
+
+            assert "ls /etc/yum.repos.d/ | wc -l " 4
+            ;;
+        5.6|5.7)
+            assert "ls /etc/yum.repos.d/redhat-rhui-client-config.repo"
+            assert "ls /etc/yum.repos.d/redhat-rhui.repo"
+            assert "ls /etc/yum.repos.d/rhui-load-balancers.conf"
+
+            assert "ls /etc/yum.repos.d/rhel-source.repo"
+            assert "ls /etc/yum.repos.d/rhel-debuginfo.repo"
+
+            assert "ls /etc/yum.repos.d/ | wc -l " 5
+            ;;
+        6.*)
+            assert "ls /etc/yum.repos.d/ | wc -l " 4
+            assert "ls /etc/yum.repos.d/redhat* | wc -l" 2
+            assert "ls /etc/yum.repos.d/rhel* | wc -l" 0
+        ;;
+        *)
+            _err 1 "Unsupported RHEL version: $RHEL_FOUND"
+        ;;
+    esac
 }
 
 function test_yum_plugin()
