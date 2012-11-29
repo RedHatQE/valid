@@ -937,7 +937,7 @@ function test_auditd()
 
     new_test "## Verify auditd.conf ... "
     case "$RHEL_FOUND" in
-        6.1)
+        6.0|6.1)
             assert "md5sum /etc/audit/auditd.conf | cut -f 1 -d  \" \"" "612ddf28c3916530d47ef56a1b1ed1ed"
             ;;
         6.*)
@@ -953,7 +953,7 @@ function test_auditd()
 
     new_test "## Verify auditd sysconfig ... "
     case "$RHEL_FOUND" in
-        6.1)
+        6.0|6.1)
             assert "md5sum /etc/sysconfig/auditd | cut -f 1 -d  \" \"" "123beb3a97a32d96eba4f11509e39da2"
             ;;
         6.*)
