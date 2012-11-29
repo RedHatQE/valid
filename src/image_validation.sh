@@ -29,14 +29,21 @@ source testlib.sh
 _testlib_init
 
 function build_python_bugzilla() {
-	# get python-bugzilla from fedorahosted
-	if [ -z ${RHELV%5.*} ]; then
-	    #rpm -i http://dl.fedoraproject.org/pub/epel/5/i386/python-bugzilla-0.7.0-1.el5.noarch.rpm
-	    #perl -pi -e "s/except (.*) as (.*):/except \$1, \$2:/g" /usr/lib/python2.4/site-packages/bugzilla/util.py
-        ln -s /bin/true /usr/bin/bugzilla
-	else
-	    rpm -i http://dl.fedoraproject.org/pub/epel/6/i386/python-bugzilla-0.7.0-1.el6.noarch.rpm
-	fi
+    # get python-bugzilla from fedorahosted
+    case ${RHEL} in
+        5*)
+            #rpm -i http://dl.fedoraproject.org/pub/epel/5/i386/python-bugzilla-0.7.0-1.el5.noarch.rpm
+            #perl -pi -e "s/except (.*) as (.*):/except \$1, \$2:/g" /usr/lib/python2.4/site-packages/bugzilla/util.py
+            ln -s /bin/true /usr/bin/bugzilla
+            ;;
+        6*)
+            rpm -i http://dl.fedoraproject.org/pub/epel/6/i386/python-bugzilla-0.7.0-1.el6.noarch.rpm
+            ;;
+        *)
+            echo $RHEL unsupported
+            exit 1
+            ;;
+    esac
 }
 
 #set -x
