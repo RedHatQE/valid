@@ -34,7 +34,7 @@ __VALID_FILE
 function releng_candidates() {
 	# relengo wrapper
 	# ~/src/utility-scripts/relengo/relengo-tool.py candidate list -c
-	relengo candidate list
+	cat -
 }
 
 function validate() {
