@@ -140,7 +140,7 @@ if [ ${BUGZILLA:-1} -gt 0 ] ; then
 fi
 #sos_report
 
-# poweroff
+poweroff
 ##################################
 
 
