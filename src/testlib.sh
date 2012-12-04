@@ -1142,17 +1142,32 @@ function remove_bugzilla_rpms()
 	echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 }
 
+function postreboot_cmd_text() {
+    # provides a post-reboot image-validation command text
+    echo pushd /root/valid/src
+    if [ ${BUGZILLA:-1} -gt 0 ] ; then
+        echo "./image_validation_postreboot.sh --imageID=${IMAGEID} --RHEL=$RHELV --full-yum-suite=no --skip-questions=yes --bugzilla-username=$BUG_USERNAME --bugzilla-password=$BUG_PASSWORD --bugzilla-num=$BUGZILLA --failures=$FAILURES --memory=$MEM_HWP >> /var/log/messages"
+    else
+        echo "./image_validation_postreboot.sh --imageID=${IMAGEID} --RHEL=$RHELV --full-yum-suite=no --skip-questions=yes --no-bugzilla --failures=$FAILURES --memory=$MEM_HWP >> /var/log/messages"
+    fi
+    echo popd
+}
+
+
 function setup_rc.local()
 {
-	echo "####################### cat of /etc/rc.local ##################" >> $LOGFILE
-	echo "cd /root/valid/src" >> /etc/rc.local
-	if [ ${BUGZILLA:-1} -gt 0 ] ; then
-		echo "./image_validation_postreboot.sh --imageID=${IMAGEID} --RHEL=$RHELV --full-yum-suite=no --skip-questions=yes --bugzilla-username=$BUG_USERNAME --bugzilla-password=$BUG_PASSWORD --bugzilla-num=$BUGZILLA --failures=$FAILURES --memory=$MEM_HWP >> /var/log/messages" >> /etc/rc.local
-	else
-		echo "./image_validation_postreboot.sh --imageID=${IMAGEID} --RHEL=$RHELV --full-yum-suite=no --skip-questions=yes --no-bugzilla --failures=$FAILURES --memory=$MEM_HWP >> /var/log/messages" >> /etc/rc.local
-	fi
-	cat /etc/rc.local >> $LOGFILE
-	echo "####################### cat of /etc/rc.local ##################" >> $LOGFILE
+# creates a self-disabling rc.local-based image-validation post-reboot call
+local mark=__IMAGE_VALIDATION_POSTREBOOT_SCRIPT
+cat <<__IMAGE_VALIDATION_POSTREBOOT_SCRIPT  >> /etc/rc.local
+## $mark
+`postreboot_cmd_text`
+__me=\`basename \$0\`
+pushd \`dirname \$0\`
+csplit -f \${__me} \${__me} /$mark/
+mv \${__me}00 \${__me}
+rm -f \${__me}01
+popd
+__IMAGE_VALIDATION_POSTREBOOT_SCRIPT
 }
 
 function postReboot()
