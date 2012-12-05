@@ -1,6 +1,6 @@
 Name:		valid
-Version:	0.1
-Release:	0%{?dist}
+Version:	0.2
+Release:	1%{?dist}
 Summary:	Image validation (threaded)
 
 Group:		Development/Python
@@ -36,3 +36,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%name/hwp
 
 %changelog
+* Wed Dec 05 2012 Vitaly Kuznetsov <vitty@redhat.com> 0.2-1
+- new package built with tito
+
