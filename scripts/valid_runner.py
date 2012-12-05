@@ -1,6 +1,5 @@
 #! /usr/bin/python -tt
 
-import random
 import Queue
 import threading
 import boto
