@@ -28,11 +28,14 @@ argparser.add_argument('--debug', action='store_const', const=True,
                        default=False, help='debug mode')
 argparser.add_argument('--maxtries', type=int,
                        default=100, help='maximum number of tries')
+argparser.add_argument('--maxwait', type=int,
+                       default=300, help='maximum wait time for instance creation')
 argparser.add_argument('--numthreads', type=int,
                        default=10, help='number of worker threads')
 
 args = argparser.parse_args()
 maxtries = args.maxtries
+maxwait = args.maxwait
 
 confd = open(args.config, 'r')
 yamlconfig = yaml.load(confd)
@@ -58,6 +61,7 @@ t = EBSBlockDeviceType()
 t.size = '15'
 t.delete_on_termination = True
 bmap['/dev/sda1'] = t
+
 
 class InstanceThread(threading.Thread):
     def __init__(self):
@@ -157,12 +161,12 @@ class InstanceThread(threading.Thread):
             reservation = connection.run_instances(params["ami"], instance_type=params["hwp"]["name"], key_name=ssh_key_name, block_device_map=bmap)
             myinstance = reservation.instances[0]
             count = 0
-            while myinstance.update() == 'pending' and count < 20:
+            while myinstance.update() == 'pending' and count < maxwait / 5:
                 logging.debug(params["iname"] + "... waiting..." + str(count))
                 time.sleep(5)
             connection.close()
-            if count == 20:
-                # 100 seconds is enough to create an instance. If not -- EC2 failed.
+            if count == maxwait / 5:
+                # maxwait seconds is enough to create an instance. If not -- EC2 failed.
                 logging.error("Timeout during instance creation, %s" % e)
                 return None
             else:
@@ -202,8 +206,8 @@ except Exception, e:
 
 count = 0
 for params in data:
-    minimal_set=set(["product", "arch", "region", "itype", "version", "ami"])
-    exact_set=set(params.keys())
+    minimal_set = set(["product", "arch", "region", "itype", "version", "ami"])
+    exact_set = set(params.keys())
     if minimal_set.issubset(exact_set):
         # we have all required keys
         logging.debug("Got valid data line " + str(params))
