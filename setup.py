@@ -11,7 +11,7 @@ setup(name='valid',
     url='https://github.com/RedHatQE/valid',
     license="GPLv3+",
     packages=[
-        'valid'
+        'valid', 'valid.testing_modules'
         ],
     data_files=[
              ('share/valid/hwp', glob.glob('hwp/*.yaml')),

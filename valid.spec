@@ -30,7 +30,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %doc LICENSE README.md
 %attr(0755, root, root) %{_bindir}/*.py
-%config(noreplace) %attr(0600, root, root) %{_sysconfdir}/valid.yaml
+%config(noreplace) %attr(0600, root, root) %{_sysconfdir}/validation.yaml
 %{python_sitelib}/*.egg-info
 %{python_sitelib}/valid/*
 %{_datadir}/%name/hwp
