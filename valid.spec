@@ -33,7 +33,7 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %attr(0600, root, root) %{_sysconfdir}/validation.yaml
 %{python_sitelib}/*.egg-info
 %{python_sitelib}/valid/*
-%{_datadir}/%name/hwp
+%{_datadir}/%name
 
 %changelog
 * Wed Dec 05 2012 Vitaly Kuznetsov <vitty@redhat.com> 0.2-1
