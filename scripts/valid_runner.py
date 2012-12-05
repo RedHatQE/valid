@@ -1,3 +1,5 @@
+#! /usr/bin/python -tt
+
 import random
 import Queue
 import threading
@@ -14,11 +16,11 @@ from boto import ec2
 from boto.ec2.blockdevicemapping import EBSBlockDeviceType
 from boto.ec2.blockdevicemapping import BlockDeviceMapping
 
-from testing_modules import *
+import valid
 
 argparser = argparse.ArgumentParser(description='Create CloudFormation stack and run the testing')
-argparser.add_argument('--ami', required=True,
-                       help='validate specified AMI')
+argparser.add_argument('--data', required=True,
+                       help='data file for validation')
 argparser.add_argument('--config',
                        default="/etc/validation.yaml", help='use supplied yaml config file')
 argparser.add_argument('--debug', action='store_const', const=True,
@@ -27,11 +29,8 @@ argparser.add_argument('--maxtries', type=int,
                        default=100, help='maximum number of tries')
 argparser.add_argument('--numthreads', type=int,
                        default=10, help='number of worker threads')
-argparser.add_argument('--region',
-                       default="us-east-1", help='use specified region')
+
 args = argparser.parse_args()
-region = args.region
-ami = args.ami
 maxtries = args.maxtries
 
 confd = open(args.config, 'r')
@@ -122,9 +121,9 @@ class InstanceThread(threading.Thread):
             con = Connection(instance, "root", ssh_key)
             Expect.ping_pong(con, "uname", "Linux")
             for m in sys.modules.keys():
-                if m.startswith("testing_modules.testcase"):
+                if m.startswith("valid.testing_modules.testcase"):
                     try:
-                        test_name = m.split('.')[1]
+                        test_name = m.split('.')[2]
                         test_result = getattr(sys.modules[m], test_name)(con)
                         logging.info(self.getName() + ": test " + test_name + " finised with " + str(test_result))
                         result[test_name] = test_result
@@ -161,6 +160,14 @@ class InstanceThread(threading.Thread):
 # main queue for worker threads
 mainq = Queue.Queue()
 resultsq = Queue.Queue()
+
+try:
+    fd = open(args.data, "r")
+    yamlconfig = yaml.load(confd)
+    confd.close()
+except Exception, e:
+    logging.debug("Failed to read data file %s wit error %s" % (args.data, e))
+    sys.exit(1)
 
 mainq.put((0, "create", ("Instance1", "t1.micro")))
 mainq.put((0, "create", ("Instance2", "m1.small")))

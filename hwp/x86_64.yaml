@@ -1,0 +1,7 @@
+- {cpu: '1', memory: '600000', name: t1.micro}
+- {cpu: '2', memory: '7500000', name: m1.large}
+- {cpu: '4', memory: '15000000', name: m1.xlarge}
+- {cpu: '2', memory: '17100000', name: m2.xlarge}
+- {cpu: '4', memory: '34200000', name: m2.2xlarge}
+- {cpu: '8', memory: '68400000', name: m2.4xlarge}
+- {cpu: '8', memory: '7000000', name: c1.xlarge}

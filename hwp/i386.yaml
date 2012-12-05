@@ -1,0 +1,3 @@
+- {cpu: '1', memory: '600000', name: t1.micro}
+- {cpu: '1', memory: '1700000', name: m1.small}
+- {cpu: '2', memory: '1700000', name: c1.medium}
