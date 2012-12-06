@@ -134,7 +134,7 @@ class InstanceThread(threading.Thread):
                     try:
                         test_name = m.split('.')[2]
                         testcase = getattr(sys.modules[m], test_name)()
-                        test_result = testcase.test(con)
+                        test_result = testcase.test(con, params)
                         logging.debug(self.getName() + params["iname"] + ": test " + test_name + " finised with " + str(test_result))
                         result[test_name] = test_result
                     except AttributeError, e:
