@@ -143,7 +143,7 @@ class InstanceThread(threading.Thread):
                         logging.debug(self.getName() + params["iname"] + ": test " + test_name + " finised with " + str(test_result))
                         result[test_name] = test_result
                     except AttributeError, e:
-                        logging.error(self.getName() + ": bad test, %s" % e)
+                        logging.error(self.getName() + ": bad test, %s %s" % (m, e))
                         result[test_name] = "Failure"
             mainq.put((0, "terminate", params))
             return result
