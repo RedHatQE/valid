@@ -124,7 +124,6 @@ class InstanceThread(threading.Thread):
             instance["type"] = params["hwp"]["name"]
 
             (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
-
             logging.debug(self.getName() + ": ssh-key " + ssh_key)
 
             con = Connection(instance, "root", ssh_key)
@@ -134,7 +133,8 @@ class InstanceThread(threading.Thread):
                 if m.startswith("valid.testing_modules.testcase"):
                     try:
                         test_name = m.split('.')[2]
-                        test_result = getattr(sys.modules[m], test_name)(con)
+                        testcase = getattr(sys.modules[m], test_name)()
+                        test_result = testcase.test(con)
                         logging.debug(self.getName() + params["iname"] + ": test " + test_name + " finised with " + str(test_result))
                         result[test_name] = test_result
                     except AttributeError, e:
