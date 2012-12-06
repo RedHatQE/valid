@@ -32,10 +32,13 @@ argparser.add_argument('--maxwait', type=int,
                        default=300, help='maximum wait time for instance creation')
 argparser.add_argument('--numthreads', type=int,
                        default=10, help='number of worker threads')
+argparser.add_argument('--settlewait', type=int,
+                       default=90, help='wait for instance to settle before testing')
 
 args = argparser.parse_args()
 maxtries = args.maxtries
 maxwait = args.maxwait
+settlewait = args.settlewait
 
 confd = open(args.config, 'r')
 yamlconfig = yaml.load(confd)
@@ -129,6 +132,8 @@ class InstanceThread(threading.Thread):
             con = Connection(instance, "root", ssh_key)
 
             Expect.ping_pong(con, "uname", "Linux")
+            logging.debug(self.getName() + ": sleeping for " + str(settlewait) + " sec. to make sure instance has been settled.")
+            time.sleep(settlewait)
             for m in sys.modules.keys():
                 if m.startswith("valid.testing_modules.testcase"):
                     try:
