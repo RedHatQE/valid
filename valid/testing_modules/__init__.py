@@ -1,2 +1,2 @@
 import testcase_01_ipv6
-import testcase_02_auditd
+import testcase_50_auditd
