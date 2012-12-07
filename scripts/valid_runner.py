@@ -33,7 +33,7 @@ argparser.add_argument('--maxwait', type=int,
 argparser.add_argument('--numthreads', type=int,
                        default=10, help='number of worker threads')
 argparser.add_argument('--settlewait', type=int,
-                       default=90, help='wait for instance to settle before testing')
+                       default=30, help='wait for instance to settle before testing')
 
 args = argparser.parse_args()
 maxtries = args.maxtries
@@ -263,4 +263,4 @@ while not resultsq.empty():
     outres[ami][itype] = result_item["result"]
     resultsq.task_done()
 
-logging.info("RESULT: " + str(outres))
+logging.info("RESULT: \n" + yaml.safe_dump(outres))
