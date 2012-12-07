@@ -7,4 +7,5 @@ import testcase_06_inittab
 import testcase_07_libc6_xen_conf
 import testcase_08_memory
 import testcase_09_nameserver
+import testcase_10_networking
 import testcase_50_auditd
