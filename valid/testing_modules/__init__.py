@@ -13,4 +13,5 @@ import testcase_12_passwd_group
 import testcase_13_resize2fs
 import testcase_14_host_details
 import testcase_15_rhel_version
+import testcase_16_selinux
 import testcase_50_auditd
