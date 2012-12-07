@@ -9,4 +9,5 @@ import testcase_08_memory
 import testcase_09_nameserver
 import testcase_10_networking
 import testcase_11_package_set
+import testcase_12_passwd_group
 import testcase_50_auditd
