@@ -197,6 +197,8 @@ class InstanceThread(threading.Thread):
             return None
 
 
+logging.getLogger('boto').setLevel(logging.CRITICAL)
+
 # main queue for worker threads
 mainq = Queue.Queue()
 resultsq = Queue.Queue()
