@@ -23,8 +23,8 @@ source $PWD/testlib.sh
 function usage()
 {
            echo " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! "
-	   echo "Please use all options"
-	   echo ""
+       echo "Please use all options"
+       echo ""
            echo " This script will run through some basic sanity tests for a Red Hat Enterprise Linux image "
            echo " A valid Red Hat bugzilla username and password will be required at the end of the script "
            echo " http://bugzilla.redhat.com/ "
@@ -34,60 +34,57 @@ function usage()
            echo "--imageID=          :: Please provide a unique id for the image"
            echo "--RHEL=             :: Please specify the correct FULL rhel version eg: --RHEL=5.7 or --RHEL=6.1"
            echo "--full-yum-suite=   :: Please input the value  "yes" OR "no""
-	   echo "--skip-questions=   :: Please input the value  "yes" or "no""
-	   echo "--bugzilla-username :: Please specify your bugzilla username@email.com"
-	   echo "--bugzilla-password :: Please specify your bugzilla password"
-	   echo "--bugzilla-num      :: If a bug has already been opened you can specify the number here "
-	   echo "--memory            :: Minium total kb of  memory the system *should* have available "
+       echo "--skip-questions=   :: Please input the value  "yes" or "no""
+       echo "--bugzilla-username :: Please specify your bugzilla username@email.com"
+       echo "--bugzilla-password :: Please specify your bugzilla password"
+       echo "--bugzilla-num      :: If a bug has already been opened you can specify the number here "
+       echo "--memory            :: Minium total kb of  memory the system *should* have available "
 }
 
 
 #cli
-for i in $*
- do
- case $i in
-      --imageID=*)
-         IMAGEID="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
-         ;;
-      --RHEL=*)
-         RHELV="`echo $i | sed 's/[-A-Z]*=//'`"
-         ;;
-      --full-yum-suite=*)
-          yum_test="`echo $i | sed 's/[-a-zA-Z]*=//'`"
-          if [ "$yum_test" == "yes" ] || [ "$yum_test" == "no" ]; then
-            :
-          else
-	    usage
+for i in $* ; do
+case $i in
+    --imageID=*)
+        IMAGEID="${i##*=}"
+        ;;
+    --RHEL=*)
+        RHELV="${i##*=}"
+        ;;
+    --full-yum-suite=*)
+        yum_test="${i##*=}"
+        if [ "$yum_test" != "yes" ] && [ "$yum_test" != "no" ]; then
+            usage
             exit 1
-          fi
-          ;;
-      --skip-questions=*)
-	  QUESTIONS="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
-	  ;;
-      --bugzilla-username=*)
-	  BUG_USERNAME="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
-	  ;;
-	--bugzilla-password=*)
-	  BUG_PASSWORD="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
-	  ;;
-      --bugzilla-num=*)
-	  BUG_NUM="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
-	  ;;
-      --failures=*)
-	  FAILURES="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
-	  ;;
-      --memory=*)
-	  MEM_HWP="`echo $i | sed 's/[-a-zA-Z0-9]*=//'`"
-          ;;
-	  --no-bugzilla)
-	  BUGZILLA=0
-	  ;;
-        *)
-         # unknown option
-	   usage
-           exit 1
-           ;;
- esac
+        fi
+        ;;
+    --skip-questions=*)
+        QUESTIONS="${i##*=}"
+        ;;
+    --bugzilla-username=*)
+        BUG_USERNAME="${i##*=}"
+        ;;
+    --bugzilla-password=*)
+        BUG_PASSWORD="${i##*=}"
+        ;;
+    --bugzilla-num=*)
+        BUG_NUM="${i##*=}"
+        ;;
+    --failures=*)
+        FAILURES="${i##*=}"
+        ;;
+    --memory=*)
+        MEM_HWP="${i##*=}"
+        ;;
+    --no-bugzilla)
+        BUGZILLA=0
+        ;;
+    *)
+        # unknown option
+        usage
+        exit 1
+        ;;
+esac
 done
 
 # initialize testlib
@@ -100,10 +97,10 @@ if [[ -z $IMAGEID ]] || [[ -z $RHELV ]] ||  [[ -z $yum_test ]] ; then
 fi
 
 if [ ${BUGZILLA:-1} -gt 0 ] ; then
-	if [[ -z $BUG_USERNAME ]] || [[ -z $BUG_PASSWORD ]] ; then
-		usage
-		exit 1
-	fi
+    if [[ -z $BUG_USERNAME ]] || [[ -z $BUG_PASSWORD ]] ; then
+        usage
+        exit 1
+    fi
 fi
 
 
@@ -133,10 +130,10 @@ print_rhel_version
 ### DONT REMOVE OR COMMENT OUT ###
 show_failures
 if [ ${BUGZILLA:-1} -gt 0 ] ; then
-	sleep 360
-	open_bugzilla
-	bugzilla_comments
-	verify_bugzilla
+    sleep 360
+    open_bugzilla
+    bugzilla_comments
+    verify_bugzilla
 fi
 #sos_report
 

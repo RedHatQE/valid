@@ -510,6 +510,9 @@ function test_package_set()
 		6.3)
 			ref=packages_63 
 			;;
+		6.4)
+			ref=packages_64
+			;;
 		*)
 			_err 1 "Unsupported RHEL version: $RHEL_FOUND" 
 			;;
@@ -1143,14 +1146,23 @@ function remove_bugzilla_rpms()
 }
 
 function postreboot_cmd_text() {
-    # provides a post-reboot image-validation command text
-    echo pushd /root/valid/src
-    if [ ${BUGZILLA:-1} -gt 0 ] ; then
-        echo "./image_validation_postreboot.sh --imageID=${IMAGEID} --RHEL=$RHELV --full-yum-suite=no --skip-questions=yes --bugzilla-username=$BUG_USERNAME --bugzilla-password=$BUG_PASSWORD --bugzilla-num=$BUGZILLA --failures=$FAILURES --memory=$MEM_HWP >> /var/log/messages"
-    else
-        echo "./image_validation_postreboot.sh --imageID=${IMAGEID} --RHEL=$RHELV --full-yum-suite=no --skip-questions=yes --no-bugzilla --failures=$FAILURES --memory=$MEM_HWP >> /var/log/messages"
-    fi
-    echo popd
+# provides a post-reboot image-validation command text
+cat <<__POSTREBOOT_CMD_TEXT
+pushd /root/valid/src || exit $?
+( ./image_validation_postreboot.sh \\
+  --imageID=$IMAGEID \\
+  --RHEL=$RHELV \\
+  --full-yum-suite=no \\
+  --skip-questions=yes \\
+  --failures=$FAILURES \\
+  --memory=$MEM_HWP \\
+  --bugzilla-num=$BUGZILLA \\
+  --bugzilla-username=$BUG_USERNAME \\
+  --bugzilla-password=$BUG_PASSWORD \\
+  >> /var/log/messages
+) &
+popd
+__POSTREBOOT_CMD_TEXT
 }
 
 
@@ -1164,7 +1176,7 @@ cat <<__IMAGE_VALIDATION_POSTREBOOT_SCRIPT  >> /etc/rc.local
 __me=\`basename \$0\`
 pushd \`dirname \$0\`
 csplit -f \${__me} \${__me} /$mark/
-mv \${__me}00 \${__me}
+cp -f \${__me}00 \${__me}
 rm -f \${__me}01
 popd
 __IMAGE_VALIDATION_POSTREBOOT_SCRIPT

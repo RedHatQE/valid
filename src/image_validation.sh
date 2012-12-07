@@ -41,7 +41,7 @@ function build_python_bugzilla() {
             perl -pi -e "s/except (.*) as (.*):/except \$1, \$2:/g" /usr/lib/python2.4/site-packages/bugzilla/util.py
             ;;
         6*)
-            rpm -i http://dl.fedoraproject.org/pub/epel/6/i386/python-bugzilla-0.7.0-2.el6.noarch.rpm
+            rpm -i http://dl.fedoraproject.org/pub/epel/6/i386/python-bugzilla-0.7.0-1.el6.noarch.rpm
             ;;
         *)
             echo $RHEL unsupported
