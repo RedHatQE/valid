@@ -1,6 +1,6 @@
 from valid.valid_testcase import *
 
-class testcase_50_auditd(ValidTestcase):
+class testcase_20_auditd(ValidTestcase):
     def test(self, connection, params):
         self.ping_pong(connection, "md5sum /etc/audit/audit.rules | cut -f 1 -d ' '", "f9869e1191838c461f5b9051c78a638d")
         if (params["product"].upper() == "RHEL" or params["product"].upper() == "BETA") and params["version"].startswith("6."):
