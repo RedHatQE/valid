@@ -16,4 +16,5 @@ import testcase_15_rhel_version
 import testcase_16_selinux
 import testcase_17_shells
 import testcase_18_sshd
+import testcase_19_rhn_system_id
 import testcase_50_auditd
