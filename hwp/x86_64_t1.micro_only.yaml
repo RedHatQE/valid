@@ -1,1 +1,1 @@
-- {cpu: '1', memory: '600000', name: t1.micro}
+- {arch: 'x86_64', cpu: '1', memory: '600000', name: t1.micro}
