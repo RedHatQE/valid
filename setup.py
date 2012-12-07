@@ -15,6 +15,7 @@ setup(name='valid',
         ],
     data_files=[
              ('share/valid/hwp', glob.glob('hwp/*.yaml')),
+             ('share/valid/data', glob.glob('data/*')),
              ('share/valid/examples', glob.glob('examples/*.yaml')),
              ('/etc', ['etc/validation.yaml'])
     ],

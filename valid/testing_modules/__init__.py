@@ -8,4 +8,5 @@ import testcase_07_libc6_xen_conf
 import testcase_08_memory
 import testcase_09_nameserver
 import testcase_10_networking
+import testcase_11_package_set
 import testcase_50_auditd
