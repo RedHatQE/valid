@@ -20,3 +20,4 @@ import testcase_19_rhn_system_id
 import testcase_20_auditd
 import testcase_21_disk_size_format
 import testcase_22_gpg_keys
+import testcase_23_syslog
