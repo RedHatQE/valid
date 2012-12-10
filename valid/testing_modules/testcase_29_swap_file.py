@@ -20,11 +20,11 @@ class testcase_29_swap_file(ValidTestcase):
             self.log.append({"result": "failure", "comment": "failed to get instance details"})
             return self.log
         if has_swap:
-            size = self.command(connection, "parted -l | grep linux-swap | awk '{print $4}' | awk -F'MB' '{print $1}'")
-            partition = self.command(connection, "parted -l | grep -B 5 swap | grep ^Disk | awk '{print $2}' | sed '$s/.$//' | head -1")
-            if size and partition:   
-                self.ping_pong(connection, "[ %s -gt 0 ] && echo SUCCESS" % size, "\r\nSUCCESS\r\n")
-                self.ping_pong(connection, "swapoff " + partition + "; echo SUCCESS" % size, "\r\nSUCCESS\r\n")
-                self.ping_pong(connection, "swapon " + partition + "&& echo SUCCESS" % size, "\r\nSUCCESS\r\n")
-                self.ping_pong(connection, "swapoff " + partition + " && swapon " + partition +  "&& echo SUCCESS" % size, "\r\nSUCCESS\r\n")
+            size = self.get_result(connection, "parted -l | grep linux-swap | awk '{print $4}' | awk -F'MB' '{print $1}'")
+            partition = self.get_result(connection, "parted -l | grep -B 5 swap | grep ^Disk | awk '{print $2}' | sed '$s/.$//' | head -1")
+            if size and partition:
+                self.ping_pong(connection, "[ " + size + " -gt 0 ] && echo SUCCESS", "\r\nSUCCESS\r\n")
+                self.ping_pong(connection, "swapoff " + partition + " ; echo SUCCESS", "\r\nSUCCESS\r\n")
+                self.ping_pong(connection, "swapon " + partition + " && echo SUCCESS", "\r\nSUCCESS\r\n")
+                self.ping_pong(connection, "swapoff " + partition + " && swapon " + partition +  " && echo SUCCESS", "\r\nSUCCESS\r\n")
         return self.log
