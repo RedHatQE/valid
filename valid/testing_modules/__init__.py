@@ -27,3 +27,6 @@ import testcase_26_verify_rpms
 import testcase_27_yum_repos
 import testcase_28_iptables
 import testcase_29_swap_file
+import testcase_30_yum_package_install
+import testcase_31_yum_group_install
+import testcase_32_yum_update
