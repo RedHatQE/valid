@@ -590,6 +590,12 @@ function test_verify_rpms()
 
 function test_subscription_management()
 {
+   # N/A for older releases
+    case $RHEL_FOUND in
+        5.[12345678]|6.[123])
+            return
+            ;;
+    esac
     new_test "## check subscription-manager yum plugin is disabled"
     assert 'yum repolist | grep -i subscription-manager ; echo $?' 1
 
