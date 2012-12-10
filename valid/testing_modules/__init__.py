@@ -26,3 +26,4 @@ import testcase_25_uname
 import testcase_26_verify_rpms
 import testcase_27_yum_repos
 import testcase_28_iptables
+import testcase_29_swap_file
