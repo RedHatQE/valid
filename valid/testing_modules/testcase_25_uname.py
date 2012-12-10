@@ -18,6 +18,4 @@ class testcase_25_uname(ValidTestcase):
             self.ping_pong(connection, "[ %s = 'GNU/Linux' ] && echo SUCCESS" % uname_o, "\r\nSUCCESS\r\n")
             self.ping_pong(connection, "grep UPDATEDEFAULT=yes /etc/sysconfig/kernel && echo SUCCESS", "\r\nSUCCESS\r\n")
             self.ping_pong(connection, "grep DEFAULTKERNEL=kernel /etc/sysconfig/kernel && echo SUCCESS", "\r\nSUCCESS\r\n")
-        else:
-            self.log.append({"result": "failure", "comment": "uname to compare running kernel with installed kernel"})
         return self.log
