@@ -2,6 +2,8 @@ from valid.valid_testcase import *
 import json
 
 class testcase_14_host_details(ValidTestcase):
+    stages = ["stage1"]
+
     def test(self, connection, params):
         self.ping_pong(connection, '[ ! -z "`curl http://169.254.169.254/latest/dynamic/instance-identity/signature`" ] && echo SUCCESS', "[^ ]SUCCESS")
         json_str = self.match(connection, "curl http://169.254.169.254/latest/dynamic/instance-identity/document", re.compile(".*({.*}).*", re.DOTALL))

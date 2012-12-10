@@ -1,6 +1,8 @@
 from valid.valid_testcase import *
 
 class testcase_03_chkconfig(ValidTestcase):
+    stages = ["stage1"]
+
     def test(self, connection, params):
         self.ping_pong(connection, "chkconfig --list crond", "3:on")
         self.ping_pong(connection, "chkconfig --list iptables", "3:on")

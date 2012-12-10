@@ -1,6 +1,8 @@
 from valid.valid_testcase import *
 
 class testcase_13_resize2fs(ValidTestcase):
+    stages = ["stage1"]
+
     def test(self, connection, params):
         if (params["product"].upper() == "RHEL" or params["product"].upper() == "BETA") and params["version"].startswith("6."):
             self.ping_pong(connection, "[ -b /dev/xvde1 ] && (resize2fs -p /dev/xvde1 15000M && echo SUCCESS) || echo SUCCESS", "[^ ]SUCCESS", 60)

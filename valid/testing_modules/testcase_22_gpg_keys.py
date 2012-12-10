@@ -1,6 +1,8 @@
 from valid.valid_testcase import *
 
 class testcase_22_gpg_keys(ValidTestcase):
+    stages = ["stage1"]
+
     def test(self, connection, params):
         self.ping_pong(connection, "grep '^gpgcheck=' /etc/yum.repos.d/redhat-*.repo | cut -d\= -f2 | sort -uf | tr -d ' '", "\r\n1\r\n")
         if params["product"].upper() == "BETA":

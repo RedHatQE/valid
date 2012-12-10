@@ -2,6 +2,8 @@ import os
 from valid.valid_testcase import *
 
 class testcase_11_package_set(ValidTestcase):
+    stages = ["stage1"]
+
     def test(self, connection, params):
         if (params["product"].upper() == "RHEL" or params["product"].upper() == "BETA"):
             packages = self.match(connection, "rpm -qa --queryformat '%{NAME},' && echo", re.compile(".*\r\n(.*),\r\n.*", re.DOTALL))

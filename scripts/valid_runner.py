@@ -65,6 +65,21 @@ t.size = '15'
 t.delete_on_termination = True
 bmap['/dev/sda1'] = t
 
+testing_stages = []
+for m in sys.modules.keys():
+    if m.startswith("valid.testing_modules.testcase"):
+        try:
+            test_name = m.split('.')[2]
+            testcase = getattr(sys.modules[m], test_name)()
+            for stage in testcase.stages:
+                if not (stage in testing_stages):
+                    testing_stages.append(stage)
+        except AttributeError, e:
+            logging.error(self.getName() + ": bad test, %s %s" % (m, e))
+            sys.exit(1)
+testing_stages.sort()
+
+logging.info("Testing stages %s discovered" % str(testing_stages))
 
 class InstanceThread(threading.Thread):
     def __init__(self):
@@ -89,6 +104,7 @@ class InstanceThread(threading.Thread):
                     # packing creation results into params
                     params["id"] = details["id"]
                     params["public_dns_name"] = details["public_dns_name"]
+                    params["stages"] = testing_stages
                     mainq.put((0, "test", params))
                 else:
                     logging.debug(self.getName() + ": something went wrong with " + params["iname"] + " during creation, ntry: " + str(ntry) + ", rescheduling")
@@ -102,7 +118,6 @@ class InstanceThread(threading.Thread):
                 res = self.do_testing(ntry, params)
                 mainq.task_done()
                 if res:
-                    logging.info(self.getName() + ": done testing for " + params["iname"])
                     logging.debug(self.getName() + ": done testing for " + params["iname"] + ", result: " + str(res))
                     params["result"] = res
                     resultsq.put(params)
@@ -126,6 +141,8 @@ class InstanceThread(threading.Thread):
             instance["public_hostname"] = params["public_dns_name"]
             instance["type"] = params["hwp"]["name"]
 
+            stage = params["stages"][0]
+
             (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
             logging.debug(self.getName() + ": ssh-key " + ssh_key)
 
@@ -134,18 +151,33 @@ class InstanceThread(threading.Thread):
             Expect.ping_pong(con, "uname", "Linux")
             logging.debug(self.getName() + ": sleeping for " + str(settlewait) + " sec. to make sure instance has been settled.")
             time.sleep(settlewait)
+
+            logging.info(self.getName() + ": doing testing for " + params["iname"] + " " + stage)
+
             for m in sys.modules.keys():
                 if m.startswith("valid.testing_modules.testcase"):
                     try:
                         test_name = m.split('.')[2]
                         testcase = getattr(sys.modules[m], test_name)()
-                        test_result = testcase.test(con, params)
-                        logging.debug(self.getName() + params["iname"] + ": test " + test_name + " finised with " + str(test_result))
-                        result[test_name] = test_result
+                        if stage in testcase.stages:
+                            logging.debug(self.getName() + ": doing test " + test_name + " for " + params["iname"] + " " + stage)
+                            test_result = testcase.test(con, params)
+                            logging.debug(self.getName() + params["iname"] + ": test " + test_name + " finised with " + str(test_result))
+                            result[test_name] = test_result
+                        else:
+                            logging.debug(self.getName() + ": skipping test " + test_name + " for " + params["iname"] + " " +stage)
                     except AttributeError, e:
                         logging.error(self.getName() + ": bad test, %s %s" % (m, e))
                         result[test_name] = "Failure"
-            mainq.put((0, "terminate", params))
+
+            logging.info(self.getName() + ": done testing for " + params["iname"] + " " + stage)
+
+            params_new = params.copy()
+            if len(params["stages"])>1:
+                params_new["stages"] = params["stages"][1:]
+                mainq.put((0, "test", params_new))
+            else:
+                mainq.put((0, "terminate", params_new))
             return result
         except (socket.error, paramiko.PasswordRequiredException) as e:
             logging.debug(self.getName() + ": got socket error during instance creation, %s" % e)
@@ -176,7 +208,7 @@ class InstanceThread(threading.Thread):
                 return None
             else:
                 return myinstance.__dict__
-        except socket.error, e:
+        except (socket.error, boto.exception.EC2ResponseError), e:
             logging.debug(self.getName() + ": got socket error during instance creation, %s" % e)
             return None
         except Exception, e:
@@ -255,14 +287,15 @@ while not resultsq.empty():
     result_item = resultsq.get()
     ami = result_item["ami"]
     itype = result_item["hwp"]["name"]
+    stage = result_item["stages"][0]
 
     if not ami in outres.keys():
         outres[ami] = {}
 
-    if itype in outres[ami].keys():
-        logging.error("Second result for " + ami + "," + itype + ", ignoring")
+    if not itype in outres[ami].keys():
+        outres[ami][itype] = {}
 
-    outres[ami][itype] = result_item["result"]
+    outres[ami][itype][stage] = result_item["result"]
     resultsq.task_done()
 
 logging.info("RESULT: \n" + yaml.safe_dump(outres))

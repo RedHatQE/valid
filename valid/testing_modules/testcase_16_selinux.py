@@ -1,6 +1,8 @@
 from valid.valid_testcase import *
 
 class testcase_16_selinux(ValidTestcase):
+    stages = ["stage1"]
+
     def test(self, connection, params):
         self.ping_pong(connection, "getenforce", "\r\nEnforcing\r\n")
         self.ping_pong(connection, "grep '^SELINUX=enforcing' /etc/sysconfig/selinux && echo SUCCESS", "\r\nSUCCESS\r\n")

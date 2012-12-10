@@ -2,6 +2,8 @@ from valid.valid_testcase import *
 import re
 
 class testcase_08_memory(ValidTestcase):
+    stages = ["stage1"]
+
     def test(self, connection, params):
         if not params["hwp"]["memory"]:
             self.log.append({"result": "failure", "comment": "memory parameter in hwp is not set"})

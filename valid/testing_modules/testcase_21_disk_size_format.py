@@ -1,8 +1,9 @@
 from valid.valid_testcase import *
 
 class testcase_21_disk_size_format(ValidTestcase):
-    def test(self, connection, params):
+    stages = ["stage1"]
 
+    def test(self, connection, params):
         disks = self.get_result(connection,  "mount | grep '^/dev' | awk '{print $1}'")
         if disks:
             mpoint = self.match(connection,  "echo '###' ;mount | grep '^%s' | awk '{print $3}'; echo '###'" % disks[0], re.compile(".*\r\n###\r\n(.*)\r\n###\r\n.*", re.DOTALL))

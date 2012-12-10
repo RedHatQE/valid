@@ -1,6 +1,8 @@
 from valid.valid_testcase import *
 
 class testcase_04_cloud_firstboot(ValidTestcase):
+    stages = ["stage1"]
+
     def test(self, connection, params):
         if (params["product"].upper() == "RHEL" or params["product"].upper() == "BETA") and params["version"].startswith("6.0"):
             self.log.append({"result": "passed", "comment": "waived test for bugzilla 704821"})

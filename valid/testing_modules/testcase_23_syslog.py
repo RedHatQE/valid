@@ -1,6 +1,8 @@
 from valid.valid_testcase import *
 
 class testcase_23_syslog(ValidTestcase):
+    stages = ["stage1"]
+
     def test(self, connection, params):
         prod = params["product"].upper()
         ver = params["version"]

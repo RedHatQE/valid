@@ -1,6 +1,8 @@
 from valid.valid_testcase import *
 
 class testcase_12_passwd_group(ValidTestcase):
+    stages = ["stage1"]
+
     def test(self, connection, params):
     	self.ping_pong(connection, "grep '^root:x:0:0:root:/root:/bin/bash' /etc/passwd && echo SUCCESS", "[^ ]SUCCESS")
     	self.ping_pong(connection, "grep '^nobody:x:99:99:Nobody:/:/sbin/nologin' /etc/passwd && echo SUCCESS", "[^ ]SUCCESS")
