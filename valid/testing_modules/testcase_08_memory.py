@@ -2,7 +2,7 @@ from valid.valid_testcase import *
 import re
 
 class testcase_08_memory(ValidTestcase):
-    stages = ["stage1"]
+    stages = ["stage1", "stage2"]
 
     def test(self, connection, params):
         if not params["hwp"]["memory"]:
