@@ -21,3 +21,4 @@ import testcase_20_auditd
 import testcase_21_disk_size_format
 import testcase_22_gpg_keys
 import testcase_23_syslog
+import testcase_24_yum_plugin
