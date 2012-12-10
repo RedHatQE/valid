@@ -588,6 +588,18 @@ function test_verify_rpms()
 	cat $file | grep -v 'Red Hat, Inc.' >>$LOGFILE
 }
 
+function test_subscription_management()
+{
+    new_test "## check subscription-manager yum plugin is disabled"
+    assert 'yum repolist | grep -i subscription-manager ; echo $?' 1
+
+    new_test "## check subscription-manager yum plugin can be enabled"
+    assert "yum --enableplugin=subscription-manager repolist | grep -q 'Loaded plugins:.*subscription-manager'"
+
+    new_test "## check system isn't subscribbed"
+    assert "subscription-manager list | grep -q '^Status:\s*Not.Subscribed'"
+}
+
 function test_yum_full_test()
 {
 	#echo "Invoking more rigorous yum tests"
