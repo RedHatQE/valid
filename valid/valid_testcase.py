@@ -1,3 +1,4 @@
+import re
 from patchwork.expect import *
 
 class ValidTestcase(object):
@@ -22,4 +23,15 @@ class ValidTestcase(object):
             return result
         except ExpectFailed, e:
             self.log.append({"result": "failed", "match": regexp.pattern, "command": command, "actual": e.message})
+            return None
+
+    def get_result(self, connection, command, timeout=5):
+        try:
+            Expect.enter(connection, "echo '###START###'; " + command + "; echo '###END###'")
+            regexp = re.compile(".*\r\n###START###\r\n(.*)\r\n###END###\r\n.*", re.DOTALL)
+            result = Expect.match(connection, regexp, [1], timeout)
+            self.log.append({"result": "passed", "command": command, "value": result[0]})
+            return result[0]
+        except ExpectFailed, e:
+            self.log.append({"result": "failed", "command": command, "actual": e.message})
             return None
