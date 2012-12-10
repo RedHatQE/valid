@@ -74,7 +74,7 @@ for m in sys.modules.keys():
             for stage in testcase.stages:
                 if not (stage in testing_stages):
                     testing_stages.append(stage)
-        except AttributeError, e:
+        except (AttributeError, TypeError), e:
             logging.error(self.getName() + ": bad test, %s %s" % (m, e))
             sys.exit(1)
 testing_stages.sort()
@@ -166,7 +166,7 @@ class InstanceThread(threading.Thread):
                             result[test_name] = test_result
                         else:
                             logging.debug(self.getName() + ": skipping test " + test_name + " for " + params["iname"] + " " +stage)
-                    except AttributeError, e:
+                    except (AttributeError, TypeError), e:
                         logging.error(self.getName() + ": bad test, %s %s" % (m, e))
                         result[test_name] = "Failure"
 
