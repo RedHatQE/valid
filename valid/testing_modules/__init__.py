@@ -24,3 +24,4 @@ import testcase_23_syslog
 import testcase_24_yum_plugin
 import testcase_25_uname
 import testcase_26_verify_rpms
+import testcase_27_yum_repos
