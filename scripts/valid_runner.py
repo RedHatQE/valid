@@ -121,7 +121,7 @@ def add_data(data):
                         hwpfd = open(hwpdir + "/" + params["arch"] + ".yaml", "r")
                         hwp = yaml.load(hwpfd)
                         hwpfd.close()
-                        resultdic[transaction_id][params["ami"]] = {"ninstances": len(hwp), "instances": []}
+                        resultdic[transaction_id][params["ami"]] = {"ninstances": len(hwp) * len(testing_stages), "instances": []}
                         for hwp_item in hwp:
                             params["transaction_id"] = transaction_id
                             params["hwp"] = hwp_item
@@ -140,35 +140,37 @@ def add_data(data):
                 logging.error("Got invalid data line: " + str(params))
         logging.info("Validation transaction " + transaction_id + " added")
 
-def report_results():
-    ''' Looking if we can report some transactions '''
-    with resultdic_lock:
-        ''' Dictionary is now locked '''
-        for transaction_id in resultdic.keys():
-            ''' Checking all transactions '''
-            report_ready = True
-            for ami in resultdic[transaction_id].keys():
-                ''' Checking all amis: they should be finished '''
-                if resultdic[transaction_id][ami]["ninstances"] != len(resultdic[transaction_id][ami]["instances"]):
-                    ''' Still have some jobs running ...'''
-                    report_ready = False
-            if report_ready:
-                resfile = resdir + "/" + transaction_id + ".yaml"
-                result_fd = open(resfile, "w")
-                result_fd.write(yaml.safe_dump(resultdic[transaction_id]))
-                result_fd.close()
-                logging.info("Transaction " + transaction_id + " finished. Result: " + resfile)
-                resultdic.pop(transaction_id)
 
 
 class ReportingThread(threading.Thread):
     def run(self):
         while True:
             time.sleep(random.randint(2,10))
-            report_results()
+            self.report_results()
             with resultdic_lock:
                 if resultdic == {}:
                     break
+
+    def report_results(self):
+        ''' Looking if we can report some transactions '''
+        with resultdic_lock:
+            ''' Dictionary is now locked '''
+            for transaction_id in resultdic.keys():
+                ''' Checking all transactions '''
+                report_ready = True
+                for ami in resultdic[transaction_id].keys():
+                    ''' Checking all amis: they should be finished '''
+                    if resultdic[transaction_id][ami]["ninstances"] != len(resultdic[transaction_id][ami]["instances"]):
+                        ''' Still have some jobs running ...'''
+                        logging.info("ReportThread: " + ami + ": " + str(resultdic[transaction_id][ami]["ninstances"]) + " " + str(len(resultdic[transaction_id][ami]["instances"])))
+                        report_ready = False
+                if report_ready:
+                    resfile = resdir + "/" + transaction_id + ".yaml"
+                    result_fd = open(resfile, "w")
+                    result_fd.write(yaml.safe_dump(resultdic[transaction_id]))
+                    result_fd.close()
+                    logging.info("Transaction " + transaction_id + " finished. Result: " + resfile)
+                    resultdic.pop(transaction_id)
 
 
 class InstanceThread(threading.Thread):
@@ -185,21 +187,18 @@ class InstanceThread(threading.Thread):
                 continue
             try:
                 (ntry, action, params) = mainq.get()
+                mainq.task_done()
             except:
                 continue
             if ntry > maxtries:
                 logging.error(self.getName() + ": " + action + ":" + str(params) + " failed after " + str(maxtries) + " tries")
                 params["result"] = "failure"
-                with resultdic_lock:
-                    report_value = {"instance_type": params["hwp"]["name"], "result": params["result"]}
-                    resultdic[params["transaction_id"]][params["ami"]]["instances"].append(report_value)
-                mainq.task_done()
+                self.report_results(params)
                 continue
             if action == "create":
                 # (iname, hwp, product, arch, region, itype, version, ami) = params
                 logging.debug(self.getName() + ": picking up " + params["iname"])
                 details = self.create_instance(params)
-                mainq.task_done()
                 if details:
                     logging.info(self.getName() + ": created instance " + params["iname"] + ", " + details["id"] + ":" + details["public_dns_name"])
                     # packing creation results into params
@@ -217,13 +216,10 @@ class InstanceThread(threading.Thread):
                 # do some testing
                 logging.debug(self.getName() + ": doing testing for " + params["iname"])
                 res = self.do_testing(ntry, params)
-                mainq.task_done()
                 if res:
                     logging.debug(self.getName() + ": done testing for " + params["iname"] + ", result: " + str(res))
                     params["result"] = res
-                    with resultdic_lock:
-                        report_value = {"instance_type": params["hwp"]["name"], "result": params["result"]}
-                        resultdic[params["transaction_id"]][params["ami"]]["instances"].append(report_value)
+                    self.report_results(params)
                 else:
                     logging.debug(self.getName() + ": something went wrong with " + params["iname"] + " during testing, ntry: " + str(ntry) + ", rescheduled")
             elif action == "terminate":
@@ -232,7 +228,17 @@ class InstanceThread(threading.Thread):
                 logging.debug(self.getName() + ": terminating " + params["iname"])
                 if not self.terminate_instance(params):
                     mainq.put((ntry + 1, "terminate", params))
-                mainq.task_done()
+
+    def report_results(self, params):
+        with resultdic_lock:
+            report_value = {"instance_type": params["hwp"]["name"],
+                            "region": params["region"],
+                            "arch": params["hwp"]["arch"],
+                            "version": params["version"],
+                            "product": params["product"],
+                            "result": params["result"]}
+            resultdic[params["transaction_id"]][params["ami"]]["instances"].append(report_value)
+
 
     def do_testing(self, ntry, params):
         try:
