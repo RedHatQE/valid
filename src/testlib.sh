@@ -606,6 +606,53 @@ function test_subscription_management()
     assert "subscription-manager list | grep -q '^Status:\s*Not.Subscribed'"
 }
 
+function _expiration_date() {
+    # figure out expiration timeout
+    local expiration=""
+    case $RHEL_FOUND in
+        5.[12345678]|6.[12])
+            expiration="7 years"
+            ;;
+        *)
+            expiration="10 years"
+            ;;
+    esac
+    # output release date + expiration
+    case $RHEL_FOUND in
+        5.*)
+            echo "2007/03/14 + $expiration"
+            ;;
+       6.*)
+            echo "2010/11/10 + $expiration"
+            ;;
+        *)
+            _err 1 "Unsupported RHEL version: $RHEL_FOUND"
+            ;;
+    esac
+}
+
+
+function test_content_certificate_expiration()
+{
+    local cert_file=/etc/pki/entitlement/product/content-rhel${RHEL}
+
+    if [ "$BETA" == "1" ] ; then
+        cert_file=${cert_file}-beta.crt
+    else
+        cert_file=${cert_file}.crt
+    fi
+    new_test "## check content cert presence"
+    assert "test -f ${cert_file}"
+
+    new_test "## check content cert expiration date is after `_expiration_date`"
+    local notAfter=`openssl x509 -in $cert_file -noout -dates | grep notAfter`
+    # comparing the dates in seconds
+    notAfter=`date +%s -d "${notAfter#*=}"`
+    local expiration=`_expiration_date`
+    expiration=`date +%s -d "${expiration}"`
+    assert "test $notAfter -ge $expiration"
+}
+
 function test_yum_full_test()
 {
 	#echo "Invoking more rigorous yum tests"
