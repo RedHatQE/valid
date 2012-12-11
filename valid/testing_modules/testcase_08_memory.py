@@ -10,5 +10,5 @@ class testcase_08_memory(ValidTestcase):
         else:
             values = self.match(connection, "grep 'MemTotal:' /proc/meminfo", re.compile(".*\r\nMemTotal:\s*([0-9]+) ", re.DOTALL))
             if values:
-                self.ping_pong(connection, "[ %s -gt %s ] && echo SUCCESS" % (values[0], params["hwp"]["memory"]), "[^ ]SUCCESS")
+                self.get_return_value(connection, "[ %s -gt %s ]" % (values[0], params["hwp"]["memory"]))
         return self.log

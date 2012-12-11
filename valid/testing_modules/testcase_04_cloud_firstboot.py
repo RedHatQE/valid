@@ -8,6 +8,6 @@ class testcase_04_cloud_firstboot(ValidTestcase):
             self.log.append({"result": "passed", "comment": "waived test for bugzilla 704821"})
         else:
             self.ping_pong(connection, "chkconfig --list rh-cloud-firstboot", "3:off")
-            self.ping_pong(connection, "test -f /etc/sysconfig/rh-cloud-firstboot && echo SUCCESS", "[^ ]SUCCESS")
+            self.get_return_value(connection, "test -f /etc/sysconfig/rh-cloud-firstboot")
             self.ping_pong(connection, "cat /etc/sysconfig/rh-cloud-firstboot", "RUN_FIRSTBOOT=NO")
         return self.log

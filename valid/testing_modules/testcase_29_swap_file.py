@@ -5,7 +5,7 @@ class testcase_29_swap_file(ValidTestcase):
     stages = ["stage1"]
 
     def test(self, connection, params):
-        self.ping_pong(connection, '[ ! -z "`curl http://169.254.169.254/latest/dynamic/instance-identity/signature`" ] && echo SUCCESS', "[^ ]SUCCESS")
+        self.get_return_value(connection, '[ ! -z "`curl http://169.254.169.254/latest/dynamic/instance-identity/signature`" ]')
         json_str = self.match(connection, "curl http://169.254.169.254/latest/dynamic/instance-identity/document", re.compile(".*({.*}).*", re.DOTALL))
         has_swap = True
         if json_str:
@@ -23,8 +23,8 @@ class testcase_29_swap_file(ValidTestcase):
             size = self.get_result(connection, "parted -l | grep linux-swap | awk '{print $4}' | awk -F'MB' '{print $1}'")
             partition = self.get_result(connection, "parted -l | grep -B 5 swap | grep ^Disk | awk '{print $2}' | sed '$s/.$//' | head -1")
             if size and partition:
-                self.ping_pong(connection, "[ " + size + " -gt 0 ] && echo SUCCESS", "\r\nSUCCESS\r\n")
-                self.ping_pong(connection, "swapoff " + partition + " ; echo SUCCESS", "\r\nSUCCESS\r\n")
-                self.ping_pong(connection, "swapon " + partition + " && echo SUCCESS", "\r\nSUCCESS\r\n")
-                self.ping_pong(connection, "swapoff " + partition + " && swapon " + partition +  " && echo SUCCESS", "\r\nSUCCESS\r\n")
+                self.get_return_value(connection, "[ " + size + " -gt 0 ]")
+                self.get_return_value(connection, "swapoff " + partition + " ; echo")
+                self.get_return_value(connection, "swapon " + partition, 30)
+                self.get_return_value(connection, "swapoff " + partition + " && swapon " + partition, 30)
         return self.log

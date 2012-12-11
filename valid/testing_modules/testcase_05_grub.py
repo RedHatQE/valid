@@ -4,7 +4,7 @@ class testcase_05_grub(ValidTestcase):
     stages = ["stage1"]
 
     def test(self, connection, params):
-        self.ping_pong(connection, "test -h /boot/grub/menu.lst && echo SUCCESS", "[^ ]SUCCESS")
+        self.get_return_value(connection, "test -h /boot/grub/menu.lst")
         self.ping_pong(connection, "readlink -e /boot/grub/menu.lst", "/boot/grub/grub.conf")
-        self.ping_pong(connection, "grep '(hd0,0)' /boot/grub/grub.conf && echo FAILURE || echo SUCCESS", "[^ ]SUCCESS")
+        self.get_return_value(connection, "grep '(hd0,0)' /boot/grub/grub.conf", expected_status=1)
         return self.log

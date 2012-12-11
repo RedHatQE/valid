@@ -27,7 +27,7 @@ class testcase_27_yum_repos(ValidTestcase):
             self.log.append({"result": "failure", "comment": "this test is for RHEL5/RHEL6 only"})
 
         if repos and repos_rhel and repos_redhat:
-            self.ping_pong(connection, "[ %s = %s ] && echo SUCCESS" % (repos, repos_cmp), "\r\nSUCCESS\r\n")
-            self.ping_pong(connection, "[ %s = %s ] && echo SUCCESS" % (repos_redhat, repos_redhat_cmp), "\r\nSUCCESS\r\n")
-            self.ping_pong(connection, "[ %s = %s ] && echo SUCCESS" % (repos_rhel, repos_rhel_cmp), "\r\nSUCCESS\r\n")
+            self.get_return_value(connection, "[ %s = %s ]" % (repos, repos_cmp))
+            self.get_return_value(connection, "[ %s = %s ]" % (repos_redhat, repos_redhat_cmp))
+            self.get_return_value(connection, "[ %s = %s ]" % (repos_rhel, repos_rhel_cmp))
         return self.log

@@ -1,4 +1,5 @@
 import re
+import logging
 from patchwork.expect import *
 
 class ValidTestcase(object):
@@ -35,3 +36,11 @@ class ValidTestcase(object):
         except ExpectFailed, e:
             self.log.append({"result": "failed", "command": command, "actual": e.message})
             return None
+
+    def get_return_value(self, connection, command, timeout=5, expected_status=0):
+        status = connection.recv_exit_status(command + " >/dev/null 2>&1", timeout)
+        if status == expected_status:
+            self.log.append({"result": "passed", "command": command})
+        else:
+            self.log.append({"result": "failed", "command": command, "actual": str(status)})
+        return status

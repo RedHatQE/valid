@@ -90,7 +90,7 @@ for m in sys.modules.keys():
                 for stage in testcase.stages:
                     if not (stage in testing_stages):
                         testing_stages.append(stage)
-        except (AttributeError, TypeError), e:
+        except (AttributeError, TypeError, NameError), e:
             logging.error(self.getName() + ": bad test, %s %s" % (m, e))
             sys.exit(1)
 testing_stages.sort()
@@ -170,7 +170,7 @@ class InstanceThread(threading.Thread):
 
             logging.info(self.getName() + ": doing testing for " + params["iname"] + " " + stage)
 
-            for m in sys.modules.keys():
+            for m in sorted(sys.modules.keys()):
                 if m.startswith("valid.testing_modules.testcase"):
                     try:
                         test_name = m.split('.')[2]
@@ -178,11 +178,11 @@ class InstanceThread(threading.Thread):
                         if (stage in testcase.stages) and ((enable_tests and test_name in enable_tests) or (not enable_tests and not test_name in disable_tests)):
                             logging.debug(self.getName() + ": doing test " + test_name + " for " + params["iname"] + " " + stage)
                             test_result = testcase.test(con, params)
-                            logging.debug(self.getName() + params["iname"] + ": test " + test_name + " finised with " + str(test_result))
+                            logging.debug(self.getName() + ": " +params["iname"] + ": test " + test_name + " finised with " + str(test_result))
                             result[test_name] = test_result
                         else:
                             logging.debug(self.getName() + ": skipping test " + test_name + " for " + params["iname"] + " " +stage)
-                    except (AttributeError, TypeError), e:
+                    except (AttributeError, TypeError, NameError), e:
                         logging.error(self.getName() + ": bad test, %s %s" % (m, e))
                         result[test_name] = "Failure"
 

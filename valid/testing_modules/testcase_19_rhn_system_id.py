@@ -4,5 +4,5 @@ class testcase_19_rhn_system_id(ValidTestcase):
     stages = ["stage1"]
 
     def test(self, connection, params):
-        self.ping_pong(connection, "[ ! -f /etc/sysconfig/rhn/systemid ] && echo SUCCESS", "\r\nSUCCESS\r\n")
+        self.get_return_value(connection, "[ ! -f /etc/sysconfig/rhn/systemid ]")
         return self.log

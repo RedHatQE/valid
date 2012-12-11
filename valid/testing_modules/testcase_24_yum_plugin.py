@@ -4,5 +4,5 @@ class testcase_24_yum_plugin(ValidTestcase):
     stages = ["stage1"]
 
     def test(self, connection, params):
-        self.ping_pong(connection, "grep '^enabled[[:space:]]*=[[:space:]]*[^0 ]' /etc/yum/pluginconf.d/rhnplugin.conf || echo SUCCESS", "\r\nSUCCESS\r\n")
+        self.get_return_value(connection, "grep '^enabled[[:space:]]*=[[:space:]]*[^0 ]' /etc/yum/pluginconf.d/rhnplugin.conf", expected_status=1)
         return self.log

@@ -10,9 +10,9 @@ class testcase_21_disk_size_format(ValidTestcase):
             fs = self.match(connection,  "echo '###' ;mount | grep '^%s' | awk '{print $5}'; echo '###'" % disks[0], re.compile(".*\r\n###\r\n(.*)\r\n###\r\n.*", re.DOTALL))
             if mpoint and fs:
                 for disk in disks[0].split():
-                    self.ping_pong(connection, "[ `df -k %s | awk '{ print $2 }' | tail -n 1` -gt 3937219 ] && echo SUCCESS" % disk, "\r\nSUCCESS\r\n")
+                    self.get_return_value(connection, "[ `df -k %s | awk '{ print $2 }' | tail -n 1` -gt 3937219 ]" % disk)
                     if mpoint[0]=='/' and ((params["product"].upper() == "RHEL" or params["product"].upper() == "BETA") and params["version"].startswith("6.")):
-                        self.ping_pong(connection, "[ %s = ext4 ] && echo SUCCESS"  % fs[0], "\r\nSUCCESS\r\n")
+                        self.get_return_value(connection, "[ %s = ext4 ]"  % fs[0])
                     else:
-                        self.ping_pong(connection, "[ %s = ext3 ] && echo SUCCESS" % fs[0], "\r\nSUCCESS\r\n")
+                        self.get_return_value(connection, "[ %s = ext3 ]" % fs[0])
         return self.log

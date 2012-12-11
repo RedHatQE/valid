@@ -28,7 +28,7 @@ class testcase_26_verify_rpms(ValidTestcase):
         rpmrel = self.get_result(connection, "rpm -q --queryformat '%{RELEASE}\n' " + release_pkg + " | cut -d. -f1,2")
         
         if rpmv:
-            self.ping_pong(connection, "[ %s = %s ] && echo SUCCESS" % (rpmv, rpmv_cmp), "\r\nSUCCESS\r\n")
-            self.ping_pong(connection, "[ %s = %s ] && echo SUCCESS" % (rpmrel, ver), "\r\nSUCCESS\r\n")
+            self.get_return_value(connection, "[ %s = %s ]" % (rpmv, rpmv_cmp))
+            self.get_return_value(connection, "[ %s = %s ]" % (rpmrel, ver))
             packagers = self.get_result(connection, "rpm -qa --queryformat '%{PACKAGER}\n' | sort -u | grep -v 'Red Hat, Inc.'", 30)
         return self.log
