@@ -223,6 +223,7 @@ class InstanceThread(threading.Thread):
                 logging.error("Timeout during instance creation, %s" % e)
                 return None
             else:
+                myinstance.add_tag("Name", params["ami"] + " validation")
                 return myinstance.__dict__
         except (socket.error, boto.exception.EC2ResponseError), e:
             logging.debug(self.getName() + ": got socket error during instance creation, %s" % e)
