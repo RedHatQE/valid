@@ -19,6 +19,9 @@ from boto.ec2.blockdevicemapping import BlockDeviceMapping
 
 import valid
 
+def csv(value):
+    return map(str, value.split(","))
+
 argparser = argparse.ArgumentParser(description='Create CloudFormation stack and run the testing')
 argparser.add_argument('--data', required=True,
                        help='data file for validation')
@@ -26,6 +29,8 @@ argparser.add_argument('--config',
                        default="/etc/validation.yaml", help='use supplied yaml config file')
 argparser.add_argument('--debug', action='store_const', const=True,
                        default=False, help='debug mode')
+argparser.add_argument('--disable-tests', type=csv, help='disable specified tests')
+argparser.add_argument('--enable-tests', type=csv, help='enable specified tests only (overrides --disabe-tests)')
 argparser.add_argument('--maxtries', type=int,
                        default=100, help='maximum number of tries')
 argparser.add_argument('--maxwait', type=int,
@@ -39,6 +44,16 @@ args = argparser.parse_args()
 maxtries = args.maxtries
 maxwait = args.maxwait
 settlewait = args.settlewait
+
+if args.enable_tests:
+    enable_tests = set(args.enable_tests)
+else:
+    enable_tests = None
+
+if args.disable_tests:
+    disable_tests = set(args.disable_tests)
+else:
+    disable_tests = set()
 
 confd = open(args.config, 'r')
 yamlconfig = yaml.load(confd)
@@ -71,9 +86,10 @@ for m in sys.modules.keys():
         try:
             test_name = m.split('.')[2]
             testcase = getattr(sys.modules[m], test_name)()
-            for stage in testcase.stages:
-                if not (stage in testing_stages):
-                    testing_stages.append(stage)
+            if ((enable_tests and test_name in enable_tests) or (not enable_tests and not test_name in disable_tests)):
+                for stage in testcase.stages:
+                    if not (stage in testing_stages):
+                        testing_stages.append(stage)
         except (AttributeError, TypeError), e:
             logging.error(self.getName() + ": bad test, %s %s" % (m, e))
             sys.exit(1)
@@ -159,7 +175,7 @@ class InstanceThread(threading.Thread):
                     try:
                         test_name = m.split('.')[2]
                         testcase = getattr(sys.modules[m], test_name)()
-                        if stage in testcase.stages:
+                        if (stage in testcase.stages) and ((enable_tests and test_name in enable_tests) or (not enable_tests and not test_name in disable_tests)):
                             logging.debug(self.getName() + ": doing test " + test_name + " for " + params["iname"] + " " + stage)
                             test_result = testcase.test(con, params)
                             logging.debug(self.getName() + params["iname"] + ": test " + test_name + " finised with " + str(test_result))
