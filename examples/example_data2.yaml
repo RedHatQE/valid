@@ -1,0 +1,2 @@
+- {ami: ami-8bf2f7ff, arch: x86_64, itype: hourly, product: RHEL, region: eu-west-1, version: '6.3'}
+- {ami: ami-47615833, arch: x86_64, itype: hourly, product: RHEL, region: eu-west-1, version: '5.8'}
