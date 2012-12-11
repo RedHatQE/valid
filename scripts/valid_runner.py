@@ -10,6 +10,8 @@ import yaml
 import sys
 import sets
 import paramiko
+import random
+import string
 
 from patchwork.connection import Connection
 from patchwork.expect import *
@@ -37,6 +39,8 @@ argparser.add_argument('--maxwait', type=int,
                        default=300, help='maximum wait time for instance creation')
 argparser.add_argument('--numthreads', type=int,
                        default=10, help='number of worker threads')
+argparser.add_argument('--results-dir',
+                       default=".", help='put resulting yaml files to specified location')
 argparser.add_argument('--settlewait', type=int,
                        default=30, help='wait for instance to settle before testing')
 
@@ -44,6 +48,8 @@ args = argparser.parse_args()
 maxtries = args.maxtries
 maxwait = args.maxwait
 settlewait = args.settlewait
+resdir = args.results_dir
+num_worker_threads = args.numthreads
 
 if args.enable_tests:
     enable_tests = set(args.enable_tests)
@@ -260,6 +266,10 @@ except Exception, e:
     logging.error("Failed to read data file %s wit error %s" % (args.data, e))
     sys.exit(1)
 
+transaction_id = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
+
+logging.info("Starting validation transaction " + transaction_id)
+
 count = 0
 for params in data:
     minimal_set = set(["product", "arch", "region", "itype", "version", "ami"])
@@ -289,8 +299,6 @@ for params in data:
         # we something is missing
         logging.error("Got invalid data line: " + str(params))
 
-num_worker_threads = args.numthreads
-
 for i in range(num_worker_threads):
     i = InstanceThread()
     i.start()
@@ -315,4 +323,9 @@ while not resultsq.empty():
     outres[ami][itype][stage] = result_item["result"]
     resultsq.task_done()
 
-logging.info("RESULT: \n" + yaml.safe_dump(outres))
+resfile = resdir + "/" + transaction_id + ".yaml"
+result_fd = open(resfile, "w")
+result_fd.write(yaml.safe_dump(outres))
+result_fd.close()
+
+logging.info("RESULT: " + resfile)
