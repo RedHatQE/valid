@@ -103,17 +103,96 @@ testing_stages.sort()
 
 logging.info("Testing stages %s discovered" % str(testing_stages))
 
+def add_data(data):
+    with resultdic_lock:
+        transaction_id = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
+        logging.info("Adding validation transaction " + transaction_id)
+        resultdic[transaction_id] = {}
+        count = 0
+        for params in data:
+            minimal_set = set(["product", "arch", "region", "itype", "version", "ami"])
+            exact_set = set(params.keys())
+            if minimal_set.issubset(exact_set):
+                # we have all required keys
+                logging.debug("Got valid data line " + str(params))
+                hwp_found = False
+                for hwpdir in ["hwp", "/usr/share/valid/hwp"]:
+                    try:
+                        hwpfd = open(hwpdir + "/" + params["arch"] + ".yaml", "r")
+                        hwp = yaml.load(hwpfd)
+                        hwpfd.close()
+                        resultdic[transaction_id][params["ami"]] = {"ninstances": len(hwp), "instances": []}
+                        for hwp_item in hwp:
+                            params["transaction_id"] = transaction_id
+                            params["hwp"] = hwp_item
+                            params["iname"] = "Instance" + str(count) + "_" + transaction_id
+                            logging.info("Adding " + params["iname"] + ": " + hwp_item["name"] + " instance for " + params["ami"] + " testing in " + params["region"])
+                            mainq.put((0, "create", params.copy()))
+                            count += 1
+                        hwp_found = True
+                        break
+                    except:
+                        pass
+                if not hwp_found:
+                    logging.error("HWP for " + params["arch"] + " is not found, skipping dataline for " + params["ami"])
+            else:
+                # we something is missing
+                logging.error("Got invalid data line: " + str(params))
+        logging.info("Validation transaction " + transaction_id + " added")
+
+def report_results():
+    ''' Looking if we can report some transactions '''
+    with resultdic_lock:
+        ''' Dictionary is now locked '''
+        for transaction_id in resultdic.keys():
+            ''' Checking all transactions '''
+            report_ready = True
+            for ami in resultdic[transaction_id].keys():
+                ''' Checking all amis: they should be finished '''
+                if resultdic[transaction_id][ami]["ninstances"] != len(resultdic[transaction_id][ami]["instances"]):
+                    ''' Still have some jobs running ...'''
+                    report_ready = False
+            if report_ready:
+                resfile = resdir + "/" + transaction_id + ".yaml"
+                result_fd = open(resfile, "w")
+                result_fd.write(yaml.safe_dump(resultdic[transaction_id]))
+                result_fd.close()
+                logging.info("Transaction " + transaction_id + " finished. Result: " + resfile)
+                resultdic.pop(transaction_id)
+
+
+class ReportingThread(threading.Thread):
+    def run(self):
+        while True:
+            time.sleep(random.randint(2,10))
+            report_results()
+            with resultdic_lock:
+                if resultdic == {}:
+                    break
+
+
 class InstanceThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
 
     def run(self):
-        while not mainq.empty():
-            (ntry, action, params) = mainq.get()
+        while True:
+            with resultdic_lock:
+                if resultdic == {}:
+                    break
+            if mainq.empty():
+                time.sleep(random.randint(2,10))
+                continue
+            try:
+                (ntry, action, params) = mainq.get()
+            except:
+                continue
             if ntry > maxtries:
                 logging.error(self.getName() + ": " + action + ":" + str(params) + " failed after " + str(maxtries) + " tries")
                 params["result"] = "failure"
-                resultsq.put(params)
+                with resultdic_lock:
+                    report_value = {"instance_type": params["hwp"]["name"], "result": params["result"]}
+                    resultdic[params["transaction_id"]][params["ami"]]["instances"].append(report_value)
                 mainq.task_done()
                 continue
             if action == "create":
@@ -142,7 +221,9 @@ class InstanceThread(threading.Thread):
                 if res:
                     logging.debug(self.getName() + ": done testing for " + params["iname"] + ", result: " + str(res))
                     params["result"] = res
-                    resultsq.put(params)
+                    with resultdic_lock:
+                        report_value = {"instance_type": params["hwp"]["name"], "result": params["result"]}
+                        resultdic[params["transaction_id"]][params["ami"]]["instances"].append(report_value)
                 else:
                     logging.debug(self.getName() + ": something went wrong with " + params["iname"] + " during testing, ntry: " + str(ntry) + ", rescheduled")
             elif action == "terminate":
@@ -256,7 +337,10 @@ logging.getLogger('boto').setLevel(logging.CRITICAL)
 
 # main queue for worker threads
 mainq = Queue.Queue()
-resultsq = Queue.Queue()
+
+# resulting dictionary
+resultdic = {}
+resultdic_lock = threading.Lock()
 
 try:
     datafd = open(args.data, "r")
@@ -266,66 +350,15 @@ except Exception, e:
     logging.error("Failed to read data file %s wit error %s" % (args.data, e))
     sys.exit(1)
 
-transaction_id = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
-
-logging.info("Starting validation transaction " + transaction_id)
-
-count = 0
-for params in data:
-    minimal_set = set(["product", "arch", "region", "itype", "version", "ami"])
-    exact_set = set(params.keys())
-    if minimal_set.issubset(exact_set):
-        # we have all required keys
-        logging.debug("Got valid data line " + str(params))
-        hwp_found = False
-        for hwpdir in ["hwp", "/usr/share/valid/hwp"]:
-            try:
-                hwpfd = open(hwpdir + "/" + params["arch"] + ".yaml", "r")
-                hwp = yaml.load(hwpfd)
-                hwpfd.close()
-                for hwp_item in hwp:
-                    params["hwp"] = hwp_item
-                    params["iname"] = "Instance" + str(count)
-                    logging.info("Adding " + params["iname"] + ": " + hwp_item["name"] + " instance for " + params["ami"] + " testing in " + params["region"])
-                    mainq.put((0, "create", params.copy()))
-                    count += 1
-                hwp_found = True
-                break
-            except:
-                pass
-        if not hwp_found:
-            logging.error("HWP for " + params["arch"] + " is not found, skipping dataline for " + params["ami"])
-    else:
-        # we something is missing
-        logging.error("Got invalid data line: " + str(params))
+add_data(data)
 
 for i in range(num_worker_threads):
     i = InstanceThread()
     i.start()
 
+r = ReportingThread()
+r.start()
+
 for thread in threading.enumerate():
     if thread is not threading.currentThread():
         thread.join()
-
-outres = {}
-while not resultsq.empty():
-    result_item = resultsq.get()
-    ami = result_item["ami"]
-    itype = result_item["hwp"]["name"]
-    stage = result_item["stages"][0]
-
-    if not ami in outres.keys():
-        outres[ami] = {}
-
-    if not itype in outres[ami].keys():
-        outres[ami][itype] = {}
-
-    outres[ami][itype][stage] = result_item["result"]
-    resultsq.task_done()
-
-resfile = resdir + "/" + transaction_id + ".yaml"
-result_fd = open(resfile, "w")
-result_fd.write(yaml.safe_dump(outres))
-result_fd.close()
-
-logging.info("RESULT: " + resfile)
