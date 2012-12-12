@@ -162,12 +162,27 @@ class ReportingThread(threading.Thread):
                     ''' Checking all amis: they should be finished '''
                     if resultdic[transaction_id][ami]["ninstances"] != len(resultdic[transaction_id][ami]["instances"]):
                         ''' Still have some jobs running ...'''
-                        logging.info("ReportThread: " + ami + ": " + str(resultdic[transaction_id][ami]["ninstances"]) + " " + str(len(resultdic[transaction_id][ami]["instances"])))
+                        logging.debug("ReportThread: " + ami + ":  waiting for " + str(resultdic[transaction_id][ami]["ninstances"]) + " results, got " + str(len(resultdic[transaction_id][ami]["instances"])))
                         report_ready = False
                 if report_ready:
                     resfile = resdir + "/" + transaction_id + ".yaml"
                     result_fd = open(resfile, "w")
-                    result_fd.write(yaml.safe_dump(resultdic[transaction_id]))
+                    result = []
+                    data = resultdic[transaction_id]
+                    for ami in data.keys():
+                        result_item = {"ami": data[ami]["instances"][0]["ami"],
+                                       "product": data[ami]["instances"][0]["product"],
+                                       "version": data[ami]["instances"][0]["version"],
+                                       "arch": data[ami]["instances"][0]["arch"],
+                                       "region": data[ami]["instances"][0]["region"],
+                                       "result": {}}
+                        for instance in data[ami]["instances"]:
+                            if not instance["instance_type"] in result_item["result"].keys():
+                                result_item["result"][instance["instance_type"]] = instance["result"].copy()
+                            else:
+                                result_item["result"][instance["instance_type"]].update(instance["result"])
+                        result.append(result_item)
+                    result_fd.write(yaml.safe_dump(result))
                     result_fd.close()
                     logging.info("Transaction " + transaction_id + " finished. Result: " + resfile)
                     resultdic.pop(transaction_id)
@@ -192,7 +207,10 @@ class InstanceThread(threading.Thread):
                 continue
             if ntry > maxtries:
                 logging.error(self.getName() + ": " + action + ":" + str(params) + " failed after " + str(maxtries) + " tries")
-                params["result"] = "failure"
+                if action in ["create", "terminate"]:
+                    params["result"] = {action: "failure"}
+                else:
+                    params["result"] = {params["stages"][0]: "failure"}
                 self.report_results(params)
                 continue
             if action == "create":
@@ -218,7 +236,7 @@ class InstanceThread(threading.Thread):
                 res = self.do_testing(ntry, params)
                 if res:
                     logging.debug(self.getName() + ": done testing for " + params["iname"] + ", result: " + str(res))
-                    params["result"] = res
+                    params["result"] = {params["stages"][0]: res}
                     self.report_results(params)
                 else:
                     logging.debug(self.getName() + ": something went wrong with " + params["iname"] + " during testing, ntry: " + str(ntry) + ", rescheduled")
@@ -232,6 +250,7 @@ class InstanceThread(threading.Thread):
     def report_results(self, params):
         with resultdic_lock:
             report_value = {"instance_type": params["hwp"]["name"],
+                            "ami": params["ami"],
                             "region": params["region"],
                             "arch": params["hwp"]["arch"],
                             "version": params["version"],
