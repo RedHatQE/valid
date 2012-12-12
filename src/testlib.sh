@@ -1225,7 +1225,7 @@ pushd /root/valid/src || exit $?
   --memory=$MEM_HWP \\
   --bugzilla-num=$BUGZILLA \\
   --bugzilla-username=$BUG_USERNAME \\
-  --bugzilla-password=$BUG_PASSWORD \\
+  --bugzilla-password="'$BUG_PASSWORD'" \\
   >> /var/log/messages
 ) &
 popd
