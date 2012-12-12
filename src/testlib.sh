@@ -610,7 +610,7 @@ function _expiration_date() {
     # figure out expiration timeout
     local expiration=""
     case $RHEL_FOUND in
-        5.[12345678]|6.[12])
+        5.[12345678]|6.[123])
             expiration="7 years"
             ;;
         *)
@@ -634,23 +634,25 @@ function _expiration_date() {
 
 function test_content_certificate_expiration()
 {
-    local cert_file=/etc/pki/entitlement/product/content-rhel${RHEL}
-
+    local config_rpms=( rh-amazon-rhui-client )
+    local expiration_date=`_expiration_date`
+    local expiration_seconds=`date +%s -d "$expiration_date"`
     if [ "$BETA" == "1" ] ; then
-        cert_file=${cert_file}-beta.crt
-    else
-        cert_file=${cert_file}.crt
+        # append beta config rpm
+        config_rpms[${#config_rpms[@]}]=rh-amazon-rhui-client-beta
     fi
-    new_test "## check content cert presence"
-    assert "test -f ${cert_file}"
-
-    new_test "## check content cert expiration date is after `_expiration_date`"
-    local notAfter=`openssl x509 -in $cert_file -noout -dates | grep notAfter`
-    # comparing the dates in seconds
-    notAfter=`date +%s -d "${notAfter#*=}"`
-    local expiration=`_expiration_date`
-    expiration=`date +%s -d "${expiration}"`
-    assert "test $notAfter -ge $expiration"
+    # fetch all the cert files to examine
+    local cert_files=( `rpm -ql ${config_rpms[@]} | egrep '.*\.(pem|crt)'` )
+    local cert_file=
+    local notAfter=
+    for cert_file in ${cert_files[@]} ; do
+        notAfter=`openssl x509 -in $cert_file -noout -dates | grep notAfter`
+        new_test "## check $cert_file ($notAfter) expires after $expiration_date"
+        notAfter=${notAfter#*=} # strip the field name
+        # comparing the dates in seconds
+        notAfter=`date +%s -d "${notAfter}"`
+        assert "test $notAfter -ge $expiration_seconds"
+    done
 }
 
 function test_yum_full_test()
