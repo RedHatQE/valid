@@ -34,7 +34,7 @@ argparser.add_argument('--debug', action='store_const', const=True,
 argparser.add_argument('--disable-tests', type=csv, help='disable specified tests')
 argparser.add_argument('--enable-tests', type=csv, help='enable specified tests only (overrides --disabe-tests)')
 argparser.add_argument('--maxtries', type=int,
-                       default=100, help='maximum number of tries')
+                       default=30, help='maximum number of tries')
 argparser.add_argument('--maxwait', type=int,
                        default=300, help='maximum wait time for instance creation')
 argparser.add_argument('--numthreads', type=int,
@@ -126,6 +126,7 @@ def add_data(data):
                             params["transaction_id"] = transaction_id
                             params["hwp"] = hwp_item
                             params["iname"] = "Instance" + str(count) + "_" + transaction_id
+                            params["stages"] = testing_stages
                             logging.info("Adding " + params["iname"] + ": " + hwp_item["name"] + " instance for " + params["ami"] + " testing in " + params["region"])
                             mainq.put((0, "create", params.copy()))
                             count += 1
@@ -211,41 +212,25 @@ class InstanceThread(threading.Thread):
                     params["result"] = {action: "failure"}
                 else:
                     params["result"] = {params["stages"][0]: "failure"}
+                # we need to change expected value in resultdic
+                with resultdic_lock:
+                    resultdic[params["transaction_id"]][params["ami"]]["ninstances"] -= (len(params["stages"]) - 1)
                 self.report_results(params)
                 continue
             if action == "create":
                 # (iname, hwp, product, arch, region, itype, version, ami) = params
                 logging.debug(self.getName() + ": picking up " + params["iname"])
-                details = self.create_instance(params)
-                if details:
-                    logging.info(self.getName() + ": created instance " + params["iname"] + ", " + details["id"] + ":" + details["public_dns_name"])
-                    # packing creation results into params
-                    params["id"] = details["id"]
-                    params["public_dns_name"] = details["public_dns_name"]
-                    params["stages"] = testing_stages
-                    mainq.put((0, "test", params))
-                else:
-                    logging.debug(self.getName() + ": something went wrong with " + params["iname"] + " during creation, ntry: " + str(ntry) + ", rescheduling")
-                    # reschedule creation
-                    time.sleep(5)
-                    mainq.put((ntry + 1, "create", params))
+                self.create_instance(ntry, params)
             elif action == "test":
                 # (iname, hwp, product, arch, region, itype, version, ami, id, public_dns_name) = params
                 # do some testing
                 logging.debug(self.getName() + ": doing testing for " + params["iname"])
                 res = self.do_testing(ntry, params)
-                if res:
-                    logging.debug(self.getName() + ": done testing for " + params["iname"] + ", result: " + str(res))
-                    params["result"] = {params["stages"][0]: res}
-                    self.report_results(params)
-                else:
-                    logging.debug(self.getName() + ": something went wrong with " + params["iname"] + " during testing, ntry: " + str(ntry) + ", rescheduled")
             elif action == "terminate":
                 # (iname, hwp, product, arch, region, itype, version, ami, id, public_dns_name, result) = params
                 # terminate instance
                 logging.debug(self.getName() + ": terminating " + params["iname"])
-                if not self.terminate_instance(params):
-                    mainq.put((ntry + 1, "terminate", params))
+                self.terminate_instance(ntry, params)
 
     def report_results(self, params):
         with resultdic_lock:
@@ -257,7 +242,6 @@ class InstanceThread(threading.Thread):
                             "product": params["product"],
                             "result": params["result"]}
             resultdic[params["transaction_id"]][params["ami"]]["instances"].append(report_value)
-
 
     def do_testing(self, ntry, params):
         try:
@@ -306,19 +290,20 @@ class InstanceThread(threading.Thread):
                 mainq.put((0, "test", params_new))
             else:
                 mainq.put((0, "terminate", params_new))
-            return result
-        except (socket.error, paramiko.PasswordRequiredException) as e:
-            logging.debug(self.getName() + ": got socket error during instance creation, %s" % e)
-            time.sleep(5)
+            logging.debug(self.getName() + ": done testing for " + params["iname"] + ", result: " + str(result))
+            params["result"] = {params["stages"][0]: result}
+            self.report_results(params)
+        except (socket.error, paramiko.PasswordRequiredException, ExpectFailed) as e:
+            logging.debug(self.getName() + ": got 'predictable' error during instance testing, %s, ntry: %i" % (e, ntry))
+            time.sleep(10)
             mainq.put((ntry + 1, "test", params))
-            return None
         except Exception, e:
-            logging.error(self.getName() + ": got error during instance testing, %s %s" % (type(e), e))
-            time.sleep(5)
+            logging.error(self.getName() + ": got error during instance testing, %s %s, ntry: %i" % (type(e), e, ntry))
+            time.sleep(10)
             mainq.put((ntry + 1, "test", params))
-            return None
 
-    def create_instance(self, params):
+    def create_instance(self, ntry, params):
+        result = None
         try:
             reg = boto.ec2.get_region(params["region"], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
@@ -329,22 +314,33 @@ class InstanceThread(threading.Thread):
             while myinstance.update() == 'pending' and count < maxwait / 5:
                 logging.debug(params["iname"] + "... waiting..." + str(count))
                 time.sleep(5)
+                count += 1
             connection.close()
-            if count == maxwait / 5:
-                # maxwait seconds is enough to create an instance. If not -- EC2 failed.
-                logging.error("Timeout during instance creation, %s" % e)
-                return None
-            else:
+            if myinstance.update() == 'running':
                 myinstance.add_tag("Name", params["ami"] + " validation")
-                return myinstance.__dict__
+                result =  myinstance.__dict__
+                logging.info(self.getName() + ": created instance " + params["iname"] + ", " + result["id"] + ":" + result["public_dns_name"])
+                # packing creation results into params
+                params["id"] = result["id"]
+                params["public_dns_name"] = result["public_dns_name"]
+                mainq.put((0, "test", params))
+                return
+            else:
+                # maxwait seconds is enough to create an instance. If not -- EC2 failed.
+                logging.error("Error during instance creation, %s" % e)
         except (socket.error, boto.exception.EC2ResponseError), e:
             logging.debug(self.getName() + ": got socket error during instance creation, %s" % e)
-            return None
+            if e.message.find("<Code>InstanceLimitExceeded</Code>") != -1:
+                # InstanceLimit is temporary problem
+                ntry -= 1
         except Exception, e:
             logging.error(self.getName() + ": got error during instance creation, %s %s" % (type(e), e))
-            return None
+        logging.debug(self.getName() + ": something went wrong with " + params["iname"] + " during creation, ntry: " + str(ntry) + ", rescheduling")
+        # reschedule creation
+        time.sleep(10)
+        mainq.put((ntry + 1, "create", params))
 
-    def terminate_instance(self, params):
+    def terminate_instance(self, ntry, params):
         try:
             reg = boto.ec2.get_region(params["region"], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
@@ -355,7 +351,7 @@ class InstanceThread(threading.Thread):
             return res
         except Exception, e:
             logging.error(self.getName() + ": got error during instance termination, %s %s" % (type(e), e))
-            return None
+            mainq.put((ntry + 1, "terminate", params))
 
 
 logging.getLogger('boto').setLevel(logging.CRITICAL)
