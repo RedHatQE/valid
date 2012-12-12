@@ -6,6 +6,8 @@ class testcase_99_reboot(ValidTestcase):
     stages = ["stage1"]
 
     def test(self, connection, params):
+        prod = params["product"].upper()
+        ver = params["version"]
         if prod in ["RHEL", "BETA"] and ver.startswith("6.") and params["hwp"]["name"]=="t1.micro":
             # Creating swap to workaround mem<1024M issue
             self.get_return_value(connection, "head -c $((1024*1024*1024)) /dev/zero > /swap", 120)
