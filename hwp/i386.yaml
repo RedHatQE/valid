@@ -1,3 +1,3 @@
-- {arch: 'i386', cpu: '1', memory: '600000', name: t1.micro}
-- {arch: 'i386', cpu: '1', memory: '1700000', name: m1.small}
-- {arch: 'i386', cpu: '2', memory: '1700000', name: c1.medium}
+- {arch: 'i386', cpu: '1', memory: '600000', name: t1.micro, virtualization: 'paravirtual'}
+- {arch: 'i386', cpu: '1', memory: '1700000', name: m1.small, virtualization: 'paravirtual'}
+- {arch: 'i386', cpu: '2', memory: '1700000', name: c1.medium, virtualization: 'paravirtual'}

@@ -1,1 +1,1 @@
-- {arch: 'x86_64', cpu: '1', memory: '600000', name: m1.small}
+- {arch: 'x86_64', cpu: '1', memory: '600000', name: m1.small, virtualization: 'paravirtual'}
