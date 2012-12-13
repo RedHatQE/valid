@@ -12,6 +12,7 @@ import sets
 import paramiko
 import random
 import string
+import BaseHTTPServer
 
 from patchwork.connection import Connection
 from patchwork.expect import *
@@ -25,8 +26,7 @@ def csv(value):
     return map(str, value.split(","))
 
 argparser = argparse.ArgumentParser(description='Create CloudFormation stack and run the testing')
-argparser.add_argument('--data', required=True,
-                       help='data file for validation')
+argparser.add_argument('--data', help='data file for validation')
 argparser.add_argument('--config',
                        default="/etc/validation.yaml", help='use supplied yaml config file')
 argparser.add_argument('--debug', action='store_const', const=True,
@@ -41,6 +41,8 @@ argparser.add_argument('--numthreads', type=int,
                        default=10, help='number of worker threads')
 argparser.add_argument('--results-dir',
                        default=".", help='put resulting yaml files to specified location')
+argparser.add_argument('--server', action='store_const', const=True,
+                       default=False, help='run HTTP server')
 argparser.add_argument('--settlewait', type=int,
                        default=30, help='wait for instance to settle before testing')
 
@@ -50,6 +52,7 @@ maxwait = args.maxwait
 settlewait = args.settlewait
 resdir = args.results_dir
 num_worker_threads = args.numthreads
+httpserver = args.server
 
 if args.enable_tests:
     enable_tests = set(args.enable_tests)
@@ -142,6 +145,48 @@ def add_data(data):
         logging.info("Validation transaction " + transaction_id + " added")
 
 
+class ServerThread(threading.Thread):
+    def __init__(self, hostname="0.0.0.0", port=8080):
+        threading.Thread.__init__(self)
+        self.hostname = hostname
+        self.port = port
+
+    def run(self):
+        server_class = BaseHTTPServer.HTTPServer
+        httpd = server_class((self.hostname, self.port), HTTPHandler)
+        httpd.serve_forever()
+
+
+class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    def do_HEAD(s):
+        s.send_response(200)
+        s.send_header("Content-type", "text/html")
+        s.end_headers()
+    def do_GET(s):
+        """Respond to a GET request."""
+        s.send_response(200)
+        s.send_header("Content-type", "text/html")
+        s.end_headers()
+        s.wfile.write("<html><head><title>Validation status page</title></head>")
+        s.wfile.write("<body>")
+        # If someone went to "http://something.somewhere.net/foo/bar/",
+        # then s.path equals "/foo/bar/".
+        # s.wfile.write("<p>You accessed path: %s</p>" % s.path)
+        try:
+            s.wfile.write("<h1>Queue</h1>")
+            for q_item in mainq.queue:
+                s.wfile.write("<p>%s</p>" % str(q_item))
+            s.wfile.write("<h1>Result</h1>")
+            with resultdic_lock:
+                for transaction_id in resultdic.keys():
+                    s.wfile.write("<h2>Transaction %s </h2>" % transaction_id)
+                    for ami in resultdic[transaction_id].keys():
+                        s.wfile.write("<h3>Ami %s </h3>" % ami)
+                        s.wfile.write("<p>%s</p>" % str(resultdic[transaction_id][ami]))
+        except:
+            pass
+        s.wfile.write("</body></html>")
+
 
 class ReportingThread(threading.Thread):
     def run(self):
@@ -149,7 +194,7 @@ class ReportingThread(threading.Thread):
             time.sleep(random.randint(2,10))
             self.report_results()
             with resultdic_lock:
-                if resultdic == {}:
+                if resultdic == {} and not httpserver:
                     break
 
     def report_results(self):
@@ -196,7 +241,7 @@ class InstanceThread(threading.Thread):
     def run(self):
         while True:
             with resultdic_lock:
-                if resultdic == {}:
+                if resultdic == {} and not httpserver:
                     break
             if mainq.empty():
                 time.sleep(random.randint(2,10))
@@ -258,8 +303,16 @@ class InstanceThread(threading.Thread):
             (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
             logging.debug(self.getName() + ": ssh-key " + ssh_key)
 
-            con = Connection(instance, "root", ssh_key)
+            for user in ["ec2-user", "cloud-user"]:
+                # If we're able to login with one of these users allow root ssh immediately
+                try:
+                    con = Connection(instance, user, ssh_key)
+                    Expect.ping_pong(con, "uname", "Linux")
+                    Expect.ping_pong(con, "su -c 'cp -af /home/" + user + "/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys'; echo SUCCESS", "\r\nSUCCESS\r\n")
+                except:
+                    pass
 
+            con = Connection(instance, "root", ssh_key)
             Expect.ping_pong(con, "uname", "Linux")
             logging.debug(self.getName() + ": sleeping for " + str(settlewait) + " sec. to make sure instance has been settled.")
             time.sleep(settlewait)
@@ -363,12 +416,16 @@ mainq = Queue.Queue()
 resultdic = {}
 resultdic_lock = threading.Lock()
 
-try:
-    datafd = open(args.data, "r")
-    data = yaml.load(datafd)
-    datafd.close()
-except Exception, e:
-    logging.error("Failed to read data file %s wit error %s" % (args.data, e))
+if args.data:
+    try:
+        datafd = open(args.data, "r")
+        data = yaml.load(datafd)
+        datafd.close()
+    except Exception, e:
+        logging.error("Failed to read data file %s wit error %s" % (args.data, e))
+        sys.exit(1)
+elif not httpserver:
+    logging.error("You need to set --data or --server option!")
     sys.exit(1)
 
 add_data(data)
@@ -379,6 +436,10 @@ for i in range(num_worker_threads):
 
 r = ReportingThread()
 r.start()
+
+if httpserver:
+    s = ServerThread()
+    s.start()
 
 for thread in threading.enumerate():
     if thread is not threading.currentThread():
