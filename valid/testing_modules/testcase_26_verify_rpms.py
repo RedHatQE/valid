@@ -9,6 +9,8 @@ class testcase_26_verify_rpms(ValidTestcase):
         if prod in ["RHEL", "BETA"] and ver.startswith("6."):
             release_pkg = "redhat-release-server"
             rpmv_cmp = "4"
+            if prod in ["RHEL", "BETA"] and ver[:3] in ["6.4"]:
+                rpmv_cmp = "5"
             if prod in ["RHEL", "BETA"] and ver[:3] in ["6.1", "6.3"]:
                 rpmv_cmp = "5"
             elif prod in ["RHEL", "BETA"] and ver.startswith("6.2"):
