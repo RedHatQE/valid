@@ -17,6 +17,7 @@ import testcase_16_selinux
 import testcase_17_shells
 import testcase_18_sshd
 import testcase_19_rhn_system_id
+import testcase_19_1_rhn_certificates
 import testcase_20_auditd
 import testcase_21_disk_size_format
 import testcase_22_gpg_keys
