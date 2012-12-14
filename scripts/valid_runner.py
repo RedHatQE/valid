@@ -12,6 +12,7 @@ import sets
 import paramiko
 import random
 import string
+import traceback
 import BaseHTTPServer
 
 from patchwork.connection import Connection
@@ -101,6 +102,7 @@ for m in sys.modules.keys():
                         testing_stages.append(stage)
         except (AttributeError, TypeError, NameError), e:
             logging.error(self.getName() + ": bad test, %s %s" % (m, e))
+            logging.debug(self.getName() + ":" + traceback.format_exc())
             sys.exit(1)
 testing_stages.sort()
 
@@ -136,7 +138,7 @@ def add_data(data):
                         hwp_found = True
                         break
                     except:
-                        pass
+                        logging.debug(self.getName() + ":" + traceback.format_exc())
                 if not hwp_found:
                     logging.error("HWP for " + params["arch"] + " is not found, skipping dataline for " + params["ami"])
             else:
@@ -184,7 +186,7 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         s.wfile.write("<h3>Ami %s </h3>" % ami)
                         s.wfile.write("<p>%s</p>" % str(resultdic[transaction_id][ami]))
         except:
-            pass
+            logging.debug(self.getName() + ":" + traceback.format_exc())
         s.wfile.write("</body></html>")
 
 
@@ -331,7 +333,7 @@ class InstanceThread(threading.Thread):
                             result[test_name] = test_result
                         else:
                             logging.debug(self.getName() + ": skipping test " + test_name + " for " + params["iname"] + " " +stage)
-                    except (AttributeError, TypeError, NameError), e:
+                    except (AttributeError, TypeError, NameError, IndexError), e:
                         logging.error(self.getName() + ": bad test, %s %s" % (m, e))
                         result[test_name] = "Failure"
 
@@ -348,10 +350,12 @@ class InstanceThread(threading.Thread):
             self.report_results(params)
         except (socket.error, paramiko.PasswordRequiredException, ExpectFailed) as e:
             logging.debug(self.getName() + ": got 'predictable' error during instance testing, %s, ntry: %i" % (e, ntry))
+            logging.debug(self.getName() + ":" + traceback.format_exc())
             time.sleep(10)
             mainq.put((ntry + 1, "test", params))
         except Exception, e:
             logging.error(self.getName() + ": got error during instance testing, %s %s, ntry: %i" % (type(e), e, ntry))
+            logging.debug(self.getName() + ":" + traceback.format_exc())
             time.sleep(10)
             mainq.put((ntry + 1, "test", params))
 
@@ -383,11 +387,13 @@ class InstanceThread(threading.Thread):
                 logging.error("Error during instance creation, %s" % e)
         except (socket.error, boto.exception.EC2ResponseError), e:
             logging.debug(self.getName() + ": got socket error during instance creation, %s" % e)
+            logging.debug(self.getName() + ":" + traceback.format_exc())
             if e.message.find("<Code>InstanceLimitExceeded</Code>") != -1:
                 # InstanceLimit is temporary problem
                 ntry -= 1
         except Exception, e:
             logging.error(self.getName() + ": got error during instance creation, %s %s" % (type(e), e))
+            logging.debug(self.getName() + ":" + traceback.format_exc())
         logging.debug(self.getName() + ": something went wrong with " + params["iname"] + " during creation, ntry: " + str(ntry) + ", rescheduling")
         # reschedule creation
         time.sleep(10)
@@ -404,6 +410,7 @@ class InstanceThread(threading.Thread):
             return res
         except Exception, e:
             logging.error(self.getName() + ": got error during instance termination, %s %s" % (type(e), e))
+            logging.debug(self.getName() + ":" + traceback.format_exc())
             mainq.put((ntry + 1, "terminate", params))
 
 
