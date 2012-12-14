@@ -42,9 +42,9 @@ class testcase_19_1_rhn_certificates(ValidTestcase):
         for cert in cert_files.split():
             date_string = self.get_result(
                 connection,
-                'openssl x509 -in %s -noout -dates | grep notAfter' % file
+                'openssl x509 -in %s -noout -dates | grep notAfter' % cert
             )
-            cert_expiration = datetime(
+            cert_expiration = datetime.strptime(
                 # the date_string has the form:
                 #   notAfter=Nov 11 00:00:00 2020 GMT
                 date_string.split('=')[1],
@@ -52,7 +52,7 @@ class testcase_19_1_rhn_certificates(ValidTestcase):
             )
             self.log.append(
                 {
-                    "result": expiration_date <= cert_date
+                    "result": expiration_date <= cert_expiration
                     and 'passed' or 'failed',
                     "comment": "(%s).notAfter=%s; expecting: %s" %
                     (cert, cert_expiration, expiration_date)
