@@ -101,10 +101,14 @@ for m in sys.modules.keys():
                     if not (stage in testing_stages):
                         testing_stages.append(stage)
         except (AttributeError, TypeError, NameError, IndexError, ValueError), e:
-            logging.error(self.getName() + ": bad test, %s %s" % (m, e))
-            logging.debug(self.getName() + ":" + traceback.format_exc())
+            logging.error("bad test, %s %s" % (m, e))
+            logging.debug(traceback.format_exc())
             sys.exit(1)
 testing_stages.sort()
+
+if testing_stages == []:
+    logging.error("no tests to run, exiting")
+    sys.exit(1)
 
 logging.info("Testing stages %s discovered" % str(testing_stages))
 
