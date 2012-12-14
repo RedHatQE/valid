@@ -37,7 +37,7 @@ class testcase_19_1_rhn_certificates(ValidTestcase):
         except ValueError as e:
             # just log and return in case expiration can't be determined
             self.log.append({"result": "failure", "comment": str(e)})
-            return
+            return self.log
         results = []
         for cert in cert_files.split():
             date_string = self.get_result(
