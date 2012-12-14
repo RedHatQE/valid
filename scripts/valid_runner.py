@@ -25,7 +25,7 @@ import valid
 def csv(value):
     return map(str, value.split(","))
 
-argparser = argparse.ArgumentParser(description='Create CloudFormation stack and run the testing')
+argparser = argparse.ArgumentParser(description='Run cloud image validation')
 argparser.add_argument('--data', help='data file for validation')
 argparser.add_argument('--config',
                        default="/etc/validation.yaml", help='use supplied yaml config file')
