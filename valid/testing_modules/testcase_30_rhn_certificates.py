@@ -18,7 +18,7 @@ def _expiration_date(params):
         raise ValueError("release %s unsupported" % params["version"])
 
 
-class testcase_19_1_rhn_certificates(ValidTestcase):
+class testcase_30_rhn_certificates(ValidTestcase):
     stages = ["stage1"]
 
     def test(self, connection, params):

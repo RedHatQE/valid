@@ -17,7 +17,6 @@ import testcase_16_selinux
 import testcase_17_shells
 import testcase_18_sshd
 import testcase_19_rhn_system_id
-import testcase_19_1_rhn_certificates
 import testcase_20_auditd
 import testcase_21_disk_size_format
 import testcase_22_gpg_keys
@@ -28,7 +27,8 @@ import testcase_26_verify_rpms
 import testcase_27_yum_repos
 import testcase_28_iptables
 import testcase_29_swap_file
-import testcase_30_yum_package_install
-import testcase_31_yum_group_install
-import testcase_32_yum_update
+import testcase_30_rhn_certificates
+import testcase_50_yum_package_install
+import testcase_55_yum_group_install
+import testcase_60_yum_update
 import testcase_99_reboot

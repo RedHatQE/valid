@@ -1,6 +1,6 @@
 from valid.valid_testcase import *
 
-class testcase_32_yum_update(ValidTestcase):
+class testcase_60_yum_update(ValidTestcase):
     stages = ["stage1"]
 
     def test(self, connection, params):

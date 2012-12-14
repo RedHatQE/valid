@@ -1,7 +1,7 @@
 from valid.valid_testcase import *
 import logging
 
-class testcase_30_yum_package_install(ValidTestcase):
+class testcase_50_yum_package_install(ValidTestcase):
     stages = ["stage1"]
 
     def test(self, connection, params):
