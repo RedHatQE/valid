@@ -17,21 +17,20 @@ class testcase_31_subscription_management(ValidTestcase):
             return self.log
         # check subscription-manager plugin is disabled
         self.get_return_value(
-            'yum repolist | grep -i subscription-manager',
+            connection,
+            'yum --disablerepo="*" repolist | grep -i subscription-manager',
             expected_status=1
         )
         # check subscription-manager plugin can be enabled
-        pattern = re.compile(
-            '.*Loaded plugins:[^\n]*subscription-manager.*',
-            re.DOTALL
-        )
-        self.match(
-            'yum --enableplugin=subscription-manager repolist',
-            regexp=pattern
+        self.ping_pong(
+            connection,
+            'yum --enableplugin=subscription-manager --disablerepo="*" repolist',
+            expectation='Loaded plugins:[^\n]*subscription-manager'
         )
         # check system isn't subscribbed
-        pattern = re.compile(
-            '.*^Status:\s*Not.Subscribed.*',
-            re.DOTALL
+        self.ping_pong(
+            connection,
+            'subscription-manager list',
+            expectation='Status:\s*Not.Subscribed'
         )
-        self.match('subscription-manager list', regexp.pattern)
+        return self.log
