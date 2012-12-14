@@ -335,6 +335,7 @@ class InstanceThread(threading.Thread):
                             logging.debug(self.getName() + ": skipping test " + test_name + " for " + params["iname"] + " " +stage)
                     except (AttributeError, TypeError, NameError, IndexError), e:
                         logging.error(self.getName() + ": bad test, %s %s" % (m, e))
+                        logging.debug(self.getName() + ":" + traceback.format_exc())
                         result[test_name] = "Failure"
 
             logging.info(self.getName() + ": done testing for " + params["iname"] + " " + stage)
