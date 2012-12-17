@@ -14,6 +14,7 @@ import random
 import string
 import traceback
 import BaseHTTPServer
+import urlparse
 
 from patchwork.connection import Connection
 from patchwork.expect import *
@@ -148,7 +149,12 @@ def add_data(data):
             else:
                 # we something is missing
                 logging.error("Got invalid data line: " + str(params))
-        logging.info("Validation transaction " + transaction_id + " added")
+        if count > 0:
+            logging.info("Validation transaction " + transaction_id + " added")
+            return transaction_id
+        else:
+            logging.info("No data added")
+            return None
 
 
 class ServerThread(threading.Thread):
@@ -168,6 +174,7 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         s.send_response(200)
         s.send_header("Content-type", "text/html")
         s.end_headers()
+
     def do_GET(s):
         """Respond to a GET request."""
         s.send_response(200)
@@ -192,6 +199,31 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         except:
             logging.debug(self.getName() + ":" + traceback.format_exc())
         s.wfile.write("</body></html>")
+
+    def do_POST(s):
+        """Respond to a POST request."""
+
+        # Extract and print the contents of the POST
+        length = int(s.headers['Content-Length'])
+        try:
+            post_data = urlparse.parse_qs(s.rfile.read(length).decode('utf-8'))
+            if post_data and ("data" in post_data.keys()):
+                data = yaml.load(post_data["data"][0])
+                logging.info("DATA:" + str(data))
+                transaction_id = add_data(data)
+                if not transaction_id:
+                    raise Exception("Bad data")
+                s.send_response(200)
+                s.send_header("Content-type", "text/yaml")
+                s.end_headers()
+                s.wfile.write(yaml.safe_dump({"transaction_id": transaction_id}))
+            else:
+                raise Exception("Bad data")
+        except Exception, e:
+                s.send_response(400)
+                s.send_header("Content-type", "text/plain")
+                s.end_headers()
+                s.wfile.write(e.message)
 
 
 class ReportingThread(threading.Thread):
@@ -353,7 +385,7 @@ class InstanceThread(threading.Thread):
             logging.debug(self.getName() + ": done testing for " + params["iname"] + ", result: " + str(result))
             params["result"] = {params["stages"][0]: result}
             self.report_results(params)
-        except (socket.error, paramiko.PasswordRequiredException, ExpectFailed) as e:
+        except (socket.error, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
             logging.debug(self.getName() + ": got 'predictable' error during instance testing, %s, ntry: %i" % (e, ntry))
             logging.debug(self.getName() + ":" + traceback.format_exc())
             time.sleep(10)
@@ -436,11 +468,10 @@ if args.data:
     except Exception, e:
         logging.error("Failed to read data file %s wit error %s" % (args.data, e))
         sys.exit(1)
+    add_data(data)
 elif not httpserver:
     logging.error("You need to set --data or --server option!")
     sys.exit(1)
-
-add_data(data)
 
 for i in range(num_worker_threads):
     i = InstanceThread()
