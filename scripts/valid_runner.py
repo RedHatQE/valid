@@ -7,6 +7,7 @@ import time
 import logging
 import argparse
 import yaml
+import os
 import sys
 import sets
 import paramiko
@@ -349,16 +350,18 @@ class InstanceThread(threading.Thread):
                 self.report_results(params)
                 continue
             if action == "create":
-                # (iname, hwp, product, arch, region, itype, version, ami) = params
+                # create an instance
                 logging.debug(self.getName() + ": picking up " + params["iname"])
                 self.create_instance(ntry, params)
+            elif action == "setup":
+                # setup instance for testing
+                logging.debug(self.getName() + ": doing setup for " + params["iname"])
+                res = self.do_setup(ntry, params)
             elif action == "test":
-                # (iname, hwp, product, arch, region, itype, version, ami, id, public_dns_name) = params
                 # do some testing
                 logging.debug(self.getName() + ": doing testing for " + params["iname"])
                 res = self.do_testing(ntry, params)
             elif action == "terminate":
-                # (iname, hwp, product, arch, region, itype, version, ami, id, public_dns_name, result) = params
                 # terminate instance
                 logging.debug(self.getName() + ": terminating " + params["iname"])
                 self.terminate_instance(ntry, params)
@@ -374,22 +377,14 @@ class InstanceThread(threading.Thread):
                             "result": params["result"]}
             resultdic[params["transaction_id"]][params["ami"]]["instances"].append(report_value)
 
-
-    def do_testing(self, ntry, params):
+    def do_setup(self, ntry, params):
         try:
-            result = {}
-            logging.debug(self.getName() + ": doing testing for " + params["public_dns_name"])
+            logging.debug(self.getName() + ": doing setup for " + params["public_dns_name"])
 
             instance = {}
-            if params["public_dns_name"]:
-                instance["private_hostname"] = params["public_dns_name"]
-            else:
-                instance["private_hostname"] = params["private_ip_address"]
+            instance["private_hostname"] = params["public_dns_name"]
             instance["public_hostname"] = instance["private_hostname"]
             instance["type"] = params["hwp"]["name"]
-
-
-            stage = params["stages"][0]
 
             (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
             logging.debug(self.getName() + ": ssh-key " + ssh_key)
@@ -408,11 +403,10 @@ class InstanceThread(threading.Thread):
             logging.debug(self.getName() + ": sleeping for " + str(settlewait) + " sec. to make sure instance has been settled.")
             time.sleep(settlewait)
 
-            if "setup" in params and params["setup"]:
-                import os
+            if "setup" in yamlconfig:
                 # upload and execute a setup script as root in /tmp/
-                logging.info(self.getName() + ": executing setup script: %s" % params["setup"])
-                local_script_path = os.path.expandvars(os.path.expanduser(params["setup"]))
+                logging.debug(self.getName() + ": executing setup script: %s" % yamlconfig["setup"])
+                local_script_path = os.path.expandvars(os.path.expanduser(yamlconfig["setup"]))
                 remote_script_path = "/tmp/" + os.path.basename(local_script_path)
                 try:
                     con.sftp.put(local_script_path, remote_script_path)
@@ -420,6 +414,36 @@ class InstanceThread(threading.Thread):
                     command(con, remote_script_path)
                 except:
                     logging.debug(self.getName() + ": " + traceback.format_exc())
+
+            mainq.put((0, "test", params))
+        except (socket.error, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
+            logging.debug(self.getName() + ": got 'predictable' error during instance setup, %s, ntry: %i" % (e, ntry))
+            logging.debug(self.getName() + ":" + traceback.format_exc())
+            time.sleep(10)
+            mainq.put((ntry + 1, "setup", params))
+        except Exception, e:
+            logging.error(self.getName() + ": got error during instance setup, %s %s, ntry: %i" % (type(e), e, ntry))
+            logging.debug(self.getName() + ":" + traceback.format_exc())
+            time.sleep(10)
+            mainq.put((ntry + 1, "setup", params))
+
+    def do_testing(self, ntry, params):
+        try:
+            result = {}
+            logging.debug(self.getName() + ": doing testing for " + params["public_dns_name"])
+
+            instance = {}
+            instance["private_hostname"] = params["public_dns_name"]
+            instance["public_hostname"] = instance["private_hostname"]
+            instance["type"] = params["hwp"]["name"]
+
+            stage = params["stages"][0]
+
+            (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
+            logging.debug(self.getName() + ": ssh-key " + ssh_key)
+
+            con = Connection(instance, "root", ssh_key)
+            Expect.ping_pong(con, "uname", "Linux")
 
             logging.info(self.getName() + ": doing testing for " + params["iname"] + " " + stage)
 
@@ -492,9 +516,12 @@ class InstanceThread(threading.Thread):
                 logging.info(self.getName() + ": created instance " + params["iname"] + ", " + result["id"] + ":" + result["public_dns_name"])
                 # packing creation results into params
                 params["id"] = result["id"]
-                params["public_dns_name"] = result["public_dns_name"]
+                if result["public_dns_name"] != "":
+                    params["public_dns_name"] = result["public_dns_name"]
+                else:
+                    params["public_dns_name"] = result["private_ip_address"]
                 params["private_ip_address"] = result["private_ip_address"]
-                mainq.put((0, "test", params))
+                mainq.put((0, "setup", params))
                 return
             else:
                 # maxwait seconds is enough to create an instance. If not -- EC2 failed.
@@ -545,9 +572,6 @@ if args.data:
     try:
         datafd = open(args.data, "r")
         data = yaml.load(datafd)
-        # override any setup scripts if present in config
-        if "setup" in yamlconfig:
-            data["setup"] = yamlconfig["setup"]
         datafd.close()
     except Exception, e:
         logging.error("Failed to read data file %s wit error %s" % (args.data, e))
