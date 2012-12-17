@@ -143,7 +143,7 @@ def add_data(data):
                         hwp_found = True
                         break
                     except:
-                        logging.debug(self.getName() + ":" + traceback.format_exc())
+                        logging.debug(":" + traceback.format_exc())
                 if not hwp_found:
                     logging.error("HWP for " + params["arch"] + " is not found, skipping dataline for " + params["ami"])
             else:
@@ -156,6 +156,12 @@ def add_data(data):
             logging.info("No data added")
             return None
 
+def command(connection, command):
+    Expect.ping_pong(
+        connection,
+        "%s && echo SUCCESS" % command,
+        "\r\nSUCCESS\r\n"
+    )
 
 class ServerThread(threading.Thread):
     def __init__(self, hostname="0.0.0.0", port=8080):
@@ -326,15 +332,20 @@ class InstanceThread(threading.Thread):
                             "result": params["result"]}
             resultdic[params["transaction_id"]][params["ami"]]["instances"].append(report_value)
 
+
     def do_testing(self, ntry, params):
         try:
             result = {}
             logging.debug(self.getName() + ": doing testing for " + params["public_dns_name"])
 
             instance = {}
-            instance["private_hostname"] = params["public_dns_name"]
-            instance["public_hostname"] = params["public_dns_name"]
+            if params["public_dns_name"]:
+                instance["private_hostname"] = params["public_dns_name"]
+            else:
+                instance["private_hostname"] = params["private_ip_address"]
+            instance["public_hostname"] = instance["private_hostname"]
             instance["type"] = params["hwp"]["name"]
+
 
             stage = params["stages"][0]
 
@@ -346,7 +357,7 @@ class InstanceThread(threading.Thread):
                 try:
                     con = Connection(instance, user, ssh_key)
                     Expect.ping_pong(con, "uname", "Linux")
-                    Expect.ping_pong(con, "su -c 'cp -af /home/" + user + "/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys'; echo SUCCESS", "\r\nSUCCESS\r\n")
+                    command(con, "su -c 'cp -af /home/" + user + "/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys'")
                 except:
                     pass
 
@@ -354,6 +365,19 @@ class InstanceThread(threading.Thread):
             Expect.ping_pong(con, "uname", "Linux")
             logging.debug(self.getName() + ": sleeping for " + str(settlewait) + " sec. to make sure instance has been settled.")
             time.sleep(settlewait)
+
+            if "setup" in params and params["setup"]:
+                import os
+                # upload and execute a setup script as root in /tmp/
+                logging.info(self.getName() + ": executing setup script: %s" % params["setup"])
+                local_script_path = os.path.expandvars(os.path.expanduser(params["setup"]))
+                remote_script_path = "/tmp/" + os.path.basename(local_script_path)
+                try:
+                    con.sftp.put(local_script_path, remote_script_path)
+                    con.sftp.chmod(remote_script_path, 0700)
+                    command(con, remote_script_path)
+                except:
+                    logging.debug(self.getName() + ": " + traceback.format_exc())
 
             logging.info(self.getName() + ": doing testing for " + params["iname"] + " " + stage)
 
@@ -402,7 +426,17 @@ class InstanceThread(threading.Thread):
             reg = boto.ec2.get_region(params["region"], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
-            reservation = connection.run_instances(params["ami"], instance_type=params["hwp"]["name"], key_name=ssh_key_name, block_device_map=bmap)
+            # all handled params to be put in here
+            boto_params = ["ami", "subnet_id"]
+            for param in boto_params:
+                params.setdefault(param)
+            reservation = connection.run_instances(
+                params["ami"],
+                instance_type=params["hwp"]["name"],
+                key_name=ssh_key_name,
+                block_device_map=bmap,
+                subnet_id=params["subnet_id"]
+            )
             myinstance = reservation.instances[0]
             count = 0
             while myinstance.update() == 'pending' and count < maxwait / 5:
@@ -417,6 +451,7 @@ class InstanceThread(threading.Thread):
                 # packing creation results into params
                 params["id"] = result["id"]
                 params["public_dns_name"] = result["public_dns_name"]
+                params["private_ip_address"] = result["private_ip_address"]
                 mainq.put((0, "test", params))
                 return
             else:
@@ -459,11 +494,13 @@ mainq = Queue.Queue()
 # resulting dictionary
 resultdic = {}
 resultdic_lock = threading.Lock()
-
 if args.data:
     try:
         datafd = open(args.data, "r")
         data = yaml.load(datafd)
+        # override any setup scripts if present in config
+        if "setup" in yamlconfig:
+            data["setup"] = yamlconfig["setup"]
         datafd.close()
     except Exception, e:
         logging.error("Failed to read data file %s wit error %s" % (args.data, e))
