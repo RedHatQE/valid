@@ -1,5 +1,6 @@
 from valid.valid_testcase import *
 
+
 class testcase_16_selinux(ValidTestcase):
     stages = ["stage1"]
 

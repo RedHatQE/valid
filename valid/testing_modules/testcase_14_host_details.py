@@ -1,6 +1,7 @@
 from valid.valid_testcase import *
 import json
 
+
 class testcase_14_host_details(ValidTestcase):
     stages = ["stage1"]
 
@@ -11,7 +12,7 @@ class testcase_14_host_details(ValidTestcase):
         if json_str:
             try:
                 js = json.loads(json_str[0])
-                if "billingProducts" in js.keys() and js["billingProducts"]!=None:
+                if "billingProducts" in js.keys() and js["billingProducts"] != None:
                     billingProduct = js["billingProducts"][0]
                 else:
                     billingProduct = ""

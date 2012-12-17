@@ -1,18 +1,19 @@
 from valid.valid_testcase import *
 
+
 class testcase_21_disk_size_format(ValidTestcase):
     stages = ["stage1"]
 
     def test(self, connection, params):
-        disks = self.get_result(connection,  "mount | grep '^/dev' | awk '{print $1}'")
+        disks = self.get_result(connection, "mount | grep '^/dev' | awk '{print $1}'")
         if disks:
-            mpoint = self.match(connection,  "echo '###' ;mount | grep '^%s' | awk '{print $3}'; echo '###'" % disks[0], re.compile(".*\r\n###\r\n(.*)\r\n###\r\n.*", re.DOTALL))
-            fs = self.match(connection,  "echo '###' ;mount | grep '^%s' | awk '{print $5}'; echo '###'" % disks[0], re.compile(".*\r\n###\r\n(.*)\r\n###\r\n.*", re.DOTALL))
+            mpoint = self.match(connection, "echo '###' ;mount | grep '^%s' | awk '{print $3}'; echo '###'" % disks[0], re.compile(".*\r\n###\r\n(.*)\r\n###\r\n.*", re.DOTALL))
+            fs = self.match(connection, "echo '###' ;mount | grep '^%s' | awk '{print $5}'; echo '###'" % disks[0], re.compile(".*\r\n###\r\n(.*)\r\n###\r\n.*", re.DOTALL))
             if mpoint and fs:
                 for disk in disks[0].split():
                     self.get_return_value(connection, "[ `df -k %s | awk '{ print $2 }' | tail -n 1` -gt 3937219 ]" % disk)
-                    if mpoint[0]=='/' and ((params["product"].upper() == "RHEL" or params["product"].upper() == "BETA") and params["version"].startswith("6.")):
-                        self.get_return_value(connection, "[ %s = ext4 ]"  % fs[0])
+                    if mpoint[0] == '/' and ((params["product"].upper() == "RHEL" or params["product"].upper() == "BETA") and params["version"].startswith("6.")):
+                        self.get_return_value(connection, "[ %s = ext4 ]" % fs[0])
                     else:
                         self.get_return_value(connection, "[ %s = ext3 ]" % fs[0])
         return self.log

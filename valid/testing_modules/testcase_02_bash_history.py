@@ -1,5 +1,6 @@
 from valid.valid_testcase import *
 
+
 class testcase_02_bash_history(ValidTestcase):
     stages = ["stage1"]
 

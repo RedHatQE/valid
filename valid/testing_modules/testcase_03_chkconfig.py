@@ -1,5 +1,6 @@
 from valid.valid_testcase import *
 
+
 class testcase_03_chkconfig(ValidTestcase):
     stages = ["stage1"]
 

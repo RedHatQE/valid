@@ -1,5 +1,6 @@
 from valid.valid_testcase import *
 
+
 class testcase_28_iptables(ValidTestcase):
     stages = ["stage1"]
 

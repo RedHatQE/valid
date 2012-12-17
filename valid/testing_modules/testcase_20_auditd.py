@@ -1,5 +1,6 @@
 from valid.valid_testcase import *
 
+
 class testcase_20_auditd(ValidTestcase):
     stages = ["stage1"]
 

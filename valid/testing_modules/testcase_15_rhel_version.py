@@ -1,5 +1,6 @@
 from valid.valid_testcase import *
 
+
 class testcase_15_rhel_version(ValidTestcase):
     stages = ["stage1"]
 

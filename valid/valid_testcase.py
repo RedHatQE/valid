@@ -2,6 +2,7 @@ import re
 import logging
 from patchwork.expect import *
 
+
 class ValidTestcase(object):
     def __init__(self):
         self.log = []

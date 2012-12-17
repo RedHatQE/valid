@@ -1,5 +1,6 @@
 from valid.valid_testcase import *
 
+
 class testcase_22_gpg_keys(ValidTestcase):
     stages = ["stage1"]
 

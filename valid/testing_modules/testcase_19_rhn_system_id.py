@@ -1,5 +1,6 @@
 from valid.valid_testcase import *
 
+
 class testcase_19_rhn_system_id(ValidTestcase):
     stages = ["stage1"]
 

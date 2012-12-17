@@ -24,6 +24,7 @@ from boto.ec2.blockdevicemapping import BlockDeviceMapping
 
 import valid
 
+
 def csv(value):
     return map(str, value.split(","))
 
@@ -112,6 +113,7 @@ if testing_stages == []:
     sys.exit(1)
 
 logging.info("Testing stages %s discovered" % str(testing_stages))
+
 
 def add_data(data):
     with resultdic_lock:
@@ -266,7 +268,7 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 class ReportingThread(threading.Thread):
     def run(self):
         while True:
-            time.sleep(random.randint(2,10))
+            time.sleep(random.randint(2, 10))
             self.report_results()
             with resultdic_lock:
                 if resultdic == {} and not httpserver:
@@ -322,7 +324,7 @@ class InstanceThread(threading.Thread):
                 if resultdic == {} and not httpserver:
                     break
             if mainq.empty():
-                time.sleep(random.randint(2,10))
+                time.sleep(random.randint(2, 10))
                 continue
             try:
                 (ntry, action, params) = mainq.get()
@@ -405,10 +407,10 @@ class InstanceThread(threading.Thread):
                         if (stage in testcase.stages) and ((enable_tests and test_name in enable_tests) or (not enable_tests and not test_name in disable_tests)):
                             logging.debug(self.getName() + ": doing test " + test_name + " for " + params["iname"] + " " + stage)
                             test_result = testcase.test(con, params)
-                            logging.debug(self.getName() + ": " +params["iname"] + ": test " + test_name + " finised with " + str(test_result))
+                            logging.debug(self.getName() + ": " + params["iname"] + ": test " + test_name + " finised with " + str(test_result))
                             result[test_name] = test_result
                         else:
-                            logging.debug(self.getName() + ": skipping test " + test_name + " for " + params["iname"] + " " +stage)
+                            logging.debug(self.getName() + ": skipping test " + test_name + " for " + params["iname"] + " " + stage)
                     except (AttributeError, TypeError, NameError, IndexError, ValueError), e:
                         logging.error(self.getName() + ": bad test, %s %s" % (m, e))
                         logging.debug(self.getName() + ":" + traceback.format_exc())
@@ -417,7 +419,7 @@ class InstanceThread(threading.Thread):
             logging.info(self.getName() + ": done testing for " + params["iname"] + " " + stage)
 
             params_new = params.copy()
-            if len(params["stages"])>1:
+            if len(params["stages"]) > 1:
                 params_new["stages"] = params["stages"][1:]
                 mainq.put((0, "test", params_new))
             else:
@@ -452,7 +454,7 @@ class InstanceThread(threading.Thread):
             connection.close()
             if myinstance.update() == 'running':
                 myinstance.add_tag("Name", params["ami"] + " validation")
-                result =  myinstance.__dict__
+                result = myinstance.__dict__
                 logging.info(self.getName() + ": created instance " + params["iname"] + ", " + result["id"] + ":" + result["public_dns_name"])
                 # packing creation results into params
                 params["id"] = result["id"]

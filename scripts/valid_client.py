@@ -36,4 +36,3 @@ elif args.get:
 else:
     sys.stderr.write("You should specify either '--get' or '--add' option!\n")
     sys.exit(1)
-

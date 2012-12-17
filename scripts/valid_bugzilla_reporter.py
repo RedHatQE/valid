@@ -77,7 +77,6 @@ for ami in result:
                                 for command in test_result:
                                     for key in command.keys():
                                         bug_description += "\t%s: %s\n" % (key, command[key])
-                                
                 else:
                     bug_description += "stage testing failed!\n"
                     overall_result = "failure"
