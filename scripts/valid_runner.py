@@ -177,28 +177,65 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_GET(s):
         """Respond to a GET request."""
-        s.send_response(200)
-        s.send_header("Content-type", "text/html")
-        s.end_headers()
-        s.wfile.write("<html><head><title>Validation status page</title></head>")
-        s.wfile.write("<body>")
-        # If someone went to "http://something.somewhere.net/foo/bar/",
-        # then s.path equals "/foo/bar/".
-        # s.wfile.write("<p>You accessed path: %s</p>" % s.path)
         try:
-            s.wfile.write("<h1>Queue</h1>")
-            for q_item in mainq.queue:
-                s.wfile.write("<p>%s</p>" % str(q_item))
-            s.wfile.write("<h1>Result</h1>")
-            with resultdic_lock:
-                for transaction_id in resultdic.keys():
-                    s.wfile.write("<h2>Transaction %s </h2>" % transaction_id)
-                    for ami in resultdic[transaction_id].keys():
-                        s.wfile.write("<h3>Ami %s </h3>" % ami)
-                        s.wfile.write("<p>%s</p>" % str(resultdic[transaction_id][ami]))
-        except:
-            logging.debug(self.getName() + ":" + traceback.format_exc())
-        s.wfile.write("</body></html>")
+            path = urlparse.urlparse(s.path).path
+            query = urlparse.parse_qs(urlparse.urlparse(s.path).query)
+            logging.debug("GET request: " + s.path)
+            if path[-1:] == "/":
+                path = path[:-1]
+            if path == "":
+                # info page
+                s.send_response(200)
+                s.send_header("Content-type", "text/html")
+                s.end_headers()
+                s.wfile.write("<html><head><title>Validation status page</title></head>")
+                s.wfile.write("<body>")
+                s.wfile.write("<h1>Worker's queue</h1>")
+                for q_item in mainq.queue:
+                    s.wfile.write("<p>%s</p>" % str(q_item))
+                s.wfile.write("<h1>Ongoing testing</h1>")
+                with resultdic_lock:
+                    for transaction_id in resultdic.keys():
+                        s.wfile.write("<h2>Transaction <a href=/result?transaction_id=%s>%s</a></h2>" % (transaction_id, transaction_id))
+                        for ami in resultdic[transaction_id].keys():
+                            s.wfile.write("<h3>Ami %s </h3>" % ami)
+                            s.wfile.write("<p>%s</p>" % str(resultdic[transaction_id][ami]))
+                s.wfile.write("<h1>Finished testing</h1>")
+                with resultdic_yaml_lock:
+                    for transaction_id in resultdic_yaml.keys():
+                        s.wfile.write("<h2>Transaction <a href=/result?transaction_id=%s>%s</a></h2>" % (transaction_id, transaction_id))
+                s.wfile.write("</body></html>")
+            elif path == "/result":
+                # transaction result in yaml
+                if not "transaction_id" in query.keys():
+                    raise Exception("transaction_id parameter is not set")
+                transaction_id = query["transaction_id"][0]
+                with resultdic_yaml_lock:
+                    if transaction_id in resultdic_yaml.keys():
+                        s.send_response(200)
+                        s.send_header("Content-type", "text/yaml")
+                        s.end_headers()
+                        s.wfile.write(resultdic_yaml[transaction_id])
+                    else:
+                        with resultdic_lock:
+                            if transaction_id in resultdic.keys():
+                                s.send_response(200)
+                                s.send_header("Content-type", "text/yaml")
+                                s.end_headers()
+                                s.wfile.write(yaml.safe_dump({"result": "In progress"}))
+                            else:
+                                raise Exception("No such transaction")
+            else:
+                s.send_response(404)
+                s.send_header("Content-type", "text/html")
+                s.end_headers()
+                s.wfile.write("<html><body>Bad url</body></html>")
+        except Exception, e:
+            s.send_response(400)
+            s.send_header("Content-type", "text/plain")
+            s.end_headers()
+            s.wfile.write(e.message)
+            logging.debug("HTTP Server:" + traceback.format_exc())
 
     def do_POST(s):
         """Respond to a POST request."""
@@ -209,7 +246,7 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             post_data = urlparse.parse_qs(s.rfile.read(length).decode('utf-8'))
             if post_data and ("data" in post_data.keys()):
                 data = yaml.load(post_data["data"][0])
-                logging.info("DATA:" + str(data))
+                logging.debug("POST DATA:" + str(data))
                 transaction_id = add_data(data)
                 if not transaction_id:
                     raise Exception("Bad data")
@@ -266,8 +303,11 @@ class ReportingThread(threading.Thread):
                             else:
                                 result_item["result"][instance["instance_type"]].update(instance["result"])
                         result.append(result_item)
-                    result_fd.write(yaml.safe_dump(result))
+                    result_yaml = yaml.safe_dump(result)
+                    result_fd.write(result_yaml)
                     result_fd.close()
+                    with resultdic_yaml_lock:
+                        resultdic_yaml[transaction_id] = result_yaml
                     logging.info("Transaction " + transaction_id + " finished. Result: " + resfile)
                     resultdic.pop(transaction_id)
 
@@ -459,6 +499,10 @@ mainq = Queue.Queue()
 # resulting dictionary
 resultdic = {}
 resultdic_lock = threading.Lock()
+
+# resulting dictionary
+resultdic_yaml = {}
+resultdic_yaml_lock = threading.Lock()
 
 if args.data:
     try:
