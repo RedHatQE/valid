@@ -1,5 +1,5 @@
 Name:		valid
-Version:	0.2
+Version:	0.3
 Release:	1%{?dist}
 Summary:	Image validation (threaded)
 
@@ -36,6 +36,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%name
 
 %changelog
+* Mon Dec 17 2012 Vitaly Kuznetsov <vitty@redhat.com> 0.3-1
+- new version
 * Wed Dec 05 2012 Vitaly Kuznetsov <vitty@redhat.com> 0.2-1
 - new package built with tito
 

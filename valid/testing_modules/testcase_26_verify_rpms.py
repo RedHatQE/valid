@@ -1,5 +1,6 @@
 from valid.valid_testcase import *
 
+
 class testcase_26_verify_rpms(ValidTestcase):
     stages = ["stage1"]
 
@@ -28,7 +29,7 @@ class testcase_26_verify_rpms(ValidTestcase):
 
         rpmv = self.get_result(connection, "rpm -Va --nomtime --nosize --nomd5 | sort -fu | wc -l", 90)
         rpmrel = self.get_result(connection, "rpm -q --queryformat '%{RELEASE}\n' " + release_pkg + " | cut -d. -f1,2")
-        
+
         if rpmv:
             self.get_return_value(connection, "[ %s = %s ]" % (rpmv, rpmv_cmp))
             self.get_return_value(connection, "[ %s = %s ]" % (rpmrel, ver))

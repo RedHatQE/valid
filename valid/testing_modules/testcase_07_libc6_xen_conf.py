@@ -1,5 +1,6 @@
 from valid.valid_testcase import *
 
+
 class testcase_07_libc6_xen_conf(ValidTestcase):
     stages = ["stage1"]
 

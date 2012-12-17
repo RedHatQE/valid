@@ -1,5 +1,6 @@
 from valid.valid_testcase import *
 
+
 class testcase_55_yum_group_install(ValidTestcase):
     stages = ["stage1"]
 

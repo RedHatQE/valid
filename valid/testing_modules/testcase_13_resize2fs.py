@@ -1,10 +1,11 @@
 from valid.valid_testcase import *
 
+
 class testcase_13_resize2fs(ValidTestcase):
     stages = ["stage1"]
 
     def test(self, connection, params):
-        if params["hwp"]["virtualization"]!="hvm":
+        if params["hwp"]["virtualization"] != "hvm":
             if (params["product"].upper() == "RHEL" or params["product"].upper() == "BETA") and params["version"].startswith("6."):
                 self.get_return_value(connection, "if [ -b /dev/xvde1 ]; then resize2fs -p /dev/xvde1 15000M ; else resize2fs -p /dev/xvda1 15000M; fi", 90)
                 self.get_return_value(connection, "df -h | grep 15G")

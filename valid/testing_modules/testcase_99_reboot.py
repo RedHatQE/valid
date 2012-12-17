@@ -2,6 +2,7 @@ from valid.valid_testcase import *
 import paramiko
 import time
 
+
 class testcase_99_reboot(ValidTestcase):
     stages = ["stage1"]
 
