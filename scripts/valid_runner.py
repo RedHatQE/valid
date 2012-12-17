@@ -340,7 +340,7 @@ class InstanceThread(threading.Thread):
                 continue
             if ntry > maxtries:
                 logging.error(self.getName() + ": " + action + ":" + str(params) + " failed after " + str(maxtries) + " tries")
-                if action in ["create", "terminate"]:
+                if action in ["create", "terminate", "setup"]:
                     params["result"] = {action: "failure"}
                 else:
                     params["result"] = {params["stages"][0]: "failure"}
