@@ -530,6 +530,20 @@ if httpserver:
     s = ServerThread()
     s.start()
 
-for thread in threading.enumerate():
-    if thread is not threading.currentThread():
-        thread.join()
+try:
+    threads_exist = True
+    while threads_exist:
+        threads_exist = False
+        for thread in threading.enumerate():
+            if thread is not threading.currentThread():
+                threads_exist = True
+                thread.join(2)
+except KeyboardInterrupt:
+    print "Got CTRL-C, exiting"
+    for thread in threading.enumerate():
+        if thread is not threading.currentThread() and thread.isAlive():
+            try:
+                thread._Thread__stop()
+            except:
+                print(str(thread.getName()) + ' could not be terminated')
+    sys.exit(1)
