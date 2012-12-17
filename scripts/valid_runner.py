@@ -13,6 +13,7 @@ import sets
 import paramiko
 import random
 import string
+import tempfile
 import traceback
 import BaseHTTPServer
 import urlparse
@@ -403,17 +404,24 @@ class InstanceThread(threading.Thread):
             logging.debug(self.getName() + ": sleeping for " + str(settlewait) + " sec. to make sure instance has been settled.")
             time.sleep(settlewait)
 
+            setup_scripts = []
             if "setup" in yamlconfig:
                 # upload and execute a setup script as root in /tmp/
-                logging.debug(self.getName() + ": executing setup script: %s" % yamlconfig["setup"])
+                logging.debug(self.getName() + ": executing global setup script: %s" % yamlconfig["setup"])
                 local_script_path = os.path.expandvars(os.path.expanduser(yamlconfig["setup"]))
-                remote_script_path = "/tmp/" + os.path.basename(local_script_path)
-                try:
-                    con.sftp.put(local_script_path, remote_script_path)
-                    con.sftp.chmod(remote_script_path, 0700)
-                    command(con, remote_script_path)
-                except:
-                    logging.debug(self.getName() + ": " + traceback.format_exc())
+                setup_scripts.append(local_script_path)
+            tf = tempfile.NamedTemporaryFile(delete=False)
+            if "setup" in params.keys() and params["setup"]:
+                logging.debug(self.getName() + ": executing ami-specific setup script: %s" % params["setup"])
+                tf.write(params["setup"])
+                setup_scripts.append(tf.name)
+            tf.close()
+            for script in setup_scripts:
+                remote_script_path = "/tmp/" + os.path.basename(script)
+                con.sftp.put(script, remote_script_path)
+                con.sftp.chmod(remote_script_path, 0700)
+                command(con, remote_script_path)
+            os.unlink(tf.name)
 
             mainq.put((0, "test", params))
         except (socket.error, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
