@@ -1,0 +1,1 @@
+- {ami: ami-9980baed, arch: x86_64_m1.small_only, itype: hourly, product: Fedora, region: eu-west-1, version: '17', setup: 'touch /local_script_executed2'}
