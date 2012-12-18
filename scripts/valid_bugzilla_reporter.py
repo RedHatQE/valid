@@ -75,8 +75,10 @@ for ami in result:
                             else:
                                 bug_description += "test %s failed\n" % test
                                 for command in test_result:
-                                    for key in command.keys():
+                                    bug_description += "--->\n"
+                                    for key in sorted(command.keys()):
                                         bug_description += "\t%s: %s\n" % (key, command[key])
+                                    bug_description += "<---\n"
                 else:
                     bug_description += "stage testing failed!\n"
                     overall_result = "failure"
