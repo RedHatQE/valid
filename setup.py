@@ -17,7 +17,8 @@ setup(name='valid',
              ('share/valid/hwp', glob.glob('hwp/*.yaml')),
              ('share/valid/data', glob.glob('data/*')),
              ('share/valid/examples', glob.glob('examples/*.yaml')),
-             ('/etc', ['etc/validation.yaml'])
+             ('/etc', ['etc/validation.yaml']),
+             ('/etc/valid', ['etc/setup_script.sh'])
     ],
     classifiers=[
             'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
