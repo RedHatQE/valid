@@ -140,10 +140,14 @@ def add_data(data):
         resultdic[transaction_id] = {}
         count = 0
         for params in data:
-            minimal_set = set(["product", "arch", "region", "itype", "version", "ami"])
+            mandatory_fields = ["product", "arch", "region", "itype", "version", "ami"]
+            minimal_set = set(mandatory_fields)
             exact_set = set(params.keys())
             if minimal_set.issubset(exact_set):
                 # we have all required keys
+                for field in mandatory_fields:
+                    if type(params[field]) != str:
+                        params[field] = str(params[field])
                 logging.debug("Got valid data line " + str(params))
                 hwp_found = False
                 for hwpdir in ["hwp", "/usr/share/valid/hwp"]:
@@ -409,7 +413,7 @@ class InstanceThread(threading.Thread):
                 try:
                     con = Connection(params["instance"], user, ssh_key)
                     Expect.ping_pong(con, "uname", "Linux")
-                    remote_command(con, "su -c 'cp -af /home/" + user + "/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys'")
+                    Expect.ping_pong(con, "su -c 'cp -af /home/" + user + "/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys' && echo SUCCESS", "\r\nSUCCESS\r\n")
                 except:
                     pass
 
