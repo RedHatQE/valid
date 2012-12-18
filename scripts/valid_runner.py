@@ -380,26 +380,19 @@ class InstanceThread(threading.Thread):
 
     def do_setup(self, ntry, params):
         try:
-            logging.debug(self.getName() + ": doing setup for " + params["public_dns_name"])
-
-            instance = {}
-            instance["private_hostname"] = params["public_dns_name"]
-            instance["public_hostname"] = instance["private_hostname"]
-            instance["type"] = params["hwp"]["name"]
-
             (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
             logging.debug(self.getName() + ": ssh-key " + ssh_key)
 
             for user in ["ec2-user", "cloud-user"]:
                 # If we're able to login with one of these users allow root ssh immediately
                 try:
-                    con = Connection(instance, user, ssh_key)
+                    con = Connection(params["instance"], user, ssh_key)
                     Expect.ping_pong(con, "uname", "Linux")
                     command(con, "su -c 'cp -af /home/" + user + "/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys'")
                 except:
                     pass
 
-            con = Connection(instance, "root", ssh_key)
+            con = Connection(params["instance"], "root", ssh_key)
             Expect.ping_pong(con, "uname", "Linux")
             logging.debug(self.getName() + ": sleeping for " + str(settlewait) + " sec. to make sure instance has been settled.")
             time.sleep(settlewait)
@@ -438,19 +431,13 @@ class InstanceThread(threading.Thread):
     def do_testing(self, ntry, params):
         try:
             result = {}
-            logging.debug(self.getName() + ": doing testing for " + params["public_dns_name"])
-
-            instance = {}
-            instance["private_hostname"] = params["public_dns_name"]
-            instance["public_hostname"] = instance["private_hostname"]
-            instance["type"] = params["hwp"]["name"]
 
             stage = params["stages"][0]
 
             (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
             logging.debug(self.getName() + ": ssh-key " + ssh_key)
 
-            con = Connection(instance, "root", ssh_key)
+            con = Connection(params["instance"], "root", ssh_key)
             Expect.ping_pong(con, "uname", "Linux")
 
             logging.info(self.getName() + ": doing testing for " + params["iname"] + " " + stage)
@@ -524,11 +511,7 @@ class InstanceThread(threading.Thread):
                 logging.info(self.getName() + ": created instance " + params["iname"] + ", " + result["id"] + ":" + result["public_dns_name"])
                 # packing creation results into params
                 params["id"] = result["id"]
-                if result["public_dns_name"] != "":
-                    params["public_dns_name"] = result["public_dns_name"]
-                else:
-                    params["public_dns_name"] = result["private_ip_address"]
-                params["private_ip_address"] = result["private_ip_address"]
+                params["instance"] = result.copy()
                 mainq.put((0, "setup", params))
                 return
             else:
