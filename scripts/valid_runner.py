@@ -160,12 +160,10 @@ def add_data(data):
             logging.info("No data added")
             return None
 
-def command(connection, command):
-    Expect.ping_pong(
-        connection,
-        "%s && echo SUCCESS" % command,
-        "\r\nSUCCESS\r\n"
-    )
+def remote_command(connection, command, timeout=5):
+    status = connection.recv_exit_status(command + " >/dev/null 2>&1", timeout)
+    if status != 0:
+        raise ExpectFailed("Command " + command + " failed with " + str(status) + " status.")
 
 class ServerThread(threading.Thread):
     def __init__(self, hostname="0.0.0.0", port=8080):
@@ -388,12 +386,12 @@ class InstanceThread(threading.Thread):
                 try:
                     con = Connection(params["instance"], user, ssh_key)
                     Expect.ping_pong(con, "uname", "Linux")
-                    command(con, "su -c 'cp -af /home/" + user + "/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys'")
+                    remote_command(con, "su -c 'cp -af /home/" + user + "/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys'")
                 except:
                     pass
 
             con = Connection(params["instance"], "root", ssh_key)
-            Expect.ping_pong(con, "uname", "Linux")
+            remote_command(con, "[ `uname` = \"Linux\" ]")
             logging.debug(self.getName() + ": sleeping for " + str(settlewait) + " sec. to make sure instance has been settled.")
             time.sleep(settlewait)
 
@@ -413,7 +411,7 @@ class InstanceThread(threading.Thread):
                 remote_script_path = "/tmp/" + os.path.basename(script)
                 con.sftp.put(script, remote_script_path)
                 con.sftp.chmod(remote_script_path, 0700)
-                command(con, remote_script_path)
+                remote_command(con, remote_script_path)
             os.unlink(tf.name)
 
             mainq.put((0, "test", params))
