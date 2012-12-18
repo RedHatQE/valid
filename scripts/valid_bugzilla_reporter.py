@@ -61,7 +61,7 @@ for ami in result:
                 bug_description += stage + ":\n"
                 stage_result = itype_result[stage]
                 if type(stage_result) == dict:
-                    for test in stage_result.keys():
+                    for test in sorted(stage_result.keys()):
                         test_result = stage_result[test]
                         if type(test_result) == list:
                             is_failed = False
