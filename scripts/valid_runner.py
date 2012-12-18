@@ -17,6 +17,7 @@ import tempfile
 import traceback
 import BaseHTTPServer
 import urlparse
+import ssl
 
 from patchwork.connection import Connection
 from patchwork.expect import *
@@ -45,7 +46,7 @@ argparser.add_argument('--maxwait', type=int,
 argparser.add_argument('--numthreads', type=int,
                        default=10, help='number of worker threads')
 argparser.add_argument('--results-dir',
-                       default=".", help='put resulting yaml files to specified location')
+                       default=False, help='put resulting yaml files to specified location')
 argparser.add_argument('--server', action='store_const', const=True,
                        default=False, help='run HTTP server')
 argparser.add_argument('--settlewait', type=int,
@@ -55,9 +56,28 @@ args = argparser.parse_args()
 maxtries = args.maxtries
 maxwait = args.maxwait
 settlewait = args.settlewait
-resdir = args.results_dir
 num_worker_threads = args.numthreads
 httpserver = args.server
+
+confd = open(args.config, 'r')
+yamlconfig = yaml.load(confd)
+confd.close()
+
+if args.results_dir:
+    resdir = args.results_dir
+elif "results_dir" in yamlconfig.keys():
+    resdir = yamlconfig["results_dir"]
+else:
+    resdir = "."
+
+if httpserver:
+    for key in "server_ssl_ca", "server_ssl_cert", "server_ssl_key":
+        if not key in yamlconfig.keys():
+            sys.stderr.write("You should specify " + key + " in " + args.config + " to run in server mode!\n")
+            sys.exit(1)
+        elif not os.path.exists(yamlconfig[key]):
+            sys.stderr.write(key + "file does not exist but required for server mode. Use valid_cert_creator.py to create it.\n")
+            sys.exit(1)
 
 if args.enable_tests:
     enable_tests = set(args.enable_tests)
@@ -68,10 +88,6 @@ if args.disable_tests:
     disable_tests = set(args.disable_tests)
 else:
     disable_tests = set()
-
-confd = open(args.config, 'r')
-yamlconfig = yaml.load(confd)
-confd.close()
 
 ec2_key = yamlconfig["ec2"]["ec2-key"]
 ec2_secret_key = yamlconfig["ec2"]["ec2-secret-key"]
@@ -165,6 +181,7 @@ def remote_command(connection, command, timeout=5):
     if status != 0:
         raise ExpectFailed("Command " + command + " failed with " + str(status) + " status.")
 
+
 class ServerThread(threading.Thread):
     def __init__(self, hostname="0.0.0.0", port=8080):
         threading.Thread.__init__(self)
@@ -174,6 +191,12 @@ class ServerThread(threading.Thread):
     def run(self):
         server_class = BaseHTTPServer.HTTPServer
         httpd = server_class((self.hostname, self.port), HTTPHandler)
+        httpd.socket = ssl.wrap_socket(httpd.socket,
+                                       certfile=yamlconfig["server_ssl_cert"],
+                                       keyfile=yamlconfig["server_ssl_key"],
+                                       server_side=True,
+                                       cert_reqs=ssl.CERT_REQUIRED,
+                                       ca_certs=yamlconfig["server_ssl_ca"])
         httpd.serve_forever()
 
 
