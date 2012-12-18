@@ -38,7 +38,7 @@ else:
 
 response = http.getresponse()
 if response.status == 200:
-    sys.stdout.write("Request succeeded: " + response.read() + "\n")
+    sys.stdout.write(response.read() + "\n")
 else:
     sys.stdout.write("Request failed: " + response.read() + "\n")
     sys.exit(1)
