@@ -66,7 +66,7 @@ for ami in result:
                         if type(test_result) == list:
                             is_failed = False
                             for command in test_result:
-                                if command["result"] in ["fail", "failure"]:
+                                if command["result"] in ["fail", "failed", "failure"]:
                                     is_failed = True
                                     if overall_result == "succeeded":
                                         overall_result = "failed"
