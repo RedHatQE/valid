@@ -28,9 +28,13 @@ class testcase_27_yum_repos(ValidTestcase):
         repos_conf.readfp(repos_fp)
         # convert into a dictionary of {'repo-id':{attr_name:attr_value,...}}
         # this is to be able to compare with expected config dictionary
-        # all values would be: repos = {id:dict(cfg.items(id)) for id in repos_conf.sections()}
+        # all values would be:
+        #   repos = {id:dict(cfg.items(id)) for id in repos_conf.sections()}
         # vaules of interrest:
-        repos = {id:{'Repo-status':repos_conf.get(id,'Repo-status')} for id in repos_conf.sections()}
+        #   repos = {id:{'repo-status': repos_conf.get(id, 'repo-status')} for id in repos_conf.sections()}
+        repos = {}
+        for id in repos_conf.sections():
+            repos[id] = {'repo-status': repos_conf.get(id, 'repo-status')}
 
         # figure out whether expected repos match repos
         with open('/usr/share/valid/data/repos.yaml') as expected_repos_fd:
