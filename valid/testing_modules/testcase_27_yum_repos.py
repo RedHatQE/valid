@@ -23,7 +23,7 @@ class testcase_27_yum_repos(ValidTestcase):
            "head -n-1 repolist_xx00 | sed -e 's/Repo-id\s*:\s*\(.*\)/[\1]/'"
         )
         # extract particular repos as sections from the structure
-        repos_fp = StringIO.StringIO(repo_details)
+        repos_fp = StringIO.StringIO(repos_details)
         repos_conf = ConfigParser.ConfigParser()
         repos_conf.readfp(repos_fp)
         # convert into a dictionary of {'repo-id':{attr_name:attr_value,...}}
