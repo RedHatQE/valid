@@ -1,5 +1,9 @@
 from valid.valid_testcase import *
 
+import StringIO
+import ConfigParser
+import yaml
+
 
 class testcase_27_yum_repos(ValidTestcase):
     stages = ["stage1"]
@@ -7,28 +11,35 @@ class testcase_27_yum_repos(ValidTestcase):
     def test(self, connection, params):
         prod = params["product"].upper()
         ver = params["version"]
-        repos = self.get_result(connection, "ls /etc/yum.repos.d/*.repo | wc -l")
-        repos_redhat = self.get_result(connection, "ls /etc/yum.repos.d/redhat*.repo | wc -l")
-        repos_rhel = self.get_result(connection, "ls /etc/yum.repos.d/rhel*.repo | wc -l")
-        if prod == "BETA":
-            repos_cmp = 4
-            repos_redhat_cmp = 2
-        elif prod == "RHEL":
-            repos_cmp = 6
-            repos_redhat_cmp = 4
-        else:
-            self.log.append({"result": "failure", "comment": "this test is for RHEL only"})
-            return self.log
+        # get repo details file
+        self.get_return_value(
+            connection,
+            "yum repolist -v all | csplit --prefix=repolist_xx - '%pkgsack time:%1'",
+            40
+        )
+        # translate the details into an ini-like structure
+        repos_details = self.get_result(
+           connection,
+           "head -n-1 repolist_xx00 | sed -e 's/Repo-id\s*:\s*\(.*\)/[\1]/'"
+        )
+        # extract particular repos as sections from the structure
+        repos_fp = StringIO.StringIO(repo_details)
+        repos_conf = ConfigParser.ConfigParser()
+        repos_conf.readfp(repos_fp)
+        # convert into a dictionary of {'repo-id':{attr_name:attr_value,...}}
+        # this is to be able to compare with expected config dictionary
+        # all values would be: repos = {id:dict(cfg.items(id)) for id in repos_conf.sections()}
+        # vaules of interrest:
+        repos = {id:{'Repo-status':repos_conf.get(id,'Repo-status')} for id in repos_conf.sections()}
 
-        if prod in ["RHEL", "BETA"] and ver.startswith("6."):
-            repos_rhel_cmp = 0
-        elif prod in ["RHEL", "BETA"] and ver.startswith("5."):
-            repos_rhel_cmp = 1
-        else:
-            self.log.append({"result": "failure", "comment": "this test is for RHEL5/RHEL6 only"})
-
-        if repos and repos_rhel and repos_redhat:
-            self.get_return_value(connection, "[ %s = %s ]" % (repos, repos_cmp))
-            self.get_return_value(connection, "[ %s = %s ]" % (repos_redhat, repos_redhat_cmp))
-            self.get_return_value(connection, "[ %s = %s ]" % (repos_rhel, repos_rhel_cmp))
+        # figure out whether expected repos match repos
+        with open('/usr/share/valid/data/repos.yaml') as expected_repos_fd:
+            all_repos = yaml.safe_load(expected_repos_fd)
+        expected_repos = all_repos[params['region']]['%s-%s' % (prod, ver[0])]
+        ret = {
+            "comment": "# expected repos:\n%s\n# actual repos:\n%s" %
+                (yaml.dump(expected_repos), yaml.dump(repos))
+        }
+        ret['result'] = expected_repos == repos and 'passed' or 'failed'
+        self.log.append(ret)
         return self.log
