@@ -17,7 +17,7 @@ argparser.add_argument('--hwpvirtualization', help='hwp virtualization', default
 
 args = argparser.parse_args()
 
-params = {"produce": args.product, "version": args.version, "hwp": {"name": args.hwpname, "virtualization": args.hwpvirtualization, "memory": args.hwpmemory}}
+params = {"product": args.product, "version": args.version, "hwp": {"name": args.hwpname, "virtualization": args.hwpvirtualization, "memory": args.hwpmemory}}
 
 con = patchwork.connection.Connection({"public_hostname": args.host, "private_hostname": args.host}, key_filename=args.key)
 
