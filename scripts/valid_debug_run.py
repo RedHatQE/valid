@@ -4,6 +4,7 @@ import argparse
 import patchwork
 import valid
 import sys
+import yaml
 
 argparser = argparse.ArgumentParser(description='Run cloud image validation')
 argparser.add_argument('--host', help='hostname', required=True)
@@ -24,4 +25,4 @@ con = patchwork.connection.Connection({"public_hostname": args.host, "private_ho
 m = "valid.testing_modules." + args.test
 testcase = getattr(sys.modules[m], args.test)()
 test_result = testcase.test(con, params)
-print test_result
+sys.stdout.write(yaml.safe_dump(test_result))
