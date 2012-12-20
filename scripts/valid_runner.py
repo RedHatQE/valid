@@ -193,6 +193,7 @@ def add_data(data):
             logging.info("No data added")
             return None
 
+
 def remote_command(connection, command, timeout=5):
     status = connection.recv_exit_status(command + " >/dev/null 2>&1", timeout)
     if status != 0:
