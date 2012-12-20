@@ -451,6 +451,8 @@ class InstanceThread(threading.Thread):
                 setup_scripts.append(local_script_path)
             tf = tempfile.NamedTemporaryFile(delete=False)
             if "setup" in params.keys() and params["setup"]:
+                if type(params["setup"]) is list:
+                    params["setup"] = "\n".join(map(lambda x: str(x), params["setup"]))
                 logging.debug(self.getName() + ": executing ami-specific setup script: %s" % params["setup"])
                 tf.write(params["setup"])
                 setup_scripts.append(tf.name)
