@@ -70,6 +70,16 @@ elif "results_dir" in yamlconfig.keys():
 else:
     resdir = "."
 
+# Check if result directory is writable
+try:
+    fd = open(resdir + "/.valid.tmp", "w")
+    fd.write("temp")
+    fd.close()
+    os.unlink(resdir + "/.valid.tmp")
+except IOError, e:
+    sys.stderr.write("Failed to create file in " + resdir + " %s " % e + "\n")
+    sys.exit(1)
+
 if httpserver:
     for key in "server_ssl_ca", "server_ssl_cert", "server_ssl_key":
         if not key in yamlconfig.keys():
@@ -148,6 +158,9 @@ def add_data(data):
                 for field in mandatory_fields:
                     if type(params[field]) != str:
                         params[field] = str(params[field])
+                if params["ami"] in resultdic[transaction_id].keys():
+                    logging.error("Ami %s was already added for transaction %s!" % (params["ami"], transaction_id))
+                    continue
                 logging.debug("Got valid data line " + str(params))
                 hwp_found = False
                 for hwpdir in ["hwp", "/usr/share/valid/hwp"]:
@@ -318,11 +331,10 @@ class ReportingThread(threading.Thread):
                     ''' Checking all amis: they should be finished '''
                     if resultdic[transaction_id][ami]["ninstances"] != len(resultdic[transaction_id][ami]["instances"]):
                         ''' Still have some jobs running ...'''
-                        logging.debug("ReportThread: " + ami + ":  waiting for " + str(resultdic[transaction_id][ami]["ninstances"]) + " results, got " + str(len(resultdic[transaction_id][ami]["instances"])))
+                        logging.debug("ReportThread: " + transaction_id + ": " + ami + ":  waiting for " + str(resultdic[transaction_id][ami]["ninstances"]) + " results, got " + str(len(resultdic[transaction_id][ami]["instances"])))
                         report_ready = False
                 if report_ready:
                     resfile = resdir + "/" + transaction_id + ".yaml"
-                    result_fd = open(resfile, "w")
                     result = []
                     data = resultdic[transaction_id]
                     for ami in data.keys():
@@ -339,10 +351,11 @@ class ReportingThread(threading.Thread):
                                 result_item["result"][instance["instance_type"]].update(instance["result"])
                         result.append(result_item)
                     result_yaml = yaml.safe_dump(result)
-                    result_fd.write(result_yaml)
-                    result_fd.close()
                     with resultdic_yaml_lock:
                         resultdic_yaml[transaction_id] = result_yaml
+                    result_fd = open(resfile, "w")
+                    result_fd.write(result_yaml)
+                    result_fd.close()
                     logging.info("Transaction " + transaction_id + " finished. Result: " + resfile)
                     resultdic.pop(transaction_id)
 
@@ -366,19 +379,23 @@ class InstanceThread(threading.Thread):
                 continue
             if ntry > maxtries:
                 logging.error(self.getName() + ": " + action + ":" + str(params) + " failed after " + str(maxtries) + " tries")
-                if action in ["create", "terminate", "setup"]:
+                if action in ["create", "setup"]:
                     params["result"] = {action: "failure"}
-                else:
+                elif action == "test":
                     params["result"] = {params["stages"][0]: "failure"}
-                # we need to change expected value in resultdic
-                with resultdic_lock:
-                    resultdic[params["transaction_id"]][params["ami"]]["ninstances"] -= (len(params["stages"]) - 1)
-                self.report_results(params)
+                if action != "terminate":
+                    # we need to change expected value in resultdic
+                    with resultdic_lock:
+                        resultdic[params["transaction_id"]][params["ami"]]["ninstances"] -= (len(params["stages"]) - 1)
+                    self.report_results(params)
+                    if "id" in params.keys():
+                        # Try to terminate the instance
+                        mainq.put((0, "terminate", params))
                 continue
             if action == "create":
                 # create an instance
                 logging.debug(self.getName() + ": picking up " + params["iname"])
-                self.create_instance(ntry, params)
+                self.do_create(ntry, params)
             elif action == "setup":
                 # setup instance for testing
                 logging.debug(self.getName() + ": doing setup for " + params["iname"])
@@ -390,7 +407,7 @@ class InstanceThread(threading.Thread):
             elif action == "terminate":
                 # terminate instance
                 logging.debug(self.getName() + ": terminating " + params["iname"])
-                self.terminate_instance(ntry, params)
+                self.do_terminate(ntry, params)
 
     def report_results(self, params):
         with resultdic_lock:
@@ -404,7 +421,11 @@ class InstanceThread(threading.Thread):
             resultdic[params["transaction_id"]][params["ami"]]["instances"].append(report_value)
 
     def do_setup(self, ntry, params):
+        '''
+        Setup stage of testing
+        '''
         try:
+            logging.debug(self.getName() + ": trying to do setup for " + ", ntry " + str(ntry))
             (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
             logging.debug(self.getName() + ": ssh-key " + ssh_key)
 
@@ -454,10 +475,14 @@ class InstanceThread(threading.Thread):
             mainq.put((ntry + 1, "setup", params))
 
     def do_testing(self, ntry, params):
+        '''
+        Testing stage of testing
+        '''
         try:
-            result = {}
-
             stage = params["stages"][0]
+            logging.debug(self.getName() + ": trying to do testing for " + params["iname"] + " " + stage + ", ntry " + str(ntry))
+
+            result = {}
 
             (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
             logging.debug(self.getName() + ": ssh-key " + ssh_key)
@@ -496,18 +521,25 @@ class InstanceThread(threading.Thread):
             params["result"] = {params["stages"][0]: result}
             self.report_results(params)
         except (socket.error, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
+            # Looks like we've failed to connect to the instance
             logging.debug(self.getName() + ": got 'predictable' error during instance testing, %s, ntry: %i" % (e, ntry))
             logging.debug(self.getName() + ":" + traceback.format_exc())
             time.sleep(10)
             mainq.put((ntry + 1, "test", params))
         except Exception, e:
+            # Got unexpected error
             logging.error(self.getName() + ": got error during instance testing, %s %s, ntry: %i" % (type(e), e, ntry))
             logging.debug(self.getName() + ":" + traceback.format_exc())
             time.sleep(10)
             mainq.put((ntry + 1, "test", params))
 
-    def create_instance(self, ntry, params):
+    def do_create(self, ntry, params):
+        '''
+        Create stage of testing
+        '''
         result = None
+        logging.debug(self.getName() + ": trying to create instance  " + params["iname"] + ", ntry " + str(ntry))
+        ntry += 1
         try:
             reg = boto.ec2.get_region(params["region"], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
@@ -525,12 +557,16 @@ class InstanceThread(threading.Thread):
             )
             myinstance = reservation.instances[0]
             count = 0
+            # Sometimes EC2 failes to return something meaningful without small timeout between run_instances() and update()
+            time.sleep(10)
             while myinstance.update() == 'pending' and count < maxwait / 5:
+                # Waiting out instance to appear
                 logging.debug(params["iname"] + "... waiting..." + str(count))
                 time.sleep(5)
                 count += 1
             connection.close()
             if myinstance.update() == 'running':
+                # Instance appeared - scheduling 'setup' stage
                 myinstance.add_tag("Name", params["ami"] + " validation")
                 result = myinstance.__dict__
                 logging.info(self.getName() + ": created instance " + params["iname"] + ", " + result["id"] + ":" + result["public_dns_name"])
@@ -542,27 +578,44 @@ class InstanceThread(threading.Thread):
             else:
                 # maxwait seconds is enough to create an instance. If not -- EC2 failed.
                 logging.error("Error during instance creation, %s" % e)
-        except (socket.error, boto.exception.EC2ResponseError), e:
-            logging.debug(self.getName() + ": got socket error during instance creation, %s" % e)
-            logging.debug(self.getName() + ":" + traceback.format_exc())
-            if e.message.find("<Code>InstanceLimitExceeded</Code>") != -1:
+
+        except boto.exception.EC2ResponseError, e:
+            # Boto errors should be handled according to their error Message - there are some well-known ones
+            logging.debug(self.getName() + ": got boto error during instance creation: %s" % e)
+            if str(e).find("<Code>InstanceLimitExceeded</Code>") != -1:
                 # InstanceLimit is temporary problem
+                logging.debug(self.getName() + ": got InstanceLimitExceeded - not increasing ntry")
                 ntry -= 1
+            elif str(e).find("<Code>InvalidParameterValue</Code>") != -1:
+                # InvalidParameterValue is really bad
+                logging.error(self.getName() + ": got boto error during instance creation: %s" % e)
+                # Try to speed up whole testing process, it's hardly possible to recover from this error
+                ntry += 9
+            else:
+                logging.debug(self.getName() + ":" + traceback.format_exc())
+        except socket.error, e:
+            # Network errors are usual, reschedult silently
+            logging.debug(self.getName() + ": got socket error during instance creation: %s" % e)
+            logging.debug(self.getName() + ":" + traceback.format_exc())
         except Exception, e:
-            logging.error(self.getName() + ": got error during instance creation, %s %s" % (type(e), e))
+            # Unexpected error happened
+            logging.error(self.getName() + ": got error during instance creation: %s %s" % (type(e), e))
             logging.debug(self.getName() + ":" + traceback.format_exc())
         logging.debug(self.getName() + ": something went wrong with " + params["iname"] + " during creation, ntry: " + str(ntry) + ", rescheduling")
         # reschedule creation
         time.sleep(10)
-        mainq.put((ntry + 1, "create", params))
+        mainq.put((ntry, "create", params))
 
-    def terminate_instance(self, ntry, params):
+    def do_terminate(self, ntry, params):
+        '''
+        Terminate stage of testing
+        '''
         try:
+            logging.debug(self.getName() + ": trying to terminata instance  " + params["iname"] + ", ntry " + str(ntry))
             reg = boto.ec2.get_region(params["region"], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             res = connection.terminate_instances([params["id"]])
             logging.info(self.getName() + ": terminated " + params["iname"])
-            logging.debug(self.getName() + ": terminated " + params["id"] + " with result: " + str(res))
             connection.close()
             return res
         except Exception, e:

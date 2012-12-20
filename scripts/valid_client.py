@@ -25,9 +25,12 @@ args = argparser.parse_args()
 http = httplib.HTTPSConnection(args.host, args.port, key_file=args.key, cert_file=args.cert)
 
 if args.add:
-    fd = open(args.add, "r")
-    data = fd.read()
-    fd.close()
+    if args.add != "-":
+        fd = open(args.add, "r")
+        data = fd.read()
+        fd.close()
+    else:
+        data = sys.stdin.read()
     params = urllib.urlencode({"data": data})
     http.request("POST", "", params, {"Content-type": "text/yaml"})
 elif args.get:
