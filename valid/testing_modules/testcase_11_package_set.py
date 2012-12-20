@@ -7,7 +7,7 @@ class testcase_11_package_set(ValidTestcase):
 
     def test(self, connection, params):
         if (params["product"].upper() == "RHEL" or params["product"].upper() == "BETA"):
-            packages = self.match(connection, "rpm -qa --queryformat '%{NAME},' && echo", re.compile(".*\r\n(.*),\r\n.*", re.DOTALL))
+            packages = self.match(connection, "rpm -qa --queryformat '%{NAME},' && echo", re.compile(".*\r\n(.*),\r\n.*", re.DOTALL), timeput=30)
             if packages:
                 basepath = "/usr/share/valid/data/packages_rhel_"
                 if (len(params["version"]) > 2) and os.path.exists(basepath + params["version"][0] + params["version"][2]):
