@@ -12,13 +12,14 @@ argparser.add_argument('--key', help='keyfile', required=True)
 argparser.add_argument('--test', help='test name', required=True)
 argparser.add_argument('--product', help='product name', default="RHEL")
 argparser.add_argument('--version', help='version', default="6.0")
+argparser.add_argument('--region', help='aws region', default="us-east-1")
 argparser.add_argument('--hwpname', help='hwp name', default="m1.small")
 argparser.add_argument('--hwpmemory', help='hwp memory', default=1000000)
 argparser.add_argument('--hwpvirtualization', help='hwp virtualization', default="paravirtualization")
 
 args = argparser.parse_args()
 
-params = {"product": args.product, "version": args.version, "hwp": {"name": args.hwpname, "virtualization": args.hwpvirtualization, "memory": args.hwpmemory}}
+params = {"product": args.product, "version": args.version, "region": args.region, "hwp": {"name": args.hwpname, "virtualization": args.hwpvirtualization, "memory": args.hwpmemory}}
 
 con = patchwork.connection.Connection({"public_hostname": args.host, "private_hostname": args.host}, key_filename=args.key)
 

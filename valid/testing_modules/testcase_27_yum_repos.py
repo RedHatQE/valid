@@ -44,7 +44,15 @@ class testcase_27_yum_repos(ValidTestcase):
         # figure out whether expected repos match repos
         with open('/usr/share/valid/data/repos.yaml') as expected_repos_fd:
             all_repos = yaml.safe_load(expected_repos_fd)
-        expected_repos = all_repos[params['region']]['%s-%s' % (prod, ver[0])]
+        try:
+            expected_repos = all_repos[params['region']]['%s-%s' % (prod, ver.split('.')[0])]
+        except KeyError as e:
+            self.log.append({
+                "result": "skip",
+                "comment": "unsupported region and/or product-version combination"
+                })
+            return self.log
+
         ret = {
             "expected repos": expected_repos,
             "actual repos": repos
