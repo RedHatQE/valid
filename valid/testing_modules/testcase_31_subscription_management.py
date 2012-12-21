@@ -16,21 +16,24 @@ class testcase_31_subscription_management(ValidTestcase):
             )
             return self.log
         # check subscription-manager plugin is disabled
-        self.get_return_value(
+        self.ping_pong(
             connection,
-            'yum --disablerepo="*" repolist | grep -i subscription-manager',
-            expected_status=1
+            'yum --disablerepo="*" -v repolist',
+            expectation='Not loading "subscription-manager" plugin',
+            timeout=30
         )
         # check subscription-manager plugin can be enabled
         self.ping_pong(
             connection,
-            'yum --enableplugin=subscription-manager --disablerepo="*" repolist',
-            expectation='Loaded plugins:[^\n]*subscription-manager'
+            'yum --enableplugin=subscription-manager --disablerepo="*" -v repolist',
+            expectation='Loading "subscription-manager" plugin',
+            timeout=30
         )
         # check system isn't subscribbed
         self.ping_pong(
             connection,
             'subscription-manager list',
-            expectation='Status:\s*Not.Subscribed'
+            expectation='No installed products to list',
+            timeout=90
         )
         return self.log
