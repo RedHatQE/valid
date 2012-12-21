@@ -1,0 +1,12 @@
+[Unit]
+Description=Cloud image validation service
+After=syslog.target network.target
+
+[Service]
+User=valid
+PIDFile=/var/run/valid/valid.pid
+EnvironmentFile=/etc/sysconfig/valid
+ExecStart=/usr/bin/valid_runner.py $OPTIONS --server
+
+[Install]
+WantedBy=multi-user.target

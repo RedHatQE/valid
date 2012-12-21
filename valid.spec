@@ -13,6 +13,11 @@ BuildArch:  noarch
 BuildRequires:	python-devel
 Requires:	python-patchwork python-paramiko PyYAML
 
+%if 0%{?fedora} >= 15
+Requires(post): systemd-units
+Requires(preun): systemd-units
+%endif
+
 %description
 Cloud image validation suite
 
@@ -32,6 +37,10 @@ Cloud image validation suite
 %install
 %{__python} setup.py install -O1 --root $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{_sharedstatedir}/valid
+%if 0%{?fedora} >= 15
+install -p -D -m 644 systemd/valid.service %{buildroot}/lib/systemd/system/valid.service
+install -p -D -m 644 systemd/valid-tmpfile %{buildroot}%{_libdir}/../lib/tmpfiles.d/valid.conf
+%endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -43,6 +52,25 @@ useradd -r -g valid -d /var/lib/valid -s /sbin/nologin \
         -c "Validation user" valid
         exit 0
 
+%post
+%if 0%{?fedora} >= 15
+/bin/systemctl daemon-reload &> /dev/null || :
+%endif
+
+%preun
+%if 0%{?fedora} >= 15
+/bin/systemctl --no-reload disable %{name}.service &> /dev/null
+/bin/systemctl stop %{name}.service &> /dev/null
+%endif
+
+%postun
+%if 0%{?fedora} >= 15
+/bin/systemctl daemon-reload &> /dev/null
+if [ "$1" -ge "1" ] ; then
+   /bin/systemctl try-restart %{name}.service &> /dev/null
+fi
+%endif
+
 %files
 %defattr(-,root,root,-)
 %doc LICENSE README.md
@@ -52,10 +80,15 @@ useradd -r -g valid -d /var/lib/valid -s /sbin/nologin \
 %attr(0755, root, root) %{_bindir}/valid_debug_run.py
 %dir %{_sysconfdir}/valid
 %config(noreplace) %attr(0640, root, valid) %{_sysconfdir}/validation.yaml
+%config(noreplace) %attr(0640, root, valid) %{_sysconfdir}/sysconfig/valid
 %config(noreplace) %attr(0644, root, valid) %{_sysconfdir}/valid/setup_script.sh
 %{python_sitelib}/*.egg-info
 %{python_sitelib}/valid/*
 %{_datadir}/%name
+%if 0%{?fedora} >= 15
+/lib/systemd/system/*.service
+%{_libdir}/../lib/tmpfiles.d/valid.conf
+%endif
 %attr(0775, valid, valid) %{_sharedstatedir}/valid
 
 %files client
