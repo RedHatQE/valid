@@ -16,5 +16,5 @@ class testcase_23_syslog(ValidTestcase):
             elif prod in ["RHEL", "BETA"] and ver.startswith("6."):
                 self.get_return_value(connection, "[ %s = 8b91b32300134e98ef4aee632ed61e21 ]" % rsyslog_md5)
             else:
-                self.log.append({"result": "failure", "comment": "this test is for RHEL5/RHEL6 only"})
+                self.log.append({"result": "skip", "comment": "this test is for RHEL5/RHEL6 only"})
         return self.log

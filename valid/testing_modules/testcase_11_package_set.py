@@ -29,5 +29,5 @@ class testcase_11_package_set(ValidTestcase):
                 else:
                     self.log.append({"result": "passed", "comment": "All required package are included"})
         else:
-            self.log.append({"result": "failure", "comment": "this test is for RHEL5/RHEL6 only"})
+            self.log.append({"result": "skip", "comment": "this test is for RHEL5/RHEL6 only"})
         return self.log

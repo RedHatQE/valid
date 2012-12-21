@@ -64,16 +64,16 @@ for ami in result:
                     for test in sorted(stage_result.keys()):
                         test_result = stage_result[test]
                         if type(test_result) == list:
-                            is_failed = False
+                            is_failed = "succeeded"
                             for command in test_result:
                                 if command["result"] in ["fail", "failed", "failure"]:
-                                    is_failed = True
+                                    is_failed = "failed"
                                     if overall_result == "succeeded":
                                         overall_result = "failed"
-                            if not is_failed:
-                                bug_description += "test %s succeeded\n" % test
-                            else:
-                                bug_description += "test %s failed\n" % test
+                                if command["result"] in ["skip", "skipped"]:
+                                    is_failed = "skipped"
+                            bug_description += "test %s %s\n" % (test, is_failed)
+                            if is_failed != "succeeded":
                                 for command in test_result:
                                     bug_description += "--->\n"
                                     for key in sorted(command.keys()):

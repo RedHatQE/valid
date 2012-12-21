@@ -10,5 +10,5 @@ class testcase_15_rhel_version(ValidTestcase):
             if rhelv:
                 self.get_return_value(connection, "[ '%s' = '%s' ]" % (params["version"], rhelv[0][:len(params["version"])]))
         else:
-            self.log.append({"result": "failure", "comment": "this test is for RHEL only"})
+            self.log.append({"result": "skip", "comment": "this test is for RHEL only"})
         return self.log

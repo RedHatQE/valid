@@ -18,5 +18,5 @@ class testcase_12_passwd_group(ValidTestcase):
                 self.get_return_value(connection, "grep '^daemon:x:2:bin,daemon' /etc/group")
                 self.get_return_value(connection, "grep '^bin:x:1:bin,daemon' /etc/group")
         else:
-            self.log.append({"result": "failure", "comment": "this test is for RHEL5/RHEL6 only"})
+            self.log.append({"result": "skip", "comment": "this test is for RHEL5/RHEL6 only"})
         return self.log

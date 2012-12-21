@@ -13,7 +13,7 @@ class testcase_13_resize2fs(ValidTestcase):
                 self.get_return_value(connection, "resize2fs -p /dev/sda1 15000M", 90)
                 self.get_return_value(connection, "df -h | grep 15G")
             else:
-                self.log.append({"result": "failure", "comment": "this test is for RHEL5/RHEL6 only"})
+                self.log.append({"result": "skip", "comment": "this test is for RHEL5/RHEL6 only"})
         else:
-            self.log.append({"result": "passed", "comment": "resize2fs is not applicable for hvm instances"})
+            self.log.append({"result": "skip", "comment": "resize2fs is not applicable for hvm instances"})
         return self.log

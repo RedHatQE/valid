@@ -24,7 +24,7 @@ class testcase_26_verify_rpms(ValidTestcase):
             elif prod in ["RHEL", "BETA"] and ver[:3] in ["5.8", "5.9"]:
                 rpmv_cmp = "3"
         else:
-            self.log.append({"result": "failure", "comment": "this test is for RHEL5/RHEL6 only"})
+            self.log.append({"result": "skip", "comment": "this test is for RHEL5/RHEL6 only"})
             return self.log
 
         rpmv = self.get_result(connection, "rpm -Va --nomtime --nosize --nomd5 | sort -fu | wc -l", 90)
