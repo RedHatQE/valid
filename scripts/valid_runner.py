@@ -171,12 +171,13 @@ def add_data(data):
                         hwpfd.close()
                         resultdic[transaction_id][params["ami"]] = {"ninstances": len(hwp) * len(testing_stages), "instances": []}
                         for hwp_item in hwp:
-                            params["transaction_id"] = transaction_id
-                            params["hwp"] = hwp_item
-                            params["iname"] = "Instance" + str(count) + "_" + transaction_id
-                            params["stages"] = testing_stages
-                            logging.info("Adding " + params["iname"] + ": " + hwp_item["name"] + " instance for " + params["ami"] + " testing in " + params["region"])
-                            mainq.put((0, "create", params.copy()))
+                            params_copy = params.copy()
+                            params_copy.update(hwp_item)
+                            params_copy["transaction_id"] = transaction_id
+                            params_copy["iname"] = "Instance" + str(count) + "_" + transaction_id
+                            params_copy["stages"] = testing_stages
+                            logging.info("Adding " + params_copy["iname"] + ": " + hwp_item["ec2name"] + " instance for " + params_copy["ami"] + " testing in " + params_copy["region"])
+                            mainq.put((0, "create", params_copy))
                             count += 1
                         hwp_found = True
                         break
@@ -392,7 +393,7 @@ class InstanceThread(threading.Thread):
                     self.report_results(params)
                     if "id" in params.keys():
                         # Try to terminate the instance
-                        mainq.put((0, "terminate", params))
+                        mainq.put((0, "terminate", params.copy()))
                 continue
             if action == "create":
                 # create an instance
@@ -413,10 +414,10 @@ class InstanceThread(threading.Thread):
 
     def report_results(self, params):
         with resultdic_lock:
-            report_value = {"instance_type": params["hwp"]["name"],
+            report_value = {"instance_type": params["ec2name"],
                             "ami": params["ami"],
                             "region": params["region"],
-                            "arch": params["hwp"]["arch"],
+                            "arch": params["arch"],
                             "version": params["version"],
                             "product": params["product"],
                             "result": params["result"]}
@@ -466,17 +467,17 @@ class InstanceThread(threading.Thread):
                 remote_command(con, remote_script_path)
             os.unlink(tf.name)
 
-            mainq.put((0, "test", params))
-        except (socket.error, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
+            mainq.put((0, "test", params.copy()))
+        except (socket.error, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
             logging.debug(self.getName() + ": got 'predictable' error during instance setup, %s, ntry: %i" % (e, ntry))
             logging.debug(self.getName() + ":" + traceback.format_exc())
             time.sleep(10)
-            mainq.put((ntry + 1, "setup", params))
+            mainq.put((ntry + 1, "setup", params.copy()))
         except Exception, e:
             logging.error(self.getName() + ": got error during instance setup, %s %s, ntry: %i" % (type(e), e, ntry))
             logging.debug(self.getName() + ":" + traceback.format_exc())
             time.sleep(10)
-            mainq.put((ntry + 1, "setup", params))
+            mainq.put((ntry + 1, "setup", params.copy()))
 
     def do_testing(self, ntry, params):
         '''
@@ -549,18 +550,18 @@ class InstanceThread(threading.Thread):
             logging.debug(self.getName() + ": done testing for " + params["iname"] + ", result: " + str(result))
             params["result"] = {params["stages"][0]: result}
             self.report_results(params)
-        except (socket.error, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
+        except (socket.error, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
             # Looks like we've failed to connect to the instance
             logging.debug(self.getName() + ": got 'predictable' error during instance testing, %s, ntry: %i" % (e, ntry))
             logging.debug(self.getName() + ":" + traceback.format_exc())
             time.sleep(10)
-            mainq.put((ntry + 1, "test", params))
+            mainq.put((ntry + 1, "test", params.copy()))
         except Exception, e:
             # Got unexpected error
             logging.error(self.getName() + ": got error during instance testing, %s %s, ntry: %i" % (type(e), e, ntry))
             logging.debug(self.getName() + ":" + traceback.format_exc())
             time.sleep(10)
-            mainq.put((ntry + 1, "test", params))
+            mainq.put((ntry + 1, "test", params.copy()))
 
     def do_create(self, ntry, params):
         '''
@@ -579,7 +580,7 @@ class InstanceThread(threading.Thread):
                 params.setdefault(param)
             reservation = connection.run_instances(
                 params["ami"],
-                instance_type=params["hwp"]["name"],
+                instance_type=params["ec2name"],
                 key_name=ssh_key_name,
                 block_device_map=bmap,
                 subnet_id=params["subnet_id"]
@@ -633,7 +634,7 @@ class InstanceThread(threading.Thread):
         logging.debug(self.getName() + ": something went wrong with " + params["iname"] + " during creation, ntry: " + str(ntry) + ", rescheduling")
         # reschedule creation
         time.sleep(10)
-        mainq.put((ntry, "create", params))
+        mainq.put((ntry, "create", params.copy()))
 
     def do_terminate(self, ntry, params):
         '''
@@ -650,7 +651,7 @@ class InstanceThread(threading.Thread):
         except Exception, e:
             logging.error(self.getName() + ": got error during instance termination, %s %s" % (type(e), e))
             logging.debug(self.getName() + ":" + traceback.format_exc())
-            mainq.put((ntry + 1, "terminate", params))
+            mainq.put((ntry + 1, "terminate", params.copy()))
 
 
 logging.getLogger('boto').setLevel(logging.CRITICAL)

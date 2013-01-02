@@ -19,9 +19,16 @@ class testcase_27_yum_repos(ValidTestcase):
             40
         )
         # translate the details into an ini-like structure
-        repos_fp = connection.sftp.open('/root/repolist_xx00')
-        repos_details = repos_fp.read()
-        repos_fp.close()
+        try:
+            repos_fp = connection.sftp.open('/root/repolist_xx00')
+            repos_details = repos_fp.read()
+            repos_fp.close()
+        except IOError, e:
+            self.log.append({
+                "result": "failure",
+                "comment": "failed to get actual repo list %s" % e
+                })
+            return self.log
 
         # make 'Repo-id : <id>' ini section headers: '[<id>]'
         pattern = re.compile('repo-id\s*:\s*([^\n]*)', re.DOTALL | re.IGNORECASE)

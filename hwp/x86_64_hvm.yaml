@@ -1,6 +1,6 @@
-- {arch: 'x86_64', cpu: '4', memory: '15000000', name: m3.xlarge, virtualization: 'hvm'}
-- {arch: 'x86_64', cpu: '8', memory: '30000000', name: m3.2xlarge, virtualization: 'hvm'}
-- {arch: 'x86_64', cpu: '8', memory: '23000000', name: cc1.4xlarge, virtualization: 'hvm'}
-- {arch: 'x86_64', cpu: '16', memory: '60500000', name: cc2.8xlarge, virtualization: 'hvm'}
-- {arch: 'x86_64', cpu: '8', memory: '22000000', name: cg1.4xlarge, virtualization: 'hvm'}
-- {arch: 'x86_64', cpu: '8', memory: '60500000', name: hi1.4xlarge, virtualization: 'hvm'}
+- {arch: 'x86_64', cpu: '4', memory: '15000000', ec2name: m3.xlarge, virtualization: 'hvm'}
+- {arch: 'x86_64', cpu: '8', memory: '30000000', ec2name: m3.2xlarge, virtualization: 'hvm'}
+- {arch: 'x86_64', cpu: '8', memory: '23000000', ec2name: cc1.4xlarge, virtualization: 'hvm'}
+- {arch: 'x86_64', cpu: '16', memory: '60500000', ec2name: cc2.8xlarge, virtualization: 'hvm'}
+- {arch: 'x86_64', cpu: '8', memory: '22000000', ec2name: cg1.4xlarge, virtualization: 'hvm'}
+- {arch: 'x86_64', cpu: '8', memory: '60500000', ec2name: hi1.4xlarge, virtualization: 'hvm'}

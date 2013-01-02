@@ -1,1 +1,1 @@
-- {arch: 'x86_64', cpu: '1', memory: '600000', name: t1.micro, virtualization: 'paravirtual'}
+- {arch: 'x86_64', cpu: '1', memory: '600000', ec2name: t1.micro, virtualization: 'paravirtual'}

@@ -17,7 +17,7 @@ class testcase_14_host_details(ValidTestcase):
                 else:
                     billingProduct = ""
                 self.get_return_value(connection, '[ "%s" = "%s" ]' % (js["imageId"], params["ami"]))
-                self.get_return_value(connection, '[ "%s" = "%s" ]' % (js["architecture"], params["hwp"]["arch"]))
+                self.get_return_value(connection, '[ "%s" = "%s" ]' % (js["architecture"], params["arch"]))
                 self.get_return_value(connection, '[ "%s" = "%s" ]' % (js["region"], params["region"]))
                 if prod in ["RHEL", "BETA"]:
                     if params["itype"] == "hourly":
