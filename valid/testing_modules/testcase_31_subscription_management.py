@@ -1,5 +1,6 @@
 from valid.valid_testcase import *
 
+
 class testcase_31_subscription_management(ValidTestcase):
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "^5\.[12345678]$|^6\.[123]$"}
