@@ -7,6 +7,7 @@ import yaml
 
 class testcase_27_yum_repos(ValidTestcase):
     stages = ["stage1"]
+    applicable = {"product": "(?i)RHEL|BETA"}
 
     def test(self, connection, params):
         prod = params["product"].upper()

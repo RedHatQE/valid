@@ -18,6 +18,7 @@ import traceback
 import BaseHTTPServer
 import urlparse
 import ssl
+import re
 
 from patchwork.connection import Connection
 from patchwork.expect import *
@@ -501,6 +502,31 @@ class InstanceThread(threading.Thread):
                         test_name = m.split('.')[2]
                         testcase = getattr(sys.modules[m], test_name)()
                         if (stage in testcase.stages) and ((enable_tests and test_name in enable_tests) or (not enable_tests and not test_name in disable_tests)):
+                            applicable_flag = True
+                            if hasattr(testcase, "not_applicable"):
+                                logging.debug(self.getName() + ": checking not_applicable list for " + test_name)
+                                not_applicable = testcase.not_applicable
+                                for key in not_applicable.keys():
+                                    logging.debug(self.getName() + ": not_applicable key %s %s ... " % (key, not_applicable[key]))
+                                    r = re.compile(not_applicable[key])
+                                    if r.match(params[key]):
+                                        logging.debug(self.getName() + ": got not_applicable for " + test_name + " %s = %s" % (key, params[key]))
+                                        result[test_name] = {"result": "skipped", "comment": "not applicable for %s = %s" % (key, params[key])}
+                                        applicable_flag = False
+                                        break
+                            if hasattr(testcase, "applicable"):
+                                logging.debug(self.getName() + ": checking applicable list for " + test_name)
+                                applicable = testcase.applicable
+                                for key in applicable.keys():
+                                    logging.debug(self.getName() + ": applicable key %s %s ... " % (key, applicable[key]))
+                                    r = re.compile(applicable[key])
+                                    if not r.match(params[key]):
+                                        logging.debug(self.getName() + ": got 'not applicable' for " + test_name + " %s = %s" % (key, params[key]))
+                                        result[test_name] = {"result": "skipped", "comment": "not applicable for %s = %s" % (key, params[key])}
+                                        applicable_flag = False
+                                        break
+                            if not applicable_flag:
+                                continue
                             logging.debug(self.getName() + ": doing test " + test_name + " for " + params["iname"] + " " + stage)
                             test_result = testcase.test(con, params)
                             logging.debug(self.getName() + ": " + params["iname"] + ": test " + test_name + " finised with " + str(test_result))

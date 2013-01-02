@@ -1,20 +1,10 @@
 from valid.valid_testcase import *
-import re
-_na_versions = re.compile('^5\.[12345678]$|^6\.[123]$')
-
 
 class testcase_31_subscription_management(ValidTestcase):
     stages = ["stage1"]
+    applicable = {"product": "(?i)RHEL|BETA", "version": "^5\.[12345678]$|^6\.[123]$"}
 
     def test(self, connection, params):
-        if _na_versions.match(params["version"]):
-            self.log.append(
-                {
-                    "result": "skip",
-                    "comment": "N/A for version: %s" % params["version"]
-                }
-            )
-            return self.log
         # check subscription-manager plugin is disabled
         self.ping_pong(
             connection,
