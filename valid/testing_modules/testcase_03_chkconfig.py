@@ -5,8 +5,13 @@ class testcase_03_chkconfig(ValidTestcase):
     stages = ["stage1"]
 
     def test(self, connection, params):
-        self.ping_pong(connection, "chkconfig --list crond", "3:on")
-        self.ping_pong(connection, "chkconfig --list iptables", "3:on")
-        if (params["product"].upper() == "RHEL" or params["product"].upper() == "BETA") and params["version"].startswith("5."):
-            self.ping_pong(connection, "chkconfig --list yum-updatesd", "3:on")
+        is_systemd = self.get_result(connection, "rpm -q systemd > /dev/null && echo True || echo False")
+        if is_systemd == "True":
+            self.get_return_value(connection, "systemctl is-active crond.service")
+            self.get_return_value(connection, "systemctl is-active iptables.service")
+        else:
+            self.ping_pong(connection, "chkconfig --list crond", "3:on")
+            self.ping_pong(connection, "chkconfig --list iptables", "3:on")
+            if (params["product"].upper() == "RHEL" or params["product"].upper() == "BETA") and params["version"].startswith("5."):
+                self.ping_pong(connection, "chkconfig --list yum-updatesd", "3:on")
         return self.log
