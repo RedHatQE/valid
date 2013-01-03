@@ -8,9 +8,12 @@ class testcase_32_ephemeral(ValidTestcase):
         has_ephemeral = False
         for bdev in params["bmap"]:
             if bdev.has_key("ephemeral_name"):
+                name = bdev["name"]
+                if name.startswith("/dev/sd"):
+                    name = "/dev/xvd" + name[7:]
                 has_ephemeral = True
-                self.get_return_value(connection, "fdisk -l %s | grep ^Disk" % bdev["name"], 30)
-                self.get_return_value(connection, "mkfs.vfat %s" % bdev["name"], 60)
+                self.get_return_value(connection, "fdisk -l %s | grep ^Disk" % name, 30)
+                self.get_return_value(connection, "mkfs.vfat %s" % name, 60)
         if not has_ephemeral:
             self.log.append({
                     "result": "skip",
