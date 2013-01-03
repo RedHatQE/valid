@@ -1,5 +1,5 @@
 Name:		valid
-Version:	0.3
+Version:	0.4
 Release:	1%{?dist}
 Summary:	Image validation (threaded) server
 
@@ -95,6 +95,68 @@ fi
 %attr(0755, root, root) %{_bindir}/valid_client.py
 
 %changelog
+* Thu Jan 03 2013 milan <mkovacik@redhat.com> 0.4-1
+- pep8 (mkovacik@redhat.com)
+- fixes for testcase_14_host_details (mkovacik@redhat.com)
+- fixed key error handling (mkovacik@redhat.com)
+- testcase_31_subscription_management.py: pep8 (vitty@redhat.com)
+- fix for systemd-enabled systems (vitty@redhat.com)
+- testcase_08_memory.py: fix for colorful output (vitty@redhat.com)
+- merge hwp into params bugfixes (vitty@redhat.com)
+- applicable/not_applicable lists for tests (vitty@redhat.com)
+- systemd unit (vitty@redhat.com)
+- add special user for server, separate client subpackage (vitty@redhat.com)
+- subscription manager test enhancements (mkovacik@redhat.com)
+- Merge remote branch 'origin/threaded' into threaded (mkovacik@redhat.com)
+- enhanced version handling in testcase 27, region attribute added to debug
+  runner (mkovacik@redhat.com)
+- scripts/valid_runner.py: KeyError -> bad test (vitty@redhat.com)
+- avoiding name resolution in iptables dump (mkovacik@redhat.com)
+- introduce 'skipped' testing result (vitty@redhat.com)
+- testcase_29_swap_file.py: no swap for x86_64 (vitty@redhat.com)
+- valid_runner.py: pep8 (vitty@redhat.com)
+- valid_debug_run.py: dump yaml (vitty@redhat.com)
+- testcase_30_rhn_certificates.py: protect against failures (vitty@redhat.com)
+- Merge remote branch 'origin/threaded' into threaded (mkovacik@redhat.com)
+- support list of commands (mkovacik@redhat.com)
+- testcase_11_package_set: insreace timeout for rpm (vitty@redhat.com)
+- valid_debug_run.py: typo (vitty@redhat.com)
+- testcase_21_disk_size_format.py: fix for multiple disks (vitty@redhat.com)
+- debug runner (vitty@redhat.com)
+- Merge remote branch 'origin/threaded' into threaded (mkovacik@redhat.com)
+- fixed the reading (mkovacik@redhat.com)
+- tiny fix (mkovacik@redhat.com)
+- fixes (mkovacik@redhat.com)
+- refactoring repos test (mkovacik@redhat.com)
+- valid_runner.py: stress test bugfixes and optimizations (vitty@redhat.com)
+- valid_client.py: add stdin support (vitty@redhat.com)
+- providing timeout to rpm queries (mkovacik@redhat.com)
+- bugfixes for cloud-init-enabled instances and numbers in data
+  (vitty@redhat.com)
+- pretify bugzilla output (vitty@redhat.com)
+- remove 'Request succeeded' output (vitty@redhat.com)
+- HTTPS (vitty@redhat.com)
+- certs setup (vitty@redhat.com)
+- introducing 64 packages (mkovacik@redhat.com)
+- example_f17_m1small.yaml (vitty@redhat.com)
+- valid_cert_creator.py introduced (vitty@redhat.com)
+- sort tests in bugzilla (vitty@redhat.com)
+- fix 'fail' bug in bugzilla reporter (vitty@redhat.com)
+- run setup commands in a different way (vitty@redhat.com)
+- s,hwm,hvm,g (vitty@redhat.com)
+- Migrate public_dns_name/private_ip_address logic to patchwork
+  (vitty@redhat.com)
+- implement ami-specific setup scripts (vitty@redhat.com)
+- check 'ntry' for setup stage (vitty@redhat.com)
+- separate "setup" stage (vitty@redhat.com)
+- Merge remote-tracking branch 'origin/threaded' into threaded
+  (vitty@redhat.com)
+- Implement CTRL-C feature (vitty@redhat.com)
+- Merge remote branch 'origin/threaded' into threaded (mkovacik@redhat.com)
+- merge (mkovacik@redhat.com)
+- add shebang (vitty@redhat.com)
+- introducing custom setup script and subnet_id handling (mkovacik@redhat.com)
+
 * Mon Dec 17 2012 Vitaly Kuznetsov <vitty@redhat.com> 0.3-1
 - new version
 * Wed Dec 05 2012 Vitaly Kuznetsov <vitty@redhat.com> 0.2-1
