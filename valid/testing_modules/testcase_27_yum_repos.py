@@ -53,7 +53,7 @@ class testcase_27_yum_repos(ValidTestcase):
         with open('/usr/share/valid/data/repos.yaml') as expected_repos_fd:
             all_repos = yaml.safe_load(expected_repos_fd)
         try:
-            expected_repos_ = all_repos[params['region']]['%s-%s' % (prod, ver)]
+            expected_repos_ = all_repos[params['region']]['%s_%s' % (prod, ver)]
         except KeyError as e:
             self.log.append({
                 "result": "skip",
