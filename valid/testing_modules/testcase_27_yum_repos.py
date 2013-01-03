@@ -63,7 +63,7 @@ class testcase_27_yum_repos(ValidTestcase):
         # add the region substring
         expected_repos = {}
         for k, v in expected_repos_.items():
-            expected_repos[k.replace('rhui', '-' + params['region'])] = v
+            expected_repos[k.replace('rhui', 'rhui-' + params['region'])] = v
         ret = {
             "expected repos": expected_repos,
             "actual repos": repos
