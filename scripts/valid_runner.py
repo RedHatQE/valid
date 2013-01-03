@@ -617,7 +617,7 @@ class InstanceThread(threading.Thread):
                 return
             else:
                 # maxwait seconds is enough to create an instance. If not -- EC2 failed.
-                logging.error("Error during instance creation, %s" % e)
+                logging.error("Error during instance creation")
 
         except boto.exception.EC2ResponseError, e:
             # Boto errors should be handled according to their error Message - there are some well-known ones
