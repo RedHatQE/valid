@@ -43,7 +43,7 @@ argparser.add_argument('--enable-tests', type=csv, help='enable specified tests 
 argparser.add_argument('--maxtries', type=int,
                        default=30, help='maximum number of tries')
 argparser.add_argument('--maxwait', type=int,
-                       default=300, help='maximum wait time for instance creation')
+                       default=900, help='maximum wait time for instance creation')
 argparser.add_argument('--numthreads', type=int,
                        default=10, help='number of worker threads')
 argparser.add_argument('--results-dir',
@@ -605,7 +605,8 @@ class InstanceThread(threading.Thread):
                 time.sleep(5)
                 count += 1
             connection.close()
-            if myinstance.update() == 'running':
+            instance_state = myinstance.update()
+            if instance_state  == 'running':
                 # Instance appeared - scheduling 'setup' stage
                 myinstance.add_tag("Name", params["ami"] + " validation")
                 result = myinstance.__dict__
@@ -615,9 +616,18 @@ class InstanceThread(threading.Thread):
                 params["instance"] = result.copy()
                 mainq.put((0, "setup", params))
                 return
-            else:
+            elif instance_state == 'pending':
                 # maxwait seconds is enough to create an instance. If not -- EC2 failed.
-                logging.error("Error during instance creation")
+                logging.error("Error during instance creation: timeout in pending state")
+                result = myinstance.__dict__
+                if result.has_key("id"):
+                    # terminate stucked instance
+                    params["id"] = result["id"]
+                    params["instance"] = result.copy()
+                    mainq.put((0, "terminate", params.copy()))
+            else:
+                # error occured
+                logging.error("Error during instance creation: " + instance_state)
 
         except boto.exception.EC2ResponseError, e:
             # Boto errors should be handled according to their error Message - there are some well-known ones
