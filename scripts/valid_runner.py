@@ -23,7 +23,7 @@ import re
 from patchwork.connection import Connection
 from patchwork.expect import *
 from boto import ec2
-from boto.ec2.blockdevicemapping import EBSBlockDeviceType
+from boto.ec2.blockdevicemapping import BlockDeviceType
 from boto.ec2.blockdevicemapping import BlockDeviceMapping
 
 import valid
@@ -115,12 +115,6 @@ if args.debug:
 else:
     logging.getLogger("paramiko").setLevel(logging.ERROR)
 
-bmap = BlockDeviceMapping()
-t = EBSBlockDeviceType()
-t.size = '15'
-t.delete_on_termination = True
-bmap['/dev/sda1'] = t
-
 testing_stages = []
 for m in sys.modules.keys():
     if m.startswith("valid.testing_modules.testcase"):
@@ -173,6 +167,8 @@ def add_data(data):
                         for hwp_item in hwp:
                             params_copy = params.copy()
                             params_copy.update(hwp_item)
+                            if not params_copy.has_key("bmap"):
+                                params_copy["bmap"] = [{"name": "/dev/sda1", "size": "15", "delete_on_termination": True}]
                             params_copy["transaction_id"] = transaction_id
                             params_copy["iname"] = "Instance" + str(count) + "_" + transaction_id
                             params_copy["stages"] = testing_stages
@@ -571,6 +567,20 @@ class InstanceThread(threading.Thread):
         logging.debug(self.getName() + ": trying to create instance  " + params["iname"] + ", ntry " + str(ntry))
         ntry += 1
         try:
+            bmap = BlockDeviceMapping()
+            for device in params["bmap"]:
+                if not device.has_key("name"):
+                    logging.debug(self.getName() + ": bad device " + str(device))
+                    continue
+                d = BlockDeviceType()
+                if device.has_key("size"):
+                    d.size = device["size"]
+                if device.has_key("delete_on_termination"):
+                    d.delete_on_termination = device["delete_on_termination"]
+                if device.has_key("ephemeral_name"):
+                    d.ephemeral_name = device["ephemeral_name"]
+                bmap[device["name"]] = d
+
             reg = boto.ec2.get_region(params["region"], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
