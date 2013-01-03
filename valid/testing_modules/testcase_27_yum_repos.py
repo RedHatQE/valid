@@ -53,14 +53,17 @@ class testcase_27_yum_repos(ValidTestcase):
         with open('/usr/share/valid/data/repos.yaml') as expected_repos_fd:
             all_repos = yaml.safe_load(expected_repos_fd)
         try:
-            expected_repos = all_repos[params['region']]['%s-%s' % (prod, ver.split('.')[0])]
+            expected_repos_ = all_repos[params['region']]['%s-%s' % (prod, ver)]
         except KeyError as e:
             self.log.append({
                 "result": "skip",
                 "comment": "unsupported region and/or product-version combination"
                 })
             return self.log
-
+        # add the region substring
+        expected_repos = {}
+        for k, v in expected_repos_:
+            expected_repos[k.replace('rhui', '-' + params['region'])] = v
         ret = {
             "expected repos": expected_repos,
             "actual repos": repos

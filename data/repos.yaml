@@ -1,327 +1,114 @@
+# REPO CONFIGS
+# since the config has been changing with product version and region, the
+# mapping has to provide the same.
+# Fortunately, lots of entries are repeated therefore aliases may be used
+# to keep the structure somewhat smaller
+#
+# HINTS
+# - we start with most generic stuff to re-use the declarations later
+# - rhui- is always replaced to rhui-<region name>- within the test case
+
+RHEL_5ANY: &RHEL_5ANY
+    rhui-client-config-server-5: &client-config-server-5
+        repo-status: enabled
+    rhui-rhel-server: &rhel-server
+        repo-status: enabled
+
+BETA_5ANY: &BETA_5ANY
+    <<: *RHEL_5ANY
+    rhui-client-config-server-5-beta: &client-config-server-5-beta
+        repo-status: enabled
+
+RHEL_6ANY: &RHEL_6ANY
+    rhel-source: &rhel-source
+        repo-status: disabled
+    rhui-client-config-server-6: &client-config-server-6
+        repo-status: enabled
+    rhui-rhel-server-releases: &server-releases
+        repo-status: enabled
+    rhui-rhel-server-releases-optional: &server-releases-optional
+        repo-status: enabled
+    rhui-rhel-server-releases-optional-source: &server-releases-optional-source
+        repo-status: disabled
+    rhui-rhel-server-releases-source: &server-releases-source
+        repo-status: disabled
+
+BETA_6ANY: &BETA_6ANY
+    <<: *RHEL_6ANY
+    rhel-source-beta: &rhel-source-beta
+        repo-status: disabled
+    rhui-client-config-server-6-beta: &client-config-server-6-beta
+        repo-status: enabled
+    rhui-rhel-server-releases-beta: &server-releases-beta
+        repo-status: enabled
+    rhui-rhel-server-releases-optional-beta: &server-releases-optional-beta
+        repo-status: enabled
+    rhui-rhel-server-releases-optional-source-beta: &server-releases-optional-source-beta
+        repo-status: disabled
+    rhui-rhel-server-releases-source-beta: &server-releases-source-beta
+        repo-status: disabled
+
+# generic region
+ANY_REGION: &ANY_REGION
+    RHEL_5.5:
+        <<: *RHEL_5ANY
+    BETA_5.5:
+        <<: *BETA_5ANY
+    RHEL_5.6:
+        <<: *RHEL_5ANY
+    BETA_5.6:
+        <<: *BETA_5ANY
+    RHEL_5.7:
+        <<: *RHEL_5ANY
+    BETA_5.7:
+        <<: *BETA_5ANY
+    RHEL_5.8:
+        <<: *RHEL_5ANY
+    BETA_5.8:
+        <<: *BETA_5ANY
+
+    # 5.9 should contain rhel-debuginfo and source stuff in addition
+    RHEL_5.9: &RHEL_59
+        <<: *RHEL_5ANY
+        rhel-debuginfo: &rhel-debuginfo
+            repo-status: disabled
+        rhui-rhel-server-source: &rhel-server-source
+            repo-status: disabled
+    BETA_5.9:
+        <<: *BETA_5ANY
+        <<: *RHEL_59
+
+    RHEL_6.1:
+        <<: *RHEL_6ANY
+    BETA_6.1:
+        <<: *BETA_6ANY
+    RHEL_6.2:
+        <<: *RHEL_6ANY
+    BETA_6.2:
+        <<: *BETA_6ANY
+    RHEL_6.3:
+        <<: *RHEL_6ANY
+    BETA_6.3:
+        <<: *BETA_6ANY
+    RHEL_6.4:
+        <<: *RHEL_6ANY
+    BETA_6.4:
+        <<: *BETA_6ANY
+
+# particular regions follow
 ap-northeast-1:
-  BETA-6:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-ap-northeast-1-client-config-server-6: {repo-status: enabled}
-    rhui-ap-northeast-1-client-config-server-6-beta: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-ap-northeast-1-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-ap-northeast-1-rhel-server-releases-source: {repo-status: disabled}
-    rhui-ap-northeast-1-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-6:
-    rhel-source: {repo-status: disabled}
-    rhui-ap-northeast-1-client-config-server-6: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-ap-northeast-1-rhel-server-releases-source: {repo-status: disabled}
-  BETA-5:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-ap-northeast-1-client-config-server-5: {repo-status: enabled}
-    rhui-ap-northeast-1-client-config-server-5-beta: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-ap-northeast-1-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-ap-northeast-1-rhel-server-releases-source: {repo-status: disabled}
-    rhui-ap-northeast-1-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-5:
-    rhel-source: {repo-status: disabled}
-    rhui-ap-northeast-1-client-config-server-5: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-ap-northeast-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-ap-northeast-1-rhel-server-releases-source: {repo-status: disabled}
+    <<: *ANY_REGION
 ap-southeast-1:
-  BETA-6:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-ap-southeast-1-client-config-server-6: {repo-status: enabled}
-    rhui-ap-southeast-1-client-config-server-6-beta: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-ap-southeast-1-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-ap-southeast-1-rhel-server-releases-source: {repo-status: disabled}
-    rhui-ap-southeast-1-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-6:
-    rhel-source: {repo-status: disabled}
-    rhui-ap-southeast-1-client-config-server-6: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-ap-southeast-1-rhel-server-releases-source: {repo-status: disabled}
-  BETA-5:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-ap-southeast-1-client-config-server-5: {repo-status: enabled}
-    rhui-ap-southeast-1-client-config-server-5-beta: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-ap-southeast-1-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-ap-southeast-1-rhel-server-releases-source: {repo-status: disabled}
-    rhui-ap-southeast-1-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-5:
-    rhel-source: {repo-status: disabled}
-    rhui-ap-southeast-1-client-config-server-5: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-ap-southeast-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-ap-southeast-1-rhel-server-releases-source: {repo-status: disabled}
+    <<: *ANY_REGION
 ap-southeast-2:
-  BETA-6:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-ap-southeast-2-client-config-server-6: {repo-status: enabled}
-    rhui-ap-southeast-2-client-config-server-6-beta: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-ap-southeast-2-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-ap-southeast-2-rhel-server-releases-source: {repo-status: disabled}
-    rhui-ap-southeast-2-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-6:
-    rhel-source: {repo-status: disabled}
-    rhui-ap-southeast-2-client-config-server-6: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-ap-southeast-2-rhel-server-releases-source: {repo-status: disabled}
-  BETA-5:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-ap-southeast-2-client-config-server-5: {repo-status: enabled}
-    rhui-ap-southeast-2-client-config-server-5-beta: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-ap-southeast-2-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-ap-southeast-2-rhel-server-releases-source: {repo-status: disabled}
-    rhui-ap-southeast-2-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-5:
-    rhel-source: {repo-status: disabled}
-    rhui-ap-southeast-2-client-config-server-5: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-ap-southeast-2-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-ap-southeast-2-rhel-server-releases-source: {repo-status: disabled}
+    <<: *ANY_REGION
 eu-west-1:
-  BETA-6:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-eu-west-1-client-config-server-6: {repo-status: enabled}
-    rhui-eu-west-1-client-config-server-6-beta: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-eu-west-1-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-eu-west-1-rhel-server-releases-source: {repo-status: disabled}
-    rhui-eu-west-1-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-6:
-    rhel-source: {repo-status: disabled}
-    rhui-eu-west-1-client-config-server-6: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-eu-west-1-rhel-server-releases-source: {repo-status: disabled}
-  BETA-5:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-eu-west-1-client-config-server-5: {repo-status: enabled}
-    rhui-eu-west-1-client-config-server-5-beta: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-eu-west-1-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-eu-west-1-rhel-server-releases-source: {repo-status: disabled}
-    rhui-eu-west-1-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-5:
-    rhel-source: {repo-status: disabled}
-    rhui-eu-west-1-client-config-server-5: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-eu-west-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-eu-west-1-rhel-server-releases-source: {repo-status: disabled}
+    <<: *ANY_REGION
 sa-east-1:
-  BETA-6:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-sa-east-1-client-config-server-6: {repo-status: enabled}
-    rhui-sa-east-1-client-config-server-6-beta: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-sa-east-1-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-sa-east-1-rhel-server-releases-source: {repo-status: disabled}
-    rhui-sa-east-1-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-6:
-    rhel-source: {repo-status: disabled}
-    rhui-sa-east-1-client-config-server-6: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-sa-east-1-rhel-server-releases-source: {repo-status: disabled}
-  BETA-5:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-sa-east-1-client-config-server-5: {repo-status: enabled}
-    rhui-sa-east-1-client-config-server-5-beta: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-sa-east-1-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-sa-east-1-rhel-server-releases-source: {repo-status: disabled}
-    rhui-sa-east-1-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-5:
-    rhel-source: {repo-status: disabled}
-    rhui-sa-east-1-client-config-server-5: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-sa-east-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-sa-east-1-rhel-server-releases-source: {repo-status: disabled}
+    <<: *ANY_REGION
 us-east-1:
-  BETA-6:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-us-east-1-client-config-server-6: {repo-status: enabled}
-    rhui-us-east-1-client-config-server-6-beta: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-us-east-1-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-us-east-1-rhel-server-releases-source: {repo-status: disabled}
-    rhui-us-east-1-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-6:
-    rhel-source: {repo-status: disabled}
-    rhui-us-east-1-client-config-server-6: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-us-east-1-rhel-server-releases-source: {repo-status: disabled}
-  BETA-5:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-us-east-1-client-config-server-5: {repo-status: enabled}
-    rhui-us-east-1-client-config-server-5-beta: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-us-east-1-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-us-east-1-rhel-server-releases-source: {repo-status: disabled}
-    rhui-us-east-1-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-5:
-    rhel-source: {repo-status: disabled}
-    rhui-us-east-1-client-config-server-5: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-us-east-1-rhel-server-releases-optional-source: {repo-status: disabled}
+    <<: *ANY_REGION
 us-west-1:
-  BETA-6:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-us-west-1-client-config-server-6: {repo-status: enabled}
-    rhui-us-west-1-client-config-server-6-beta: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-us-west-1-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-us-west-1-rhel-server-releases-source: {repo-status: disabled}
-    rhui-us-west-1-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-6:
-    rhel-source: {repo-status: disabled}
-    rhui-us-west-1-client-config-server-6: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-us-west-1-rhel-server-releases-source: {repo-status: disabled}
-  BETA-5:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-us-west-1-client-config-server-5: {repo-status: enabled}
-    rhui-us-west-1-client-config-server-5-beta: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-us-west-1-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-us-west-1-rhel-server-releases-source: {repo-status: disabled}
-    rhui-us-west-1-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-5:
-    rhel-source: {repo-status: disabled}
-    rhui-us-west-1-client-config-server-5: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-us-west-1-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-us-west-1-rhel-server-releases-source: {repo-status: disabled}
+    <<: *ANY_REGION
 us-west-2:
-  BETA-6:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-us-west-2-client-config-server-6: {repo-status: enabled}
-    rhui-us-west-2-client-config-server-6-beta: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-us-west-2-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-us-west-2-rhel-server-releases-source: {repo-status: disabled}
-    rhui-us-west-2-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-6:
-    rhel-source: {repo-status: disabled}
-    rhui-us-west-2-client-config-server-6: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-us-west-2-rhel-server-releases-source: {repo-status: disabled}
-  BETA-5:
-    rhel-source: {repo-status: disabled}
-    rhel-source-beta: {repo-status: disabled}
-    rhui-us-west-2-client-config-server-5: {repo-status: enabled}
-    rhui-us-west-2-client-config-server-5-beta: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases-beta: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases-optional-beta: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-us-west-2-rhel-server-releases-optional-source-beta: {repo-status: disabled}
-    rhui-us-west-2-rhel-server-releases-source: {repo-status: disabled}
-    rhui-us-west-2-rhel-server-releases-source-beta: {repo-status: disabled}
-  RHEL-5:
-    rhel-source: {repo-status: disabled}
-    rhui-us-west-2-client-config-server-5: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases-optional: {repo-status: enabled}
-    rhui-us-west-2-rhel-server-releases-optional-source: {repo-status: disabled}
-    rhui-us-west-2-rhel-server-releases-source: {repo-status: disabled}
+    <<: *ANY_REGION
