@@ -60,10 +60,10 @@ class testcase_27_yum_repos(ValidTestcase):
                 "comment": "unsupported region and/or product-version combination"
                 })
             return self.log
-        # add the region substring
+        # expand %region%
         expected_repos = {}
         for k, v in expected_repos_.items():
-            expected_repos[k.replace('rhui', 'rhui-' + params['region'])] = v
+            expected_repos[k.replace('%region%', params['region'])] = v
         ret = {
             "expected repos": expected_repos,
             "actual repos": repos

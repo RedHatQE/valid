@@ -6,46 +6,46 @@
 #
 # HINTS
 # - we start with most generic stuff to re-use the declarations later
-# - rhui- is always replaced to rhui-<region name>- within the test case
+# - %region% is always replaced to rhui-<region name>- within the test case
 
 RHEL_5ANY: &RHEL_5ANY
-    rhui-client-config-server-5: &client-config-server-5
+    rhui-%region%-client-config-server-5: &client-config-server-5
         repo-status: enabled
-    rhui-rhel-server: &rhel-server
+    rhui-%region%-rhel-server: &rhel-server
         repo-status: enabled
 
 BETA_5ANY: &BETA_5ANY
     <<: *RHEL_5ANY
-    rhui-client-config-server-5-beta: &client-config-server-5-beta
+    rhui-%region%-client-config-server-5-beta: &client-config-server-5-beta
         repo-status: enabled
 
 RHEL_6ANY: &RHEL_6ANY
     rhel-source: &rhel-source
         repo-status: disabled
-    rhui-client-config-server-6: &client-config-server-6
+    rhui-%region%-client-config-server-6: &client-config-server-6
         repo-status: enabled
-    rhui-rhel-server-releases: &server-releases
+    rhui-%region%-rhel-server-releases: &server-releases
         repo-status: enabled
-    rhui-rhel-server-releases-optional: &server-releases-optional
+    rhui-%region%-rhel-server-releases-optional: &server-releases-optional
         repo-status: enabled
-    rhui-rhel-server-releases-optional-source: &server-releases-optional-source
+    rhui-%region%-rhel-server-releases-optional-source: &server-releases-optional-source
         repo-status: disabled
-    rhui-rhel-server-releases-source: &server-releases-source
+    rhui-%region%-rhel-server-releases-source: &server-releases-source
         repo-status: disabled
 
 BETA_6ANY: &BETA_6ANY
     <<: *RHEL_6ANY
     rhel-source-beta: &rhel-source-beta
         repo-status: disabled
-    rhui-client-config-server-6-beta: &client-config-server-6-beta
+    rhui-%region%-client-config-server-6-beta: &client-config-server-6-beta
         repo-status: enabled
-    rhui-rhel-server-releases-beta: &server-releases-beta
+    rhui-%region%-rhel-server-releases-beta: &server-releases-beta
         repo-status: enabled
-    rhui-rhel-server-releases-optional-beta: &server-releases-optional-beta
+    rhui-%region%-rhel-server-releases-optional-beta: &server-releases-optional-beta
         repo-status: enabled
-    rhui-rhel-server-releases-optional-source-beta: &server-releases-optional-source-beta
+    rhui-%region%-rhel-server-releases-optional-source-beta: &server-releases-optional-source-beta
         repo-status: disabled
-    rhui-rhel-server-releases-source-beta: &server-releases-source-beta
+    rhui-%region%-rhel-server-releases-source-beta: &server-releases-source-beta
         repo-status: disabled
 
 # generic region
@@ -72,7 +72,7 @@ ANY_REGION: &ANY_REGION
         <<: *RHEL_5ANY
         rhel-debuginfo: &rhel-debuginfo
             repo-status: disabled
-        rhui-rhel-server-source: &rhel-server-source
+        rhui-%region%-rhel-server-source: &rhel-server-source
             repo-status: disabled
     BETA_5.9:
         <<: *BETA_5ANY
