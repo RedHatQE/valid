@@ -1,9 +1,3 @@
-- {arch: 'x86_64', cpu: '4', memory: '15000000', ec2name: m3.xlarge, virtualization: 'hvm'}
-- {arch: 'x86_64', cpu: '8', memory: '30000000', ec2name: m3.2xlarge, virtualization: 'hvm'}
-- {arch: 'x86_64', cpu: '8', memory: '23000000', ec2name: cc1.4xlarge, virtualization: 'hvm'}
-- {arch: 'x86_64', cpu: '16', memory: '60500000', ec2name: cc2.8xlarge, virtualization: 'hvm'}
-- {arch: 'x86_64', cpu: '8', memory: '22000000', ec2name: cg1.4xlarge, virtualization: 'hvm'}
-- {arch: 'x86_64', cpu: '8', memory: '60500000', ec2name: hi1.4xlarge, virtualization: 'hvm'}
 - arch: x86_64
   bmap:
   - {delete_on_termination: true, name: /dev/sda1, size: '15'}
@@ -31,7 +25,17 @@
   - {ephemeral_name: ephemeral23, name: /dev/sdy}
   - {ephemeral_name: ephemeral4, name: /dev/xvdaa}
   - {ephemeral_name: ephemeral5, name: /dev/xvdab}
+  userdata: &USERDATA |
+      #! /bin/sh
+      touch /userdata_test
+      date >> /userdata_test
   cpu: '16'
   ec2name: hs1.8xlarge
   memory: '121000000'
   virtualization: hvm
+- {arch: 'x86_64', cpu: '4', memory: '15000000', ec2name: m3.xlarge, virtualization: 'hvm', userdata: *USERDATA}
+- {arch: 'x86_64', cpu: '8', memory: '30000000', ec2name: m3.2xlarge, virtualization: 'hvm', userdata: *USERDATA}
+- {arch: 'x86_64', cpu: '8', memory: '23000000', ec2name: cc1.4xlarge, virtualization: 'hvm', userdata: *USERDATA}
+- {arch: 'x86_64', cpu: '16', memory: '60500000', ec2name: cc2.8xlarge, virtualization: 'hvm', userdata: *USERDATA}
+- {arch: 'x86_64', cpu: '8', memory: '22000000', ec2name: cg1.4xlarge, virtualization: 'hvm', userdata: *USERDATA}
+- {arch: 'x86_64', cpu: '8', memory: '60500000', ec2name: hi1.4xlarge, virtualization: 'hvm', userdata: *USERDATA}
