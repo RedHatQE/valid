@@ -3,12 +3,23 @@
   memory: '600000'
   ec2name: t1.micro
   virtualization: 'paravirtual'
-  bmap: &BMAP
-  - {delete_on_termination: true, name: /dev/sda1, size: '15'}
-  - {ephemeral_name: ephemeral0, name: /dev/sdf}
   userdata: &USERDATA |
       #! /bin/sh
       touch /userdata_test
       date >> /userdata_test
-- {arch: 'i386', cpu: '1', memory: '1700000', ec2name: m1.small, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
-- {arch: 'i386', cpu: '2', memory: '1700000', ec2name: c1.medium, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
+- arch: 'i386'
+  cpu: '1'
+  memory: '1700000'
+  ec2name: m1.small
+  virtualization: 'paravirtual'
+  userdata: *USERDATA
+  bmap: &BMAP
+  - {delete_on_termination: true, name: /dev/sda1, size: '15'}
+  - {ephemeral_name: ephemeral0, name: /dev/sdf}
+- arch: 'i386'
+  cpu: '2'
+  memory: '1700000'
+  ec2name: c1.medium
+  virtualization: 'paravirtual'
+  userdata: *USERDATA
+  bmap: *BMAP
