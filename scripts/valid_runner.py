@@ -571,15 +571,15 @@ class InstanceThread(threading.Thread):
         try:
             bmap = BlockDeviceMapping()
             for device in params["bmap"]:
-                if not device.has_key("name"):
+                if not "name" in device.keys():
                     logging.debug(self.getName() + ": bad device " + str(device))
                     continue
                 d = BlockDeviceType()
-                if device.has_key("size"):
+                if "size" in device.keys():
                     d.size = device["size"]
-                if device.has_key("delete_on_termination"):
+                if "delete_on_termination" in device.keys():
                     d.delete_on_termination = device["delete_on_termination"]
-                if device.has_key("ephemeral_name"):
+                if "ephemeral_name" in device.keys():
                     d.ephemeral_name = device["ephemeral_name"]
                 bmap[device["name"]] = d
 
@@ -609,7 +609,7 @@ class InstanceThread(threading.Thread):
                 count += 1
             connection.close()
             instance_state = myinstance.update()
-            if instance_state  == 'running':
+            if instance_state == 'running':
                 # Instance appeared - scheduling 'setup' stage
                 myinstance.add_tag("Name", params["ami"] + " validation")
                 result = myinstance.__dict__
@@ -623,7 +623,7 @@ class InstanceThread(threading.Thread):
                 # maxwait seconds is enough to create an instance. If not -- EC2 failed.
                 logging.error("Error during instance creation: timeout in pending state")
                 result = myinstance.__dict__
-                if result.has_key("id"):
+                if "id" in result.keys():
                     # terminate stucked instance
                     params["id"] = result["id"]
                     params["instance"] = result.copy()

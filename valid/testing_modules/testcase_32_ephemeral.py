@@ -7,7 +7,7 @@ class testcase_32_ephemeral(ValidTestcase):
     def test(self, connection, params):
         has_ephemeral = False
         for bdev in params["bmap"]:
-            if bdev.has_key("ephemeral_name"):
+            if "ephemeral_name" in bdev.keys():
                 name = bdev["name"]
                 if name.startswith("/dev/sd"):
                     name = "/dev/xvd" + name[7:]
