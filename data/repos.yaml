@@ -8,45 +8,48 @@
 # - we start with most generic stuff to re-use the declarations later
 # - %region% is always replaced to rhui-<region name>- within the test case
 
-rhel-debuginfo: &rhel-debuginfo {repo-status: disabled}
-rhel-source: &rhel-source {repo-status: disabled}
+HAS_RHEL_DEBUGINFO: &HAS_RHEL_DEBUGINFO
+    rhel-debuginfo: {repo-status: disabled}
+HAS_RHEL_SOURCE: &HAS_RHEL_SOURCE
+    rhel-source: {repo-status: disabled}
+HAS_RHEL_SOURCE_BETA: &HAS_RHEL_SOURCE_BETA
+    rhel-source-beta: {repo-status: disabled}
 
 RHEL_5ANY: &RHEL_5ANY
-    *rhel-debuginfo
-    rhui-ap-ne-rhel-server: {repo-status: disabled}
-    rhui-ap-ne-rhel-server-1y: {repo-status: disabled}
-    rhui-ap-ne-rhel-server-1y-source: {repo-status: disabled}
-    rhui-ap-ne-rhel-server-source: {repo-status: disabled}
-    rhui-ap-northeast-client-config-server-5: {repo-status: disabled}
-    rhui-ap-se-rhel-server: {repo-status: disabled}
-    rhui-ap-se-rhel-server-1y: {repo-status: disabled}
-    rhui-ap-se-rhel-server-1y-source: {repo-status: disabled}
-    rhui-ap-se-rhel-server-source: {repo-status: disabled}
-    rhui-ap-southeast-client-config-server-5: {repo-status: disabled}
-    rhui-eu-west-client-config-server-5: {repo-status: disabled}
-    rhui-eu-west-rhel-server: {repo-status: disabled}
-    rhui-eu-west-rhel-server-1y: {repo-status: disabled}
-    rhui-eu-west-rhel-server-1y-source: {repo-status: disabled}
-    rhui-eu-west-rhel-server-source: {repo-status: disabled}
-    rhui-us-east-client-config-server-5: {repo-status: enabled}
-    rhui-us-east-rhel-server: {repo-status: enabled}
-    rhui-us-east-rhel-server-1y: {repo-status: disabled}
-    rhui-us-east-rhel-server-1y-source: {repo-status: disabled}
-    rhui-us-east-rhel-server-source: {repo-status: disabled}
-    rhui-us-west-2-client-config-server-5: {repo-status: disabled}
-    rhui-us-west-2-rhel-server: {repo-status: disabled}
-    rhui-us-west-2-rhel-server-source: {repo-status: disabled}
-    rhui-us-west-client-config-server-5: {repo-status: disabled}
-    rhui-us-west-rhel-server: {repo-status: disabled}
-    rhui-us-west-rhel-server-1y: {repo-status: disabled}
-    rhui-us-west-rhel-server-1y-source: {repo-status: disabled}
-    rhui-us-west-rhel-server-source: {repo-status: disabled}
+     rhui-ap-ne-rhel-server: {repo-status: disabled}
+     rhui-ap-ne-rhel-server-1y: {repo-status: disabled}
+     rhui-ap-ne-rhel-server-1y-source: {repo-status: disabled}
+     rhui-ap-ne-rhel-server-source: {repo-status: disabled}
+     rhui-ap-northeast-client-config-server-5: {repo-status: disabled}
+     rhui-ap-se-rhel-server: {repo-status: disabled}
+     rhui-ap-se-rhel-server-1y: {repo-status: disabled}
+     rhui-ap-se-rhel-server-1y-source: {repo-status: disabled}
+     rhui-ap-se-rhel-server-source: {repo-status: disabled}
+     rhui-ap-southeast-client-config-server-5: {repo-status: disabled}
+     rhui-eu-west-client-config-server-5: {repo-status: disabled}
+     rhui-eu-west-rhel-server: {repo-status: disabled}
+     rhui-eu-west-rhel-server-1y: {repo-status: disabled}
+     rhui-eu-west-rhel-server-1y-source: {repo-status: disabled}
+     rhui-eu-west-rhel-server-source: {repo-status: disabled}
+     rhui-us-east-client-config-server-5: {repo-status: enabled}
+     rhui-us-east-rhel-server: {repo-status: enabled}
+     rhui-us-east-rhel-server-1y: {repo-status: disabled}
+     rhui-us-east-rhel-server-1y-source: {repo-status: disabled}
+     rhui-us-east-rhel-server-source: {repo-status: disabled}
+     rhui-us-west-2-client-config-server-5: {repo-status: disabled}
+     rhui-us-west-2-rhel-server: {repo-status: disabled}
+     rhui-us-west-2-rhel-server-source: {repo-status: disabled}
+     rhui-us-west-client-config-server-5: {repo-status: disabled}
+     rhui-us-west-rhel-server: {repo-status: disabled}
+     rhui-us-west-rhel-server-1y: {repo-status: disabled}
+     rhui-us-west-rhel-server-1y-source: {repo-status: disabled}
+     rhui-us-west-rhel-server-source: {repo-status: disabled}
 
 BETA_5ANY: &BETA_5ANY
     <<: *RHEL_5ANY
 
 RHEL_59_AND_NEWER: &RHEL_59_AND_NEWER
-    *rhel-debuginfo
+    <<: *HAS_RHEL_DEBUGINFO
     rhui-%region%-client-config-server-5: {repo-status: enabled}
     rhui-%region%-rhel-server: {repo-status: enabled}
 
@@ -55,32 +58,21 @@ BETA_59_AND_NEWER: &BETA_59_AND_NEWER
     rhui-%region%-client-config-server-5-beta: {repo-status: enabled}
 
 RHEL_6ANY: &RHEL_6ANY
-    *rhel-source
-    rhui-%region%-client-config-server-6: &client-config-server-6
-        repo-status: enabled
-    rhui-%region%-rhel-server-releases: &server-releases
-        repo-status: enabled
-    rhui-%region%-rhel-server-releases-optional: &server-releases-optional
-        repo-status: enabled
-    rhui-%region%-rhel-server-releases-optional-source: &server-releases-optional-source
-        repo-status: disabled
-    rhui-%region%-rhel-server-releases-source: &server-releases-source
-        repo-status: disabled
+    <<: *HAS_RHEL_SOURCE
+    rhui-%region%-client-config-server-6: {repo-status: enabled}
+    rhui-%region%-rhel-server-releases: {repo-status: enabled}
+    rhui-%region%-rhel-server-releases-optional: {repo-status: enabled}
+    rhui-%region%-rhel-server-releases-optional-source: {repo-status: disabled}
+    rhui-%region%-rhel-server-releases-source: {repo-status: disabled}
 
 BETA_6ANY: &BETA_6ANY
     <<: *RHEL_6ANY
-    rhel-source-beta: &rhel-source-beta
-        repo-status: disabled
-    rhui-%region%-client-config-server-6-beta: &client-config-server-6-beta
-        repo-status: enabled
-    rhui-%region%-rhel-server-releases-beta: &server-releases-beta
-        repo-status: enabled
-    rhui-%region%-rhel-server-releases-optional-beta: &server-releases-optional-beta
-        repo-status: enabled
-    rhui-%region%-rhel-server-releases-optional-source-beta: &server-releases-optional-source-beta
-        repo-status: disabled
-    rhui-%region%-rhel-server-releases-source-beta: &server-releases-source-beta
-        repo-status: disabled
+    <<: *HAS_RHEL_SOURCE_BETA
+    rhui-%region%-client-config-server-6-beta: {repo-status: enabled}
+    rhui-%region%-rhel-server-releases-beta: {repo-status: enabled}
+    rhui-%region%-rhel-server-releases-optional-beta: {repo-status: enabled}
+    rhui-%region%-rhel-server-releases-optional-source-beta: {repo-status: disabled}
+    rhui-%region%-rhel-server-releases-source-beta: {repo-status: disabled}
 
 # generic region
 ANY_REGION: &ANY_REGION
