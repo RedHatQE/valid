@@ -53,6 +53,7 @@ RHEL_59_AND_NEWER: &RHEL_59_AND_NEWER
     <<: *HAS_RHEL_DEBUGINFO
     rhui-%region%-client-config-server-5: {repo-status: enabled}
     rhui-%region%-rhel-server: {repo-status: enabled}
+    rhui-%region%-rhel-server-source: {repo-status: disabled}
 
 BETA_59_AND_NEWER: &BETA_59_AND_NEWER
     <<: *RHEL_59_AND_NEWER
