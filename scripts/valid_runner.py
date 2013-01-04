@@ -167,8 +167,10 @@ def add_data(data):
                         for hwp_item in hwp:
                             params_copy = params.copy()
                             params_copy.update(hwp_item)
-                            if not params_copy.has_key("bmap"):
+                            if not "bmap" in params_copy.keys():
                                 params_copy["bmap"] = [{"name": "/dev/sda1", "size": "15", "delete_on_termination": True}]
+                            if not "userdata" in params_copy.keys():
+                                params_copy["userdata"] = None
                             params_copy["transaction_id"] = transaction_id
                             params_copy["iname"] = "Instance" + str(count) + "_" + transaction_id
                             params_copy["stages"] = testing_stages
@@ -593,7 +595,8 @@ class InstanceThread(threading.Thread):
                 instance_type=params["ec2name"],
                 key_name=ssh_key_name,
                 block_device_map=bmap,
-                subnet_id=params["subnet_id"]
+                subnet_id=params["subnet_id"],
+                user_data=params["userdata"]
             )
             myinstance = reservation.instances[0]
             count = 0
