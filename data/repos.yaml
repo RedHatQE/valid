@@ -16,34 +16,35 @@ HAS_RHEL_SOURCE_BETA: &HAS_RHEL_SOURCE_BETA
     rhel-source-beta: {repo-status: disabled}
 
 RHEL_5ANY: &RHEL_5ANY
-     rhui-ap-ne-rhel-server: {repo-status: disabled}
-     rhui-ap-ne-rhel-server-1y: {repo-status: disabled}
-     rhui-ap-ne-rhel-server-1y-source: {repo-status: disabled}
-     rhui-ap-ne-rhel-server-source: {repo-status: disabled}
-     rhui-ap-northeast-client-config-server-5: {repo-status: disabled}
-     rhui-ap-se-rhel-server: {repo-status: disabled}
-     rhui-ap-se-rhel-server-1y: {repo-status: disabled}
-     rhui-ap-se-rhel-server-1y-source: {repo-status: disabled}
-     rhui-ap-se-rhel-server-source: {repo-status: disabled}
-     rhui-ap-southeast-client-config-server-5: {repo-status: disabled}
-     rhui-eu-west-client-config-server-5: {repo-status: disabled}
-     rhui-eu-west-rhel-server: {repo-status: disabled}
-     rhui-eu-west-rhel-server-1y: {repo-status: disabled}
-     rhui-eu-west-rhel-server-1y-source: {repo-status: disabled}
-     rhui-eu-west-rhel-server-source: {repo-status: disabled}
-     rhui-us-east-client-config-server-5: {repo-status: enabled}
-     rhui-us-east-rhel-server: {repo-status: enabled}
-     rhui-us-east-rhel-server-1y: {repo-status: disabled}
-     rhui-us-east-rhel-server-1y-source: {repo-status: disabled}
-     rhui-us-east-rhel-server-source: {repo-status: disabled}
-     rhui-us-west-2-client-config-server-5: {repo-status: disabled}
-     rhui-us-west-2-rhel-server: {repo-status: disabled}
-     rhui-us-west-2-rhel-server-source: {repo-status: disabled}
-     rhui-us-west-client-config-server-5: {repo-status: disabled}
-     rhui-us-west-rhel-server: {repo-status: disabled}
-     rhui-us-west-rhel-server-1y: {repo-status: disabled}
-     rhui-us-west-rhel-server-1y-source: {repo-status: disabled}
-     rhui-us-west-rhel-server-source: {repo-status: disabled}
+    <<: *HAS_RHEL_DEBUGINFO
+    rhui-ap-ne-rhel-server: {repo-status: disabled}
+    rhui-ap-ne-rhel-server-1y: {repo-status: disabled}
+    rhui-ap-ne-rhel-server-1y-source: {repo-status: disabled}
+    rhui-ap-ne-rhel-server-source: {repo-status: disabled}
+    rhui-ap-northeast-client-config-server-5: {repo-status: disabled}
+    rhui-ap-se-rhel-server: {repo-status: disabled}
+    rhui-ap-se-rhel-server-1y: {repo-status: disabled}
+    rhui-ap-se-rhel-server-1y-source: {repo-status: disabled}
+    rhui-ap-se-rhel-server-source: {repo-status: disabled}
+    rhui-ap-southeast-client-config-server-5: {repo-status: disabled}
+    rhui-eu-west-client-config-server-5: {repo-status: disabled}
+    rhui-eu-west-rhel-server: {repo-status: disabled}
+    rhui-eu-west-rhel-server-1y: {repo-status: disabled}
+    rhui-eu-west-rhel-server-1y-source: {repo-status: disabled}
+    rhui-eu-west-rhel-server-source: {repo-status: disabled}
+    rhui-us-east-client-config-server-5: {repo-status: enabled}
+    rhui-us-east-rhel-server: {repo-status: enabled}
+    rhui-us-east-rhel-server-1y: {repo-status: disabled}
+    rhui-us-east-rhel-server-1y-source: {repo-status: disabled}
+    rhui-us-east-rhel-server-source: {repo-status: disabled}
+    rhui-us-west-2-client-config-server-5: {repo-status: disabled}
+    rhui-us-west-2-rhel-server: {repo-status: disabled}
+    rhui-us-west-2-rhel-server-source: {repo-status: disabled}
+    rhui-us-west-client-config-server-5: {repo-status: disabled}
+    rhui-us-west-rhel-server: {repo-status: disabled}
+    rhui-us-west-rhel-server-1y: {repo-status: disabled}
+    rhui-us-west-rhel-server-1y-source: {repo-status: disabled}
+    rhui-us-west-rhel-server-source: {repo-status: disabled}
 
 BETA_5ANY: &BETA_5ANY
     <<: *RHEL_5ANY
