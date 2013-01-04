@@ -1,0 +1,1 @@
+- {arch: 'x86_64', cpu: '8', memory: '117000000', name: hs1.8xlarge, virtualization: 'hvm'}
