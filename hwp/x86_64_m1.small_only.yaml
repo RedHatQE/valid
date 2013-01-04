@@ -3,6 +3,9 @@
   memory: '600000'
   ec2name: m1.small
   virtualization: 'paravirtual'
+  bmap: &BMAP
+  - {delete_on_termination: true, name: /dev/sda1, size: '15'}
+  - {ephemeral_name: ephemeral0, name: /dev/sdj}
   userdata: &USERDATA |
       #! /bin/sh
       touch /userdata_test
