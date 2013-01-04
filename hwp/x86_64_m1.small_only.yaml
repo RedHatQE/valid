@@ -1,1 +1,9 @@
-- {arch: 'x86_64', cpu: '1', memory: '600000', ec2name: m1.small, virtualization: 'paravirtual'}
+- arch: 'x86_64'
+  cpu: '1'
+  memory: '600000'
+  ec2name: m1.small
+  virtualization: 'paravirtual'
+  userdata: &USERDATA |
+      #! /bin/sh
+      touch /userdata_test
+      date >> /userdata_test
