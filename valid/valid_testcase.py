@@ -38,10 +38,11 @@ class ValidTestcase(object):
             self.log.append({"result": "failed", "command": command, "actual": e.message})
             return None
 
-    def get_return_value(self, connection, command, timeout=5, expected_status=0):
+    def get_return_value(self, connection, command, timeout=5, expected_status=0, nolog=False):
         status = connection.recv_exit_status(command + " >/dev/null 2>&1", timeout)
-        if status == expected_status:
-            self.log.append({"result": "passed", "command": command})
-        else:
-            self.log.append({"result": "failed", "command": command, "actual": str(status)})
+        if not nolog:
+            if status == expected_status:
+                self.log.append({"result": "passed", "command": command})
+            else:
+                self.log.append({"result": "failed", "command": command, "actual": str(status)})
         return status
