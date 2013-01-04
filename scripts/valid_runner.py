@@ -466,7 +466,7 @@ class InstanceThread(threading.Thread):
             os.unlink(tf.name)
 
             mainq.put((0, "test", params.copy()))
-        except (socket.error, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
+        except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
             logging.debug(self.getName() + ": got 'predictable' error during instance setup, %s, ntry: %i" % (e, ntry))
             logging.debug(self.getName() + ":" + traceback.format_exc())
             time.sleep(10)
@@ -548,7 +548,7 @@ class InstanceThread(threading.Thread):
             logging.debug(self.getName() + ": done testing for " + params["iname"] + ", result: " + str(result))
             params["result"] = {params["stages"][0]: result}
             self.report_results(params)
-        except (socket.error, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
+        except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
             # Looks like we've failed to connect to the instance
             logging.debug(self.getName() + ": got 'predictable' error during instance testing, %s, ntry: %i" % (e, ntry))
             logging.debug(self.getName() + ":" + traceback.format_exc())
