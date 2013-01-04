@@ -1,1 +1,31 @@
-- {arch: 'x86_64', cpu: '8', memory: '117000000', name: hs1.8xlarge, virtualization: 'hvm'}
+- arch: x86_64
+  bmap:
+  - {delete_on_termination: true, name: /dev/sda1, size: '15'}
+  - {ephemeral_name: ephemeral0, name: /dev/sdf}
+  - {ephemeral_name: ephemeral1, name: /dev/sdg}
+  - {ephemeral_name: ephemeral2, name: /dev/sdd}
+  - {ephemeral_name: ephemeral3, name: /dev/sde}
+  - {ephemeral_name: ephemeral6, name: /dev/sdh}
+  - {ephemeral_name: ephemeral7, name: /dev/sdi}
+  - {ephemeral_name: ephemeral8, name: /dev/sdj}
+  - {ephemeral_name: ephemeral9, name: /dev/sdk}
+  - {ephemeral_name: ephemeral10, name: /dev/sdl}
+  - {ephemeral_name: ephemeral11, name: /dev/sdm}
+  - {ephemeral_name: ephemeral12, name: /dev/sdn}
+  - {ephemeral_name: ephemeral13, name: /dev/sdo}
+  - {ephemeral_name: ephemeral14, name: /dev/sdp}
+  - {ephemeral_name: ephemeral15, name: /dev/sdq}
+  - {ephemeral_name: ephemeral16, name: /dev/sdr}
+  - {ephemeral_name: ephemeral17, name: /dev/sds}
+  - {ephemeral_name: ephemeral18, name: /dev/sdt}
+  - {ephemeral_name: ephemeral19, name: /dev/sdu}
+  - {ephemeral_name: ephemeral20, name: /dev/sdv}
+  - {ephemeral_name: ephemeral21, name: /dev/sdw}
+  - {ephemeral_name: ephemeral22, name: /dev/sdx}
+  - {ephemeral_name: ephemeral23, name: /dev/sdy}
+  - {ephemeral_name: ephemeral4, name: /dev/xvdaa}
+  - {ephemeral_name: ephemeral5, name: /dev/xvdab}
+  cpu: '16'
+  ec2name: hs1.8xlarge
+  memory: '121000000'
+  virtualization: hvm

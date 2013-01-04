@@ -23,7 +23,7 @@ import re
 from patchwork.connection import Connection
 from patchwork.expect import *
 from boto import ec2
-from boto.ec2.blockdevicemapping import EBSBlockDeviceType
+from boto.ec2.blockdevicemapping import BlockDeviceType
 from boto.ec2.blockdevicemapping import BlockDeviceMapping
 
 import valid
@@ -43,7 +43,7 @@ argparser.add_argument('--enable-tests', type=csv, help='enable specified tests 
 argparser.add_argument('--maxtries', type=int,
                        default=30, help='maximum number of tries')
 argparser.add_argument('--maxwait', type=int,
-                       default=300, help='maximum wait time for instance creation')
+                       default=900, help='maximum wait time for instance creation')
 argparser.add_argument('--numthreads', type=int,
                        default=10, help='number of worker threads')
 argparser.add_argument('--results-dir',
@@ -115,12 +115,6 @@ if args.debug:
 else:
     logging.getLogger("paramiko").setLevel(logging.ERROR)
 
-bmap = BlockDeviceMapping()
-t = EBSBlockDeviceType()
-t.size = '15'
-t.delete_on_termination = True
-bmap['/dev/sda1'] = t
-
 testing_stages = []
 for m in sys.modules.keys():
     if m.startswith("valid.testing_modules.testcase"):
@@ -173,6 +167,8 @@ def add_data(data):
                         for hwp_item in hwp:
                             params_copy = params.copy()
                             params_copy.update(hwp_item)
+                            if not params_copy.has_key("bmap"):
+                                params_copy["bmap"] = [{"name": "/dev/sda1", "size": "15", "delete_on_termination": True}]
                             params_copy["transaction_id"] = transaction_id
                             params_copy["iname"] = "Instance" + str(count) + "_" + transaction_id
                             params_copy["stages"] = testing_stages
@@ -571,6 +567,20 @@ class InstanceThread(threading.Thread):
         logging.debug(self.getName() + ": trying to create instance  " + params["iname"] + ", ntry " + str(ntry))
         ntry += 1
         try:
+            bmap = BlockDeviceMapping()
+            for device in params["bmap"]:
+                if not device.has_key("name"):
+                    logging.debug(self.getName() + ": bad device " + str(device))
+                    continue
+                d = BlockDeviceType()
+                if device.has_key("size"):
+                    d.size = device["size"]
+                if device.has_key("delete_on_termination"):
+                    d.delete_on_termination = device["delete_on_termination"]
+                if device.has_key("ephemeral_name"):
+                    d.ephemeral_name = device["ephemeral_name"]
+                bmap[device["name"]] = d
+
             reg = boto.ec2.get_region(params["region"], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
@@ -595,7 +605,8 @@ class InstanceThread(threading.Thread):
                 time.sleep(5)
                 count += 1
             connection.close()
-            if myinstance.update() == 'running':
+            instance_state = myinstance.update()
+            if instance_state  == 'running':
                 # Instance appeared - scheduling 'setup' stage
                 myinstance.add_tag("Name", params["ami"] + " validation")
                 result = myinstance.__dict__
@@ -605,9 +616,18 @@ class InstanceThread(threading.Thread):
                 params["instance"] = result.copy()
                 mainq.put((0, "setup", params))
                 return
-            else:
+            elif instance_state == 'pending':
                 # maxwait seconds is enough to create an instance. If not -- EC2 failed.
-                logging.error("Error during instance creation, %s" % e)
+                logging.error("Error during instance creation: timeout in pending state")
+                result = myinstance.__dict__
+                if result.has_key("id"):
+                    # terminate stucked instance
+                    params["id"] = result["id"]
+                    params["instance"] = result.copy()
+                    mainq.put((0, "terminate", params.copy()))
+            else:
+                # error occured
+                logging.error("Error during instance creation: " + instance_state)
 
         except boto.exception.EC2ResponseError, e:
             # Boto errors should be handled according to their error Message - there are some well-known ones
