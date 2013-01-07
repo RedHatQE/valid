@@ -15,7 +15,7 @@ class testcase_27_yum_repos(ValidTestcase):
         # get repo details file
         self.get_return_value(
             connection,
-            "yum repolist -v all | csplit --prefix=repolist_xx - '%pkgsack time:%1'",
+            '''yum repolist -v all | csplit --prefix=repolist_xx - "%Repo-id\s*:%"''',
             40
         )
         # translate the details into an ini-like structure
