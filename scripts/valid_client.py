@@ -10,6 +10,8 @@ argparser.add_argument('--add', help='add data file for validation')
 argparser.add_argument('--get',
                        default="", help='get transaction result')
 
+argparser.add_argument('--emails', help='report result to emails (comma-separated list, for --add only)')
+
 argparser.add_argument('--cert',
                        default="/etc/valid/valid_client.crt", help='certificate file')
 argparser.add_argument('--key',
@@ -31,7 +33,10 @@ if args.add:
         fd.close()
     else:
         data = sys.stdin.read()
-    params = urllib.urlencode({"data": data})
+    data_dic = {"data": data}
+    if args.emails:
+        data_dic["emails"] = args.emails
+    params = urllib.urlencode(data_dic)
     http.request("POST", "", params, {"Content-type": "text/yaml"})
 elif args.get:
     http.request("GET", "/result?transaction_id=" + args.get)

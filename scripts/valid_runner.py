@@ -19,6 +19,12 @@ import BaseHTTPServer
 import urlparse
 import ssl
 import re
+import urllib2
+import getpass
+import subprocess
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from patchwork.connection import Connection
 from patchwork.expect import *
@@ -137,8 +143,23 @@ if testing_stages == []:
 
 logging.info("Testing stages %s discovered" % str(testing_stages))
 
+mailfrom = "root@localhost"
+if httpserver:
+    hostname = ""
+    try:
+        logging.debug("Trying to fetch real hostname from EC2")
+        response = urllib2.urlopen('http://169.254.169.254/latest/meta-data/public-hostname', timeout=5)
+        hostname = response.read()
+        logging.debug("Fetched %s as real hostname")
+    except:
+        # looks like we're not in EC2 environment
+        pass
+    if not hostname or hostname == "":
+        hostname = subprocess.check_output(["hostname", "-f"])[:-1]
+    mailfrom = getpass.getuser() + "@" + hostname
+    logging.debug("Will send resulting emails from " + mailfrom)
 
-def add_data(data):
+def add_data(data, emails = None):
     with resultdic_lock:
         transaction_id = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
         logging.info("Adding validation transaction " + transaction_id)
@@ -164,6 +185,8 @@ def add_data(data):
                         hwp = yaml.load(hwpfd)
                         hwpfd.close()
                         resultdic[transaction_id][params["ami"]] = {"ninstances": len(hwp) * len(testing_stages), "instances": []}
+                        if emails:
+                            resultdic[transaction_id][params["ami"]]["emails"] = emails
                         for hwp_item in hwp:
                             params_copy = params.copy()
                             params_copy.update(hwp_item)
@@ -296,7 +319,12 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if post_data and ("data" in post_data.keys()):
                 data = yaml.load(post_data["data"][0])
                 logging.debug("POST DATA:" + str(data))
-                transaction_id = add_data(data)
+                if "emails" in post_data.keys():
+                    emails = post_data["emails"][0]
+                    logging.debug("POST EMAILS:" + emails)
+                else:
+                    emails = None
+                transaction_id = add_data(data, emails)
                 if not transaction_id:
                     raise Exception("Bad data")
                 s.send_response(200)
@@ -338,6 +366,7 @@ class ReportingThread(threading.Thread):
                     resfile = resdir + "/" + transaction_id + ".yaml"
                     result = []
                     data = resultdic[transaction_id]
+                    emails = None
                     for ami in data.keys():
                         result_item = {"ami": data[ami]["instances"][0]["ami"],
                                        "product": data[ami]["instances"][0]["product"],
@@ -351,12 +380,28 @@ class ReportingThread(threading.Thread):
                             else:
                                 result_item["result"][instance["instance_type"]].update(instance["result"])
                         result.append(result_item)
+                        if "emails" in data[ami].keys():
+                            emails = data[ami]["emails"]
                     result_yaml = yaml.safe_dump(result)
                     with resultdic_yaml_lock:
                         resultdic_yaml[transaction_id] = result_yaml
-                    result_fd = open(resfile, "w")
-                    result_fd.write(result_yaml)
-                    result_fd.close()
+                    try:
+                        result_fd = open(resfile, "w")
+                        result_fd.write(result_yaml)
+                        result_fd.close()
+                        if emails:
+                            msg = MIMEMultipart()
+                            msg.preamble = "Transaction " + transaction_id + " finished."
+                            msg['Subject'] = "Validation %s result" % transaction_id
+                            msg['From'] = mailfrom
+                            msg['To'] = emails
+                            txt = MIMEText(result_yaml, "json")
+                            msg.attach(txt)
+                            s = smtplib.SMTP('localhost')
+                            s.sendmail(mailfrom, emails.split(","), msg.as_string())
+                            s.quit()
+                    except Exception, e:
+                        logging.error("ReportThread: saving result failed, %s" % e)
                     logging.info("Transaction " + transaction_id + " finished. Result: " + resfile)
                     resultdic.pop(transaction_id)
 
