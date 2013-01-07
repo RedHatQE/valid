@@ -159,7 +159,8 @@ if httpserver:
     mailfrom = getpass.getuser() + "@" + hostname
     logging.debug("Will send resulting emails from " + mailfrom)
 
-def add_data(data, emails = None):
+
+def add_data(data, emails=None):
     with resultdic_lock:
         transaction_id = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
         logging.info("Adding validation transaction " + transaction_id)
