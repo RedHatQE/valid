@@ -1,3 +1,5 @@
+#! /usr/bin/python -tt
+
 import random
 import os
 import sys
