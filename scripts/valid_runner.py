@@ -696,7 +696,7 @@ if args.data:
         data = yaml.load(datafd)
         datafd.close()
     except Exception, e:
-        logging.error("Failed to read data file %s wit error %s" % (args.data, e))
+        logging.error("Failed to read data file %s with error %s" % (args.data, e))
         sys.exit(1)
     add_data(data)
 elif not httpserver:

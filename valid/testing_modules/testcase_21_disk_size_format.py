@@ -7,7 +7,7 @@ class testcase_21_disk_size_format(ValidTestcase):
     def test(self, connection, params):
         disks = self.get_result(connection, "mount | grep '^/dev' | awk '{print $1}'")
         if disks:
-            for disk in disks[0].split():
+            for disk in disks.split():
                 mpoint = self.match(connection, "echo '###' ;mount | grep '^%s' | awk '{print $3}'; echo '###'" % disk, re.compile(".*\r\n###\r\n(.*)\r\n###\r\n.*", re.DOTALL))
                 fs = self.match(connection, "echo '###' ;mount | grep '^%s' | awk '{print $5}'; echo '###'" % disk, re.compile(".*\r\n###\r\n(.*)\r\n###\r\n.*", re.DOTALL))
                 if mpoint and fs:
