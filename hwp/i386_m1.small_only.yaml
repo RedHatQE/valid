@@ -1,0 +1,12 @@
+- arch: 'i386'
+  cpu: '1'
+  memory: '600000'
+  ec2name: m1.small
+  virtualization: 'paravirtual'
+  bmap: &BMAP
+  - {delete_on_termination: true, name: /dev/sda1, size: '15'}
+  - {ephemeral_name: ephemeral0, name: /dev/sdf}
+  userdata: &USERDATA |
+      #! /bin/sh
+      touch /userdata_test
+      date >> /userdata_test

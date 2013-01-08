@@ -1,0 +1,2 @@
+- {ami: ami-6145cc08, arch: x86_64_m1.small_only, itype: hourly, product: Fedora, region: us-east-1, version: '18'}
+- {ami: ami-0d44cd64, arch: i386_m1.small_only, itype: hourly, product: Fedora, region: us-east-1, version: '18'}
