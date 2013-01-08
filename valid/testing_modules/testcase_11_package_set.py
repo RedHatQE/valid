@@ -4,17 +4,24 @@ from valid.valid_testcase import *
 
 class testcase_11_package_set(ValidTestcase):
     stages = ["stage1"]
-    applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*"}
+    applicable = {"product": "(?i)RHEL|BETA|FEDORA"}
 
     def test(self, connection, params):
         packages = self.match(connection, "rpm -qa --queryformat '%{NAME},' && echo", re.compile(".*\r\n(.*),\r\n.*", re.DOTALL), timeout=30)
         if packages:
-            basepath = "/usr/share/valid/data/packages_rhel_"
-            if (len(params["version"]) > 2) and os.path.exists(basepath + params["version"][0] + params["version"][2]):
-                path = basepath + params["version"][0] + params["version"][2]
-            elif (len(params["version"]) > 0) and os.path.exists(basepath + params["version"][0]):
-                path = basepath + params["version"][0]
+            basepath = "/usr/share/valid/data/packages_"
+            path = ""
+            if params["product"].upper() == "FEDORA":
+                basepath += "fedora_"
+                if os.path.exists(basepath + params["version"]):
+                    path = basepath + params["version"]
             else:
+                basepath += "rhel_"
+                if (len(params["version"]) > 2) and os.path.exists(basepath + params["version"][0] + params["version"][2]):
+                    path = basepath + params["version"][0] + params["version"][2]
+                elif (len(params["version"]) > 0) and os.path.exists(basepath + params["version"][0]):
+                    path = basepath + params["version"][0]
+            if path == "":
                 self.log.append({"result": "failure", "comment": "no package set for this os version"})
                 return self.log
             fd = open(path, "r")
