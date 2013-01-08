@@ -15,12 +15,16 @@ class testcase_32_ephemeral(ValidTestcase):
                     if name.startswith("/dev/xvd"):
                         # no xvd* for RHEL5
                         continue
-                else:
+                elif (prod in ["RHEL", "BETA"]) and (ver.startswith("6.")):
                     if name.startswith("/dev/sd"):
                         name = "/dev/xvd" + name[7:]
                     if params["virtualization"] != "hvm" and len(name) == 9 and ord(name[8]) < ord('w'):
                         # there is a 4-letter shift
                         name = name[:8] + chr(ord(name[8]) + 4)
+                else:
+                    # Fedora and newer RHELs
+                    if name.startswith("/dev/sd"):
+                        name = "/dev/xvd" + name[7:]
                 has_ephemeral = True
                 self.get_return_value(connection, "fdisk -l %s | grep ^Disk" % name, 30)
                 self.get_return_value(connection, "mkfs.vfat -I %s" % name, 60)
