@@ -73,7 +73,6 @@ iptables
 iputils
 kbd
 kbd-misc
-kernel
 keyutils-libs
 kmod
 kmod-libs
