@@ -8,16 +8,16 @@ import tempfile
 import sys
 
 
-class Output(object):
+class Summary(object):
     def __init__(self, contents = [], verbose=False):
         self.contents = contents
         self.verbose = verbose
-    def add(self, ami, bug, status):
-        self.contents.append({'ami': ami, 'bug': bug, 'status': status})
+    def add(self, ami, status=None, bug=None):
+        print "# %s: %s" % (ami, bug)
+        self.contents.append({'id': str(ami), 'bug': str(bug), 'status': str(status)})
     def __str__(self):
-        if self.verbose:
-            return yaml.dump(self.contents)
-        return "\n".join(map(lambda x: "%(ami)s: #%(bug)s" % x, self.contents))
+        return "## total: %d records\n" % len(self.contents) + (self.verbose and
+            yaml.dump(self.contents) or "")
 
 
 argparser = argparse.ArgumentParser(description='Report validation result to bugzilla')
@@ -47,7 +47,7 @@ resultd = open(args.result, 'r')
 result = yaml.load(resultd)
 resultd.close()
 
-output = Output(verbose=args.verbose)
+summary = Summary(verbose=args.verbose)
 
 bugzilla_user = yamlconfig["bugzilla"]["user"]
 bugzilla_password = yamlconfig["bugzilla"]["password"]
@@ -105,6 +105,7 @@ for ami in result:
     bug_description = "Validation " + overall_result + " for " + ami["ami"] + " in " + region + " product: " + product + ", version: " + version + ", arch: " + arch + "\n\n" + bug_description
 
     if args.test:
+        summary.add(ami['ami'], status='fail')
         print bug_description
     else:
         BZ_Object = bzid.createbug(product=args.bugzilla_product, component=args.bugzilla_component, version="RHEL" + version, rep_platform=arch, summary=bug_summary, op_sys="Linux")
@@ -120,9 +121,10 @@ for ami in result:
             bug.addcomment(bug_description)
             if overall_result != "succeeded":
                 bug.setstatus("ON_QA")
-                output.add(ami['ami'], bug.id, 'ON_QA')
+                ami_result = 'fail'
+                summary.add(ami['ami'], bug=bug.id, status='fail')
             else:
                 bug.setstatus("VERIFIED")
-                output.add(ami['ami'], bug.id, 'VERIFIED')
+                summary.add(ami['ami'], bug=bug.id, status='pass')
     ami_fd.close()
-    print output
+print summary
