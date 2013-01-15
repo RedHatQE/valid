@@ -9,7 +9,7 @@ class testcase_99_reboot(ValidTestcase):
     def test(self, connection, params):
         prod = params["product"].upper()
         ver = params["version"]
-        if prod in ["RHEL", "BETA"] and ver.startswith("5."):
+        if (prod in ["RHEL", "BETA"] and ver.startswith("5.")) or prod == "Fedora":
             # Booting the latest kernel for stage2 testing
             self.get_return_value(connection, "sed -i 's,\(default\)=.*$,\1=0,' /boot/grub/menu.lst")
         try:
