@@ -1,0 +1,16 @@
+- {ami: ami-30aeec62, arch: x86_64, itype: hourly, product: Fedora, region: ap-southeast-1, version: '18'}
+- {ami: ami-caa9eb98, arch: i386, itype: hourly, product: Fedora, region: ap-southeast-1, version: '18'}
+- {ami: ami-9ae472a0, arch: x86_64, itype: hourly, product: Fedora, region: ap-southeast-2, version: '18'}
+- {ami: ami-dce771e6, arch: i386, itype: hourly, product: Fedora, region: ap-southeast-2, version: '18'}
+- {ami: ami-5f01bb5e, arch: x86_64, itype: hourly, product: Fedora, region: ap-northeast-1, version: '18'}
+- {ami: ami-7100ba70, arch: i386, itype: hourly, product: Fedora, region: ap-northeast-1, version: '18'}
+- {ami: ami-6145cc08, arch: x86_64, itype: hourly, product: Fedora, region: us-east-1, version: '18'}
+- {ami: ami-0d44cd64, arch: i386, itype: hourly, product: Fedora, region: us-east-1, version: '18'}
+- {ami: ami-0899b94d, arch: x86_64, itype: hourly, product: Fedora, region: us-west-1, version: '18'}
+- {ami: ami-de99b99b, arch: i386, itype: hourly, product: Fedora, region: us-west-1, version: '18'}
+- {ami: ami-0266ed32, arch: x86_64, itype: hourly, product: Fedora, region: us-west-2, version: '18'}
+- {ami: ami-6467ec54, arch: i386, itype: hourly, product: Fedora, region: us-west-2, version: '18'}
+- {ami: ami-bafcf3ce, arch: x86_64, itype: hourly, product: Fedora, region: eu-west-1, version: '18'}
+- {ami: ami-cafef1be, arch: i386, itype: hourly, product: Fedora, region: eu-west-1, version: '18'}
+- {ami: ami-81558d9c, arch: x86_64, itype: hourly, product: Fedora, region: sa-east-1, version: '18'}
+- {ami: ami-e5548cf8, arch: i386, itype: hourly, product: Fedora, region: sa-east-1, version: '18'}
