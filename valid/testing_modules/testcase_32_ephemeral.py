@@ -27,7 +27,13 @@ class testcase_32_ephemeral(ValidTestcase):
                         name = "/dev/xvd" + name[7:]
                 has_ephemeral = True
                 self.get_return_value(connection, "fdisk -l %s | grep ^Disk" % name, 30)
-                self.get_return_value(connection, "mkfs.vfat -I %s" % name, 60)
+                if self.get_result(connection, "grep \"%s \" /proc/mounts  | wc -l" % name, 5) == "0":
+                    # device is not mounted, doing fs creation
+                    if self.get_result(connection, "ls -la /sbin/mkfs.vfat 2> /dev/null | wc -l", 5) == "1":
+                        # mkfs.vfat is faster!
+                        self.get_return_value(connection, "mkfs.vfat -I %s" % name, 60)
+                    else:
+                        self.get_return_value(connection, "mkfs.ext3 -I %s" % name, 300)
         if not has_ephemeral:
             self.log.append({
                     "result": "skip",
