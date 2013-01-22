@@ -5,6 +5,18 @@ import patchwork
 import valid
 import sys
 import yaml
+import re
+
+
+def na_exit(key, value):
+    # to exit with a skip result containing the N/A statement
+    test_result = {
+        "result": "skipped",
+        "comment": "not applicable for %s = %s" % (key, value)
+    }
+    sys.stdout.write(yaml.safe_dump(test_result))
+    sys.exit(0)
+
 
 argparser = argparse.ArgumentParser(description='Run cloud image validation')
 argparser.add_argument('--host', help='hostname', required=True)
@@ -49,5 +61,17 @@ con = patchwork.connection.Connection(
 
 m = "valid.testing_modules." + args.test
 testcase = getattr(sys.modules[m], args.test)()
+if hasattr(testcase, 'not_applicable'):
+    for key in testcase.not_applicable.keys():
+        r = re.compile(testcase.not_applicable[key])
+        if r.match(params[key]):
+            na_exit(key, params[key])
+
+if hasattr(testcase, 'applicable'):
+    for key in testcase.applicable.keys():
+        r = re.compile(testcase.applicable[key])
+        if not r.match(params[key]):
+            na_exit(key, params[key])
+
 test_result = testcase.test(con, params)
 sys.stdout.write(yaml.safe_dump(test_result))
