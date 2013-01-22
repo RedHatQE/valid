@@ -1,0 +1,11 @@
+- arch: x86_64
+  bmap:
+  - {delete_on_termination: true, name: /dev/sda1, size: '15'}
+  userdata: &USERDATA |
+      #! /bin/sh
+      touch /userdata_test
+      date >> /userdata_test
+  cpu: '32'
+  ec2name: cr1.8xlarge
+  memory: '244000000'
+  virtualization: hvm
