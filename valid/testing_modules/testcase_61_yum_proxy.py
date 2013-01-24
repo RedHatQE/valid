@@ -8,15 +8,16 @@ class testcase_61_yum_proxy(ValidTestcase):
             proxy = params["proxy"]
         except KeyError:
             self.log.append({'result': 'skip', 'comment': 'No proxy set'})
+        finally:
             return self.log
         # update rh-amazon-rhui-client
         # the repo id is: rhui-<region>-client-config-server-<major version nr>
         self.get_return_value(
             connection,
-            "yum --disablerepo=* --enablerepo " +
+            "yum --disablerepo=* --enablerepo=" +
             "rhui-%s-client-config-server-%s" % (params['region'],
                 params['version'].split('.')[0] +
-            "update -y"
+            " update -y"
         )
 
         # prepare the firewall blocking
@@ -73,7 +74,7 @@ class testcase_61_yum_proxy(ValidTestcase):
             yum_conf.write(yum_conf_fp)
             yum_conf_fp.close()
         except Error as e:
-            self.log({
+            self.log.append({
                 "result", "failure",
                 "comment", "couldn't write '/etc/yum.conf': %s" % e
             })
@@ -90,7 +91,7 @@ class testcase_61_yum_proxy(ValidTestcase):
             yum_conf_fp.write(yum_conf_data_old)
             yum_conf_fp.close()
         except Error as e:
-            self.log({
+            self.log.append({
                 "result", "failure",
                 "comment", "couldn't write '/etc/yum.conf': %s" % e
             })
