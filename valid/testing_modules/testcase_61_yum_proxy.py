@@ -84,7 +84,7 @@ class testcase_61_yum_proxy(ValidTestcase):
         # test all works
         self.get_return_value(
             connection,
-            "yum clean all; yum repolist -v",
+            "yum clean all; yum --disableplugin=fastestmirror repolist",
             timeout=yum_timeout
         )
         # restore original yum conf
@@ -111,7 +111,7 @@ class testcase_61_yum_proxy(ValidTestcase):
             connection,
             "yum clean all; " +
             "https_proxy='" + https_proxy + "' " +
-            "yum repolist",
+            "yum --disableplugin=fastestmirror repolist",
             timeout=yum_timeout
         )
         # restore firewall
