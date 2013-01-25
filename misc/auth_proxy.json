@@ -1,0 +1,160 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "F18 Squid proxy instance with authentication",
+    "Mappings": {
+        "F18Map": {
+            "ap-northeast-1": {
+                "AMI": "ami-5f01bb5e"
+            },
+            "ap-southeast-1": {
+                "AMI": "ami-30aeec62"
+            },
+            "ap-southeast-2": {
+                "AMI": "ami-9ae472a0"
+            },
+            "eu-west-1": {
+                "AMI": "ami-bafcf3ce"
+            },
+            "sa-east-1": {
+                "AMI": "ami-81558d9c"
+            },
+            "us-east-1": {
+                "AMI": "ami-6145cc08"
+            },
+            "us-west-1": {
+                "AMI": "ami-0899b94d"
+            },
+            "us-west-2": {
+                "AMI": "ami-0266ed32"
+            }
+        }
+    },
+    "Outputs": {
+        "IPProxy": {
+            "Description": "proxy.example.com IP",
+            "Value": {
+                "Fn::GetAtt": [
+                    "proxy",
+                    "PublicIp"
+                ]
+            }
+        }
+    },
+    "Parameters": {
+        "KeyName": {
+            "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+            "Type": "String"
+        },
+        "ProxyPassword": {
+            "Description": "Password for proxy auth access",
+            "Type": "String"
+        },
+        "ProxyUsername": {
+            "Default": "rhui-client",
+            "Description": "User for proxy auth access",
+            "Type": "String"
+        }
+    },
+    "Resources": {
+        "PROXYsecuritygroup": {
+            "Properties": {
+                "GroupDescription": "PROXY security group",
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "3128",
+                        "IpProtocol": "tcp",
+                        "ToPort": "3128"
+                    }
+                ]
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        "proxy": {
+            "Properties": {
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "F18Map",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "AMI"
+                    ]
+                },
+                "InstanceType": "m1.small",
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "SecurityGroups": [
+                    {
+                        "Ref": "PROXYsecuritygroup"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "_",
+                                [
+                                    "PROXY",
+                                    {
+                                        "Ref": "KeyName"
+                                    }
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "Role",
+                        "Value": "PROXY"
+                    },
+                    {
+                        "Key": "PrivateHostname",
+                        "Value": "proxy.example.com"
+                    },
+                    {
+                        "Key": "PublicHostname",
+                        "Value": "proxy_pub.example.com"
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#! /bin/sh\n",
+                                "set -xe\n",
+                                "yum -y install squid httpd-tools squid-sysvinit\n",
+                                "htpasswd -bc /etc/squid/passwd ",
+                                {
+                                    "Ref": "ProxyUsername"
+                                },
+                                " ",
+                                {
+                                    "Ref": "ProxyPassword"
+                                },
+                                "\n",
+                                "echo 'auth_param basic program /usr/lib64/squid/basic_ncsa_auth /etc/squid/passwd' > /etc/squid/squid.conf.new\n",
+                                "echo 'acl auth proxy_auth REQUIRED' >> /etc/squid/squid.conf.new\n",
+                                "cat /etc/squid/squid.conf | sed 's,allow localnet,allow auth,' >> /etc/squid/squid.conf.new\n",
+                                "mv -f /etc/squid/squid.conf.new /etc/squid/squid.conf\n",
+                                "service squid start\n",
+                                "chkconfig squid on\n",
+                                "iptables -I INPUT -p tcp --destination-port 3128 -j ACCEPT\n",
+                                "service iptables save\n"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "Type": "AWS::EC2::Instance"
+        }
+    }
+}
