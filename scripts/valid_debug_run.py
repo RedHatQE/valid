@@ -8,6 +8,8 @@ import yaml
 import re
 
 
+RUNTIME_ERR = 2
+
 def na_exit(key, value):
     # to exit with a skip result containing the N/A statement
     test_result = {
@@ -93,6 +95,7 @@ argparser.add_argument('--itype', help='access/hourly')
 argparser.add_argument('--arch', help='i386/x86_64')
 argparser.add_argument('--memory', help='required memory')
 argparser.add_argument('--virtualization', help='virtualization type')
+argparser.add_argument('--test-file', help="python file to load test from")
 
 data_parser = argparser.add_argument_group(
     'data',
@@ -141,27 +144,29 @@ args = argparser.parse_args()
 
 params = get_params(args)
 print "# using params:"
-print "#   host: %s" % args.host
-print "#   key:  %s" % args.key
-print "#   user: %s" % args.user
-print ""
-
-try:
-    con = patchwork.connection.Connection(
-        {
-            "public_hostname": args.host,
-            "private_hostname": args.host
-        },
-        username=args.user,
-        key_filename=args.key
-    )
-except Exception as e:
-    print >> sys.stderr, "Error opening connection: %s" % e
-    exit(2)
-
+print "#  host: %s" % args.host
+print "#  key:  %s" % args.key
+print "#  user: %s" % args.user
 
 m = "valid.testing_modules." + args.test
-testcase = getattr(sys.modules[m], args.test)()
+if args.test_file is not None:
+    # try loading a module from a path
+    import imp
+    test_module = imp.load_source(
+        'valid.testing_modules.test',
+        args.test_file
+    )
+elif args.test in sys.modules:
+    test_module = sys.modules[args.test]
+elif m in sys.modules:
+    test_module = sys.modules[m]
+else:
+    print >>sys.stderr, "Can't locate test: %s" % args.test
+    exit(RUNTIME_ERR)
+
+print "#  test: %s: %s" % (test_module, args.test)
+testcase = getattr(test_module, args.test)()
+
 if hasattr(testcase, 'not_applicable'):
     for key in testcase.not_applicable.keys():
         r = re.compile(testcase.not_applicable[key])
@@ -175,9 +180,19 @@ if hasattr(testcase, 'applicable'):
             na_exit(key, params[key])
 
 try:
-    test_result = testcase.test(con, params)
+    con = patchwork.connection.Connection(
+        {
+            "public_hostname": args.host,
+            "private_hostname": args.host
+        },
+        username=args.user,
+        key_filename=args.key
+    )
 except Exception as e:
-    print >> sys.stderr, "Error executing case: %s" % e
-    exit(2)
+    print >> sys.stderr, "Error opening connection: %s" % e
+    exit(RUNTIME_ERR)
 
-sys.stdout.write(yaml.safe_dump([params, test_result]))
+
+test_result = testcase.test(con, params)
+
+sys.stdout.write(yaml.safe_dump([params, {args.test: test_result}]))
