@@ -1,4 +1,8 @@
 from valid.valid_testcase import *
+import StringIO
+import ConfigParser
+
+yum_timeout = 30
 
 class testcase_61_yum_proxy(ValidTestcase):
     stage = ["stage1"]
@@ -8,7 +12,6 @@ class testcase_61_yum_proxy(ValidTestcase):
             proxy = params["proxy"]
         except KeyError:
             self.log.append({'result': 'skip', 'comment': 'No proxy set'})
-        finally:
             return self.log
         # update rh-amazon-rhui-client
         # the repo id is: rhui-<region>-client-config-server-<major version nr>
@@ -16,8 +19,9 @@ class testcase_61_yum_proxy(ValidTestcase):
             connection,
             "yum --disablerepo=* --enablerepo=" +
             "rhui-%s-client-config-server-%s" % (params['region'],
-                params['version'].split('.')[0] +
-            " update -y"
+                params['version'].split('.')[0]) +
+            " update -y",
+            timeout=yum_timeout
         )
 
         # prepare the firewall blocking
@@ -42,7 +46,6 @@ class testcase_61_yum_proxy(ValidTestcase):
                 "result": "failure",
                 "comment": "failed to get actual repo list %s" % e
                 })
-        finally:
             return self.log
         # read as INI
         yum_conf_fp = StringIO.StringIO(yum_conf_data)
@@ -51,12 +54,11 @@ class testcase_61_yum_proxy(ValidTestcase):
         yum_conf_data_old = copy.deepcopy(yum_conf_data)
         try:
             yum_conf.readfp(yum_conf_fp)
-        except: Exception as e
+        except Exception as e:
             self.log.append({
-                "result", "failure",
-                "comment", "failed parsing yum.conf: %s" % e
+                "result": "failure",
+                "comment": "failed parsing yum.conf: %s" % e
             })
-        finally:
             return self.log
         # provide the proxy config details
         if 'port' in proxy:
@@ -75,15 +77,15 @@ class testcase_61_yum_proxy(ValidTestcase):
             yum_conf_fp.close()
         except Error as e:
             self.log.append({
-                "result", "failure",
-                "comment", "couldn't write '/etc/yum.conf': %s" % e
+                "result": "failure",
+                "comment": "couldn't write '/etc/yum.conf': %s" % e
             })
-        finally:
             return self.log
         # test all works
         self.get_return_value(
             connection,
-            "yum clean all; yum repolist"
+            "yum clean all; yum repolist -v",
+            timeout=yum_timeout
         )
         # restore original yum conf
         try:
@@ -92,31 +94,32 @@ class testcase_61_yum_proxy(ValidTestcase):
             yum_conf_fp.close()
         except Error as e:
             self.log.append({
-                "result", "failure",
-                "comment", "couldn't write '/etc/yum.conf': %s" % e
+                "result": "failure",
+                "comment": "couldn't write '/etc/yum.conf': %s" % e
             })
-        finally:
             return self.log
         # try the same with an env variable
         if 'port' in proxy:
             https_proxy=proxy['host'] + ":" + proxy['port']
         if 'user' in proxy and 'password' in proxy:
-            https_proxy="https://" + proxy['user'] + ":" + proxy['password'] +
-                        "@" + https_proxy
-        else
+            https_proxy="https://" + proxy['user'] + ":" + proxy['password'] +\
+                "@" + https_proxy
+        else:
             https_proxy="https://" + https_proxy
         # check all works
         self.get_return_value(
             connection,
             "yum clean all; " +
-            "https_proxy=" + https_proxy + " " +
-            "yum repolist"
+            "https_proxy='" + https_proxy + "' " +
+            "yum repolist",
+            timeout=yum_timeout
         )
         # restore firewall
         self.get_return_value(
             connection,
             "service iptables restart"
         )
+        return self.log
 
 
 
