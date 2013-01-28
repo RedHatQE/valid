@@ -1,4 +1,8 @@
 #!/bin/bash
+umask 0077
+exec 1>/tmp/squid_setup.log
+exec 2>&1
+
 set -x
 set -e
 
@@ -29,15 +33,18 @@ function rand_string() {
 PROXY_PASSWORD=`rand_string`
 PROXY_USER="rhui-client"
 
-exit 0
+yum -y install squid httpd-tools
+htpasswd -bc /etc/squid/passwd $PROXY_USER $PROXY_PASSWORD
+echo 'auth_param basic program /usr/lib64/squid/basic_ncsa_auth /etc/squid/passwd' > /etc/squid/squid.conf.new
+echo 'acl auth proxy_auth REQUIRED' >> /etc/squid/squid.conf.new
+cat /etc/squid/squid.conf | sed 's,allow localnet,allow auth,' >> /etc/squid/squid.conf.new
+mv -f /etc/squid/squid.conf.new /etc/squid/squid.conf
+systemctl enable squid.service
+systemctl start squid.service
+iptables -I INPUT -p tcp --destination-port 3128 -j ACCEPT
+service iptables save
 
-sudo yum -y install squid httpd-tools
-sudo htpasswd -bc /etc/squid/passwd $PROXY_USER $PROXY_PASSWORD
-sudo echo 'auth_param basic program /usr/lib64/squid/ncsa_auth /etc/squid/passwd' > /etc/squid/squid.conf.new
-sudo echo 'acl auth proxy_auth REQUIRED' >> /etc/squid/squid.conf.new
-sudo cat /etc/squid/squid.conf | sed 's,allow localnet,allow auth,' >> /etc/squid/squid.conf.new
-sudo mv -f /etc/squid/squid.conf.new /etc/squid/squid.conf
-sudo service squid start
-sudo chkconfig squid on
-sudo iptables -I INPUT -p tcp --destination-port 3128 -j ACCEPT
-sudo service iptables save
+cat <<__VARIABLES > /tmp/squid_setup_variables.sh
+PROXY_PASSWORD=$PROXY_PASSWORD
+PROXY_USER=$PROXY_USER
+__VARIABLES
