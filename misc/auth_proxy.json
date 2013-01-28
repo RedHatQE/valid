@@ -129,7 +129,10 @@
                         "Fn::Join": [
                             "",
                             [
-                                "#! /bin/sh\n",
+                                "#! /bin/bash\n",
+                                "umask 0077\n",
+                                "exec 1>/tmp/squid_setup.log\n",
+                                "exec 2>&1\n",
                                 "set -xe\n",
                                 "yum -y install squid httpd-tools squid-sysvinit\n",
                                 "htpasswd -bc /etc/squid/passwd ",
@@ -145,8 +148,8 @@
                                 "echo 'acl auth proxy_auth REQUIRED' >> /etc/squid/squid.conf.new\n",
                                 "cat /etc/squid/squid.conf | sed 's,allow localnet,allow auth,' >> /etc/squid/squid.conf.new\n",
                                 "mv -f /etc/squid/squid.conf.new /etc/squid/squid.conf\n",
-                                "service squid start\n",
-                                "chkconfig squid on\n",
+                                "systemctl enable squid.service\n",
+                                "systemctl start squid.service\n",
                                 "iptables -I INPUT -p tcp --destination-port 3128 -j ACCEPT\n",
                                 "service iptables save\n"
                             ]
