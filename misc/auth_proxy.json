@@ -144,6 +144,7 @@
                                     "Ref": "ProxyPassword"
                                 },
                                 "\n",
+                                "chown squid:squid /etc/squid/passwd\n",
                                 "echo 'auth_param basic program /usr/lib64/squid/basic_ncsa_auth /etc/squid/passwd' > /etc/squid/squid.conf.new\n",
                                 "echo 'acl auth proxy_auth REQUIRED' >> /etc/squid/squid.conf.new\n",
                                 "cat /etc/squid/squid.conf | sed 's,allow localnet,allow auth,' >> /etc/squid/squid.conf.new\n",

@@ -30,11 +30,12 @@ function rand_string() {
 }
 
 
-PROXY_PASSWORD=`rand_string`
+PROXY_PASSWORD=`rand_string 8`
 PROXY_USER="rhui-client"
 
 yum -y install squid httpd-tools
 htpasswd -bc /etc/squid/passwd $PROXY_USER $PROXY_PASSWORD
+chown squid:squid /etc/squid/passwd
 echo 'auth_param basic program /usr/lib64/squid/basic_ncsa_auth /etc/squid/passwd' > /etc/squid/squid.conf.new
 echo 'acl auth proxy_auth REQUIRED' >> /etc/squid/squid.conf.new
 cat /etc/squid/squid.conf | sed 's,allow localnet,allow auth,' >> /etc/squid/squid.conf.new

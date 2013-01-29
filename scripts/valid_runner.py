@@ -122,19 +122,22 @@ else:
     logging.getLogger("paramiko").setLevel(logging.ERROR)
 
 testing_stages = []
-for m in sys.modules.keys():
-    if m.startswith("valid.testing_modules.testcase"):
-        try:
-            test_name = m.split('.')[2]
-            testcase = getattr(sys.modules[m], test_name)()
-            if ((enable_tests and test_name in enable_tests) or (not enable_tests and not test_name in disable_tests)):
-                for stage in testcase.stages:
-                    if not (stage in testing_stages):
-                        testing_stages.append(stage)
-        except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), e:
-            logging.error("bad test, %s %s" % (m, e))
-            logging.debug(traceback.format_exc())
-            sys.exit(1)
+for m in filter(lambda x: str(x).startswith("valid.testing_modules.testcase"),
+                sys.modules.keys()):
+    logging.debug("found test module: %s" % m)
+    try:
+        test_name = m.split('.')[2]
+        testcase = getattr(sys.modules[m], test_name)()
+        if ((enable_tests and test_name in enable_tests) or (not enable_tests and not test_name in disable_tests)):
+            logging.debug("module %s passed filtering" % m)
+            for stage in testcase.stages:
+                if not (stage in testing_stages):
+                    logging.debug("found new stage: %s" % stage)
+                    testing_stages.append(stage)
+    except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), e:
+        logging.error("bad test, %s %s" % (m, e))
+        logging.debug(traceback.format_exc())
+        sys.exit(1)
 testing_stages.sort()
 
 if testing_stages == []:

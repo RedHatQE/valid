@@ -5,7 +5,7 @@ import ConfigParser
 yum_timeout = 30
 
 class testcase_61_yum_proxy(ValidTestcase):
-    stage = ["stage1"]
+    stages = ["stage1"]
 
     def test(self, connection, params):
         try:
@@ -82,7 +82,7 @@ class testcase_61_yum_proxy(ValidTestcase):
             })
             return self.log
         # test all works
-        self.get_return_value(
+        self.get_result(
             connection,
             "yum clean all; yum --disableplugin=fastestmirror repolist",
             timeout=yum_timeout
@@ -107,7 +107,7 @@ class testcase_61_yum_proxy(ValidTestcase):
         else:
             https_proxy="https://" + https_proxy
         # check all works
-        self.get_return_value(
+        self.get_result(
             connection,
             "yum clean all; " +
             "https_proxy='" + https_proxy + "' " +
