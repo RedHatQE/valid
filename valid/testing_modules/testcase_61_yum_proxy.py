@@ -2,7 +2,7 @@ from valid.valid_testcase import *
 import StringIO
 import ConfigParser
 
-yum_timeout = 30
+yum_timeout = 300
 
 class testcase_61_yum_proxy(ValidTestcase):
     stages = ["stage1"]
@@ -10,6 +10,10 @@ class testcase_61_yum_proxy(ValidTestcase):
     def test(self, connection, params):
         try:
             proxy = params["proxy"]
+            if params["version"].startswith('5'):
+                yum_test_command = 'yum --disableplugin=fastestmirror repolist'
+            else:
+                yum_test_command = 'yum repolist'
         except KeyError:
             self.log.append({'result': 'skip', 'comment': 'No proxy set'})
             return self.log
@@ -20,7 +24,7 @@ class testcase_61_yum_proxy(ValidTestcase):
             "yum --disablerepo=* --enablerepo=" +
             "rhui-%s-client-config-server-%s" % (params['region'],
                 params['version'].split('.')[0]) +
-            " update -y",
+            " --nogpgcheck update -y",
             timeout=yum_timeout
         )
 
@@ -84,7 +88,7 @@ class testcase_61_yum_proxy(ValidTestcase):
         # test all works
         self.get_result(
             connection,
-            "yum clean all; yum --disableplugin=fastestmirror repolist",
+            "yum clean all; " + yum_test_command,
             timeout=yum_timeout
         )
         # restore original yum conf
@@ -111,7 +115,7 @@ class testcase_61_yum_proxy(ValidTestcase):
             connection,
             "yum clean all; " +
             "https_proxy='" + https_proxy + "' " +
-            "yum --disableplugin=fastestmirror repolist",
+            yum_test_command,
             timeout=yum_timeout
         )
         # restore firewall
