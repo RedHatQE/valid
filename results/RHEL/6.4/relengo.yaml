@@ -1,0 +1,14 @@
+# ami-014bdc68: 907976
+# ami-834fd8ea: 907977
+# ami-db4bdcb2: 907978
+# ami-d94bdcb0: 907979
+# ami-994fd8f0: 907980
+# ami-0d4bdc64: 907981
+## total: 6 records
+- {bug: '907976', id: ami-014bdc68, status: fail}
+- {bug: '907977', id: ami-834fd8ea, status: fail}
+- {bug: '907978', id: ami-db4bdcb2, status: fail}
+- {bug: '907979', id: ami-d94bdcb0, status: fail}
+# - {bug: '907980', id: ami-994fd8f0, status: fail}
+- {bug: '907981', id: ami-0d4bdc64, status: fail}
+
