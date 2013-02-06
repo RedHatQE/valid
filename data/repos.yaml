@@ -111,6 +111,8 @@ ANY_REGION: &ANY_REGION
     BETA_6.3:
         <<: *BETA_6ANY
     RHEL_6.4:
+        # in 6.4 source beta (RC) comes with redhat-release-server
+        rhel-source-beta: {repo-status: disabled}
         <<: *RHEL_6ANY
     BETA_6.4:
         <<: *BETA_6ANY
