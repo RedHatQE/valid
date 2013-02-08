@@ -58,3 +58,7 @@
 - {bug: '909148', id: ami-44bf3574, status: pass}
 - {bug: '909149', id: ami-88767ffc, status: pass}
 
+# ami-42bf3572: 909200
+## total: 1 records
+- {bug: '909200', id: ami-42bf3572, status: pass}
+
