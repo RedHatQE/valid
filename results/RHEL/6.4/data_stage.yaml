@@ -1,0 +1,97 @@
+- product: RHEL
+  arch: x86_64_hvm
+  region: us-east-1
+  itype: hourly
+  version: '6.4'
+  ami: ami-994fd8f0
+  proxy: &PROXY {host: '10.3.94.27', user: 'rhui-client', password: ',Ykvf+gH', port: '3128'}
+  setup: &SETUP [
+           '#!/bin/bash',
+           'set -xe',
+           'echo ''10.3.94.100    rhui2-cds01-stage.us-east-1.aws.ce.redhat.com'' >> /etc/hosts',
+           'sed -i ''s/rhui2-cds01.us-east-1.aws.ce.redhat.com/rhui2-cds01-stage.us-east-1.aws.ce.redhat.com/'' /etc/yum.repos.d/*.repo',
+           'echo rhui2-cds01-stage.us-east-1.aws.ce.redhat.com > /etc/yum.repos.d/rhui-load-balancers.conf',
+           ]
+  subnet_id: &SUBNET 'subnet-8ad15ce3'
+  userdata: &USERDATA |
+    touch /userdata_test
+    date >> /userdata_test
+
+
+#- product: RHEL
+#  arch: i386_hvm
+#  region: us-east-1
+#  itype: hourly
+#  version: '6.4'
+#  ami: ami-d94fd8b0
+#  proxy: *PROXY
+#  setup: *SETUP
+#  subnet_id: *SUBNET
+#  userdata: *USERDATA
+- product: RHEL
+  arch: x86_64_hvm
+  region: us-east-1
+  itype: access
+  version: '6.4'
+  ami: ami-834fd8ea
+  proxy: *PROXY
+  setup: *SETUP
+  subnet_id: *SUBNET
+  userdata: *USERDATA
+
+- product: RHEL
+  arch: i386
+  region: us-east-1
+  itype: access
+  version: '6.4'
+  ami: ami-0d4bdc64
+  proxy: *PROXY
+  setup: *SETUP
+  subnet_id: *SUBNET
+  userdata: *USERDATA
+
+- product: RHEL
+  arch: i386
+  region: us-east-1
+  itype: hourly
+  version: '6.4'
+  ami: ami-014bdc68
+  proxy: *PROXY
+  setup: *SETUP
+  subnet_id: *SUBNET
+  userdata: *USERDATA
+
+- product: RHEL
+  arch: x86_64
+  region: us-east-1
+  itype: access
+  version: '6.4'
+  ami: ami-d94bdcb0
+  proxy: *PROXY
+  setup: *SETUP
+  subnet_id: *SUBNET
+  userdata: *USERDATA
+
+- product: RHEL
+  arch: x86_64
+  region: us-east-1
+  itype: hourly
+  version: '6.4'
+  ami: ami-db4bdcb2
+  proxy: *PROXY
+  setup: *SETUP
+  subnet_id: *SUBNET
+  userdata: *USERDATA
+
+#- product: RHEL
+#  arch: i386_hvm
+#  region: us-east-1
+#  itype: access
+#  version: '6.4'
+#  ami: ami-c74fd8ae
+#  proxy: *PROXY
+#  setup: *SETUP
+#  subnet_id: *SUBNET
+#  userdata: *USERDATA
+#
+#
