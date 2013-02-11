@@ -58,6 +58,8 @@ argparser.add_argument('--server', action='store_const', const=True,
                        default=False, help='run HTTP server')
 argparser.add_argument('--settlewait', type=int,
                        default=30, help='wait for instance to settle before testing')
+argparser.add_argument('--hwp-filter', help='select hwps to instantiate',
+                      default='.*')
 
 args = argparser.parse_args()
 maxtries = args.maxtries
@@ -120,6 +122,12 @@ if args.debug:
     logging.getLogger("paramiko").setLevel(logging.DEBUG)
 else:
     logging.getLogger("paramiko").setLevel(logging.ERROR)
+
+try:
+    re.compile(args.hwp_filter)
+except re.error as e:
+    print "error compiling hwp-filter: %s: %s" % (args.hwp_filter, e)
+    sys.exit(1)
 
 testing_stages = []
 for m in sys.modules.keys():
@@ -185,6 +193,16 @@ def add_data(data, emails=None):
                         hwpfd = open(hwpdir + "/" + params["arch"] + ".yaml", "r")
                         hwp = yaml.load(hwpfd)
                         hwpfd.close()
+                        # filter hwps based on args
+                        hwp = filter(lambda x: re.match(args.hwp_filter,
+                                    x['ec2name']), hwp)
+                        logging.info('using hwps: %s' %
+                            reduce(
+                                lambda x, y: x + ', %s' % str(x['ec2name']),
+                                hwp[1:],
+                                str(hwp[0]['ec2name'])
+                            )
+                        )
                         resultdic[transaction_id][params["ami"]] = {"ninstances": len(hwp) * len(testing_stages), "instances": []}
                         if emails:
                             resultdic[transaction_id][params["ami"]]["emails"] = emails
