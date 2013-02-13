@@ -67,7 +67,7 @@ class testcase_61_yum_proxy(ValidTestcase):
         # provide the proxy config details
         if 'port' in proxy:
             yum_conf.set('main', 'proxy', "https://" + proxy['host'] +
-                         ":" + proxy['port'])
+                         ":" + str(proxy['port']))
         else:
             yum_conf.set('main', 'proxy', "https://" + proxy['host'])
         if 'user' in proxy:
@@ -104,7 +104,7 @@ class testcase_61_yum_proxy(ValidTestcase):
             return self.log
         # try the same with an env variable
         if 'port' in proxy:
-            https_proxy=proxy['host'] + ":" + proxy['port']
+            https_proxy=proxy['host'] + ":" + str(proxy['port'])
         if 'user' in proxy and 'password' in proxy:
             https_proxy="https://" + proxy['user'] + ":" + proxy['password'] +\
                 "@" + https_proxy
