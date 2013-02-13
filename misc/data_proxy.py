@@ -395,7 +395,7 @@ class InstanceThread(threading.Thread):
                     if not isinstance(entry, dict):
                         logging.debug("skipped non-dict: %s" % entry)
                         continue
-                    if 'proxy' in entry:
+                    if 'proxy' not in entry:
                             logging.debug("skipped non-proxy entry %s" % entry)
                             continue
                     if not isinstance(entry['proxy'], dict):
