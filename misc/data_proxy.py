@@ -12,6 +12,8 @@ import random
 import logging
 import string
 import time
+import urllib2
+import base64
 
 from boto import ec2
 
@@ -34,13 +36,13 @@ argparser.add_argument(
 )
 argparser.add_argument('--force', action='store_const', const=True, default=False,
                        help="create proxy even if already present in data")
-argparser.add_argument(
-    '--terminate',
-    action='store_const',
-    const=True,
-    default=False,
-    help="read data and terminate proxies found"
-)
+#argparser.add_argument(
+#    '--terminate',
+#    action='store_const',
+#    const=True,
+#    default=False,
+#    help="read data and terminate proxies found"
+#)
 argparser.add_argument('--maxtries', type=int,
                        default=30, help='maximum number of tries')
 argparser.add_argument('--settlewait', type=int,
@@ -70,6 +72,14 @@ argparser.add_argument(
     type=argparse.FileType('rw'),
     help='data file to use'
 )
+
+operation = argparser.add_mutually_exclusive_group()
+operation.add_argument('--terminate', action='store_true',
+                      help="read data and terminate proxies found")
+operation.add_argument('--check', action='store_true',
+                      help="read data and try proxies found")
+operation.add_argument('--create', action='store_true',
+                      default=True, help="the default operation")
 
 args = argparser.parse_args()
 maxtries = args.maxtries
@@ -109,7 +119,7 @@ REGION_AMI = {
     "us-west-2": "ami-0266ed32"
 }
 
-USER_DATA = '''
+USER_DATA ='''
 #! /bin/bash
 umask 0077
 exec 1>/tmp/squid_setup.log
@@ -229,7 +239,7 @@ class InstanceThread(threading.Thread):
                 'a security group allowing port %s access' % args.port
             )
 
-            security_group.authorize('tcp', 0, args.port, '0.0.0.0/0')
+            security_group.authorize('tcp', args.port, args.port, '0.0.0.0/0')
             # ssh allowed for debugging purposes
             security_group.authorize('tcp', 22, 22, '0.0.0.0/0')
             # create proxy instance
@@ -244,7 +254,7 @@ class InstanceThread(threading.Thread):
             count = 0
             while instance.update() == 'pending' and count < maxwait / 5:
                 # waiting out instance to appear
-                logging.debug(self.getName() + ": proxy in %s pending; %d" %
+                logging.info(self.getName() + ": proxy in %s pending; %d" %
                         (region_name, maxwait / 5 - count))
                 count += 1
                 time.sleep(5)
@@ -258,7 +268,7 @@ class InstanceThread(threading.Thread):
             proxy = {
                 'region': region_name,
                 'host': instance.public_dns_name,
-                'port': str(args.port),
+                'port': args.port,
                 'user': args.user,
                 'password': args.password,
                 'id': instance.id,
@@ -296,7 +306,33 @@ class InstanceThread(threading.Thread):
                 mainq.put(task)
 
     def check(self, ntry, proxy):
-        # all OK, update the data dict
+        proxy_handler = urllib2.ProxyHandler(
+            {
+                'https':
+                    'https://%(user)s:%(password)s@%(host)s:%(port)s' % proxy
+            }
+        )
+        proxy_auth_handler = urllib2.ProxyBasicAuthHandler()
+        opener = urllib2.build_opener(proxy_handler, proxy_auth_handler,
+                                     urllib2.HTTPHandler)
+        urllib2.install_opener(opener)
+        count = 0
+        while count < maxwait / 5 :
+            count += 1
+            logging.info(self.getName() + ": trying google via proxy %s (%d)" %
+                        (proxy['host'], maxwait / 5 - count))
+            try:
+                fd = opener.open('https://www.google.com/')
+            except Exception as e:
+                logging.debug(self.getName() + ": got %s" % e)
+            else:
+                logging.info(self.getName() + ": proxy %s: %s running" %
+                           (proxy['region'], proxy['host']))
+                fd.close()
+                break
+        if count >= maxwait / 5:
+            logging.warning(self.getName() + ": proxy %s: %s not running" %
+                          (proxy['region'], proxy['host']))
         with open(args.data.name, 'w+') as fd:
             # data is shared
             with data_lock:
@@ -330,13 +366,13 @@ class InstanceThread(threading.Thread):
             instance = region_connection.get_all_instances(
                 instance_ids=[proxy['id']]
             )[0].instances[0]
+            count = 0
             while instance.update() != 'terminated' and count < maxwait / 5:
                 # waiting out instance to appear
-                logging.debug(self.getName() + ": proxy  %s pending; %d" %
+                logging.info(self.getName() + ": proxy  %s pending; %d" %
                         (proxy['id'], maxwait / 5 - count))
                 count += 1
                 time.sleep(5)
-            print instance.update()
             if instance.update() != 'terminated':
                 logging.warning("could not terminate instance: %s" %
                                proxy['id'])
@@ -431,7 +467,7 @@ def create_proxies(data, ssh_config, force=False):
         logging.info('scheduling task: %s' % str(task))
         mainq.put((0, 'instantiate', task))
 
-def terminate_proxies(data):
+def manipulate_proxies(data, action):
     proxies = {}
     if not isinstance(data, list):
         print >>sys.stderr, "data not in list shape"
@@ -442,29 +478,38 @@ def terminate_proxies(data):
             logging.error("entry %s not dict; skipped" % entry)
             continue
         if 'proxy' not in entry:
-            logging.info("proxy field not present for %(ami)s" % entry)
+            logging.debug("proxy field not present for %(ami)s" % entry)
             continue
         if not isinstance(entry['proxy'], dict):
-            logging.info("proxy field not dict: %: %s; skipped" %
+            logging.debug("proxy field not dict: %: %s; skipped" %
                         (entry, args.config.name))
             continue
         if 'id' not in entry['proxy']:
-            logging.info("id field not present: %: %s; skipped" %
+            logging.debug("id field not present: %: %s; skipped" %
                          (entry['proxy'], args.config.name))
             continue
         if entry['proxy']['id'] in proxies:
             logging.debug('proxy %s already scheduled' %
                          entry['proxy']['id'])
             continue
+        logging.info("processing %(region)s: %(host)s" % entry['proxy'])
         proxies[entry['proxy']['id']] = entry['proxy']
-        mainq.put((0, 'terminate', entry['proxy'].copy()))
+        mainq.put((0, action, entry['proxy'].copy()))
 
-if not args.terminate:
+if args.check:
+    logging.info("trying proxies in %s" % args.data.name)
+    manipulate_proxies(data, "check")
+    print "check"
+if args.terminate:
+    logging.info("terminating proxies in %s" % args.data.name)
+    manipulate_proxies(data, "terminate")
+if args.create:
+    logging.info("terminating proxies for %s" % args.data.name)
     create_proxies(data, config['ssh'], args.force)
-else:
-    terminate_proxies(data)
+
 
 logging.debug("launching with a task queue: %s" %yaml.dump(mainq.queue))
+
 
 for i in range(args.numthreads):
     i = InstanceThread()
