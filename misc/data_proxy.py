@@ -36,13 +36,6 @@ argparser.add_argument(
 )
 argparser.add_argument('--force', action='store_const', const=True, default=False,
                        help="create proxy even if already present in data")
-#argparser.add_argument(
-#    '--terminate',
-#    action='store_const',
-#    const=True,
-#    default=False,
-#    help="read data and terminate proxies found"
-#)
 argparser.add_argument('--maxtries', type=int,
                        default=30, help='maximum number of tries')
 argparser.add_argument('--settlewait', type=int,
@@ -119,7 +112,7 @@ REGION_AMI = {
     "us-west-2": "ami-0266ed32"
 }
 
-USER_DATA ='''
+USER_DATA ='''\
 #! /bin/bash
 umask 0077
 exec 1>/tmp/squid_setup.log
@@ -403,7 +396,9 @@ class InstanceThread(threading.Thread):
                         logging.debug("skipped non-dict: %s" % entry)
                         continue
                     if 'proxy' in entry:
-                        if not isinstance(entry['proxy'], dict):
+                            logging.debug("skipped non-proxy entry %s" % entry)
+                            continue
+                    if not isinstance(entry['proxy'], dict):
                             logging.debug("skipped non-dict-proxy: %s" % entry)
                             continue
                     if 'id' not in entry['proxy']:
