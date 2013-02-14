@@ -196,15 +196,15 @@ def add_data(data, emails=None):
                         # filter hwps based on args
                         hwp = filter(lambda x: re.match(args.hwp_filter,
                                     x['ec2name']), hwp)
-                        if not hwp:
+                        if not len(hwp):
                             # precautions
                             logging.info("no hwp match for %s; nothing to do" %
                                         args.hwp_filter)
-                            break
+                            continue
 
                         logging.info('using hwps: %s' %
                             reduce(
-                                lambda x, y: x + ', %s' % str(x['ec2name']),
+                                lambda x, y: x + ', %s' % str(y['ec2name']),
                                 hwp[1:],
                                 str(hwp[0]['ec2name'])
                             )
