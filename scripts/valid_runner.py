@@ -713,7 +713,11 @@ class InstanceThread(threading.Thread):
                 # InvalidParameterValue is really bad
                 logging.error(self.getName() + ": got boto error during instance creation: %s" % e)
                 # Try to speed up whole testing process, it's hardly possible to recover from this error
-                ntry += 9
+                ntry += args.maxtries // 2 + 1
+            elif str(e).find("<Code>Unsupported</Code>") != -1:
+                # Unsupported
+                logging.error(self.getName() + ": got Unsupported - most likely the permanent error: %s" % e)
+                ntry += args.maxtries // 2 + 1
             else:
                 logging.debug(self.getName() + ":" + traceback.format_exc())
         except socket.error, e:
