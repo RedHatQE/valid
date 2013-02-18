@@ -1,0 +1,28 @@
+- {ami: ami-20416365, arch: x86_64_hvm, itype: access, product: rhel, region: us-west-1,
+  version: '6.4'}
+- {ami: ami-22416367, arch: x86_64_hvm, itype: hourly, product: rhel, region: us-west-1,
+  version: '6.4'}
+- {ami: ami-5875ff68, arch: x86_64_hvm, itype: access, product: rhel, region: us-west-2,
+  version: '6.4'}
+- {ami: ami-5a75ff6a, arch: x86_64_hvm, itype: hourly, product: rhel, region: us-west-2,
+  version: '6.4'}
+- {ami: ami-e2f6ff96, arch: x86_64_hvm, itype: access, product: rhel, region: eu-west-1,
+  version: '6.4'}
+- {ami: ami-ecf6ff98, arch: x86_64_hvm, itype: hourly, product: rhel, region: eu-west-1,
+  version: '6.4'}
+- {ami: ami-8038aeba, arch: x86_64_hvm, itype: access, product: rhel, region: ap-southeast-2,
+  version: '6.4'}
+- {ami: ami-8638aebc, arch: x86_64_hvm, itype: hourly, product: rhel, region: ap-southeast-2,
+  version: '6.4'}
+- {ami: ami-79da0164, arch: x86_64_hvm, itype: access, product: rhel, region: sa-east-1,
+  version: '6.4'}
+- {ami: ami-7bda0166, arch: x86_64_hvm, itype: hourly, product: rhel, region: sa-east-1,
+  version: '6.4'}
+- {ami: ami-f5890ef4, arch: x86_64_hvm, itype: access, product: rhel, region: ap-northeast-1,
+  version: '6.4'}
+- {ami: ami-f7890ef6, arch: x86_64_hvm, itype: hourly, product: rhel, region: ap-northeast-1,
+  version: '6.4'}
+- {ami: ami-ea501db8, arch: x86_64_hvm, itype: access, product: rhel, region: ap-southeast-1,
+  version: '6.4'}
+- {ami: ami-ee501dbc, arch: x86_64_hvm, itype: hourly, product: rhel, region: ap-southeast-1,
+  version: '6.4'}
