@@ -4,7 +4,7 @@ from setuptools import setup
 import glob
 
 setup(name='valid',
-    version='0.4',
+    version='0.5',
     description='Image validation (threaded version)',
     author='Vitaly Kuznetsov',
     author_email='vitty@redhat.com',

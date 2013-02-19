@@ -1,5 +1,5 @@
 Name:		valid
-Version:	0.4
+Version:	0.5
 Release:	1%{?dist}
 Summary:	Image validation (threaded) server
 
@@ -95,6 +95,9 @@ fi
 %attr(0755, root, root) %{_bindir}/valid_client.py
 
 %changelog
+* Tue Feb 19 2013 Vitaly Kuznetsov <vitty@redhat.com> 0.5-1
+- new version
+
 * Thu Jan 03 2013 milan <mkovacik@redhat.com> 0.4-1
 - pep8 (mkovacik@redhat.com)
 - fixes for testcase_14_host_details (mkovacik@redhat.com)
