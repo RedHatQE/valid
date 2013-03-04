@@ -38,4 +38,5 @@ import testcase_50_yum_package_install
 import testcase_55_yum_group_install
 import testcase_60_yum_update
 import testcase_61_yum_proxy
+import testcase_98_kernel_upgrade_pre
 import testcase_99_reboot
