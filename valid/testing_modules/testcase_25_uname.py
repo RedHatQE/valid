@@ -2,7 +2,7 @@ from valid.valid_testcase import *
 
 
 class testcase_25_uname(ValidTestcase):
-    stages = ["stage2"]
+    stages = ["stage1", "stage2"]
 
     def test(self, connection, params):
         prod = params["product"].upper()
