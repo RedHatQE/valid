@@ -33,6 +33,7 @@ import testcase_32_ephemeral
 import testcase_33_userdata
 import testcase_34_cpu
 import testcase_35_console
+import testcase_36_ebs
 import testcase_50_yum_package_install
 import testcase_55_yum_group_install
 import testcase_60_yum_update
