@@ -74,7 +74,7 @@ class testcase_36_ebs(ValidTestcase):
             wait = 0
             while volume.attachment_state() == "detaching":
                 volume.update()
-                print "Wait detaching %s %s" % (volume.volume_state(), volume.attachment_state())
+                logging.debug("Wait detaching %s: %s %s" % (volume.id, volume.volume_state(), volume.attachment_state()))
                 time.sleep(1)
                 wait += 1
                 if wait > 300:
