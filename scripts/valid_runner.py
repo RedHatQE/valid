@@ -44,6 +44,7 @@ argparser.add_argument('--config',
                        default="/etc/validation.yaml", help='use supplied yaml config file')
 argparser.add_argument('--debug', action='store_const', const=True,
                        default=False, help='debug mode')
+argparser.add_argument('--disable-stages', type=csv, help='disable specified stages')
 argparser.add_argument('--disable-tests', type=csv, help='disable specified tests')
 argparser.add_argument('--enable-tests', type=csv, help='enable specified tests only (overrides --disabe-tests)')
 argparser.add_argument('--maxtries', type=int,
@@ -108,6 +109,11 @@ if args.disable_tests:
 else:
     disable_tests = set()
 
+if args.disable_stages:
+    disable_stages = set(args.disable_stages)
+else:
+    disable_stages = set()
+
 ec2_key = yamlconfig["ec2"]["ec2-key"]
 ec2_secret_key = yamlconfig["ec2"]["ec2-secret-key"]
 
@@ -137,7 +143,7 @@ for m in sys.modules.keys():
             testcase = getattr(sys.modules[m], test_name)()
             if ((enable_tests and test_name in enable_tests) or (not enable_tests and not test_name in disable_tests)):
                 for stage in testcase.stages:
-                    if not (stage in testing_stages):
+                    if not (stage in testing_stages) and not (stage in disable_stages):
                         testing_stages.append(stage)
         except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), e:
             logging.error("bad test, %s %s" % (m, e))
