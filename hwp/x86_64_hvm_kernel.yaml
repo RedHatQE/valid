@@ -29,4 +29,4 @@
   ec2name: m3.xlarge
   memory: '15000000'
   virtualization: hvm
-- {arch: 'x86_64', cpu: '32', memory: '244000000', ec2name: cr1.8xlarge, virtualization: 'hvm', userdata: *USERDATA}
+- {arch: 'x86_64', cpu: '32', memory: '244000000', ec2name: cr1.8xlarge, virtualization: 'hvm'}
