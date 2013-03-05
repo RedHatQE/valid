@@ -33,7 +33,7 @@ class testcase_32_ephemeral(ValidTestcase):
                         # mkfs.vfat is faster!
                         self.get_return_value(connection, "mkfs.vfat -I %s" % name, 60)
                     else:
-                        self.get_return_value(connection, "mkfs.ext3 -I %s" % name, 300)
+                        self.get_return_value(connection, "mkfs.ext3 %s" % name, 300)
         if not has_ephemeral:
             self.log.append({
                     "result": "skip",
