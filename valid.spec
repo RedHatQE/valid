@@ -11,7 +11,7 @@ BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch:  noarch
 
 BuildRequires:	python-devel
-Requires:	python-patchwork python-paramiko PyYAML
+Requires:	python-patchwork python-paramiko PyYAML python-boto
 
 %if 0%{?fedora} >= 15
 Requires(post): systemd-units
