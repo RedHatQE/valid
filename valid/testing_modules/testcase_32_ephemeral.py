@@ -26,7 +26,7 @@ class testcase_32_ephemeral(ValidTestcase):
                     if name.startswith("/dev/sd"):
                         name = "/dev/xvd" + name[7:]
                 has_ephemeral = True
-                self.get_return_value(connection, "fdisk -l %s | grep ^Disk" % name, 30)
+                self.get_return_value(connection, "fdisk -l %s | grep '^Disk'" % name, 30)
                 if self.get_result(connection, "grep \"%s \" /proc/mounts  | wc -l" % name, 5) == "0":
                     # device is not mounted, doing fs creation
                     if self.get_result(connection, "ls -la /sbin/mkfs.vfat 2> /dev/null | wc -l", 5) == "1":
