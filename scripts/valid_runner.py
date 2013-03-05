@@ -404,12 +404,15 @@ class ReportingThread(threading.Thread):
                                        "version": data[ami]["instances"][0]["version"],
                                        "arch": data[ami]["instances"][0]["arch"],
                                        "region": data[ami]["instances"][0]["region"],
+                                       "console_output": {},
                                        "result": {}}
                         for instance in data[ami]["instances"]:
                             if not instance["instance_type"] in result_item["result"].keys():
                                 result_item["result"][instance["instance_type"]] = instance["result"].copy()
                             else:
                                 result_item["result"][instance["instance_type"]].update(instance["result"])
+                            # we're interested in latest console output only, overwriting
+                            result_item["console_output"][instance["instance_type"]] = instance["console_output"]
                         result.append(result_item)
                         if "emails" in data[ami].keys():
                             emails = data[ami]["emails"]
@@ -487,6 +490,14 @@ class InstanceThread(threading.Thread):
                 self.do_terminate(ntry, params)
 
     def report_results(self, params):
+        console_output = ""
+        try:
+            from pprint import pprint
+            connection = params["instance"]["connection"]
+            console_output = connection.get_console_output(params["id"]).output
+            logging.debug(self.getName() + ": got console output for %s: %s" % (params["iname"], console_output))
+        except Exception, e:
+            logging.error(self.getName() + ": report_results: Failed to get console output %s" % e)
         with resultdic_lock:
             report_value = {"instance_type": params["ec2name"],
                             "ami": params["ami"],
@@ -494,6 +505,7 @@ class InstanceThread(threading.Thread):
                             "arch": params["arch"],
                             "version": params["version"],
                             "product": params["product"],
+                            "console_output": console_output,
                             "result": params["result"]}
             resultdic[params["transaction_id"]][params["ami"]]["instances"].append(report_value)
 
@@ -745,8 +757,7 @@ class InstanceThread(threading.Thread):
         '''
         try:
             logging.debug(self.getName() + ": trying to terminata instance  " + params["iname"] + ", ntry " + str(ntry))
-            reg = boto.ec2.get_region(params["region"], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
-            connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
+            connection = params["instance"]["connection"]
             res = connection.terminate_instances([params["id"]])
             logging.info(self.getName() + ": terminated " + params["iname"])
             connection.close()
