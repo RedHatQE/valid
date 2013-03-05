@@ -10,6 +10,7 @@ class testcase_36_ebs(ValidTestcase):
         prod = params["product"].upper()
         ver = params["version"].upper()
         ec2connection = params["instance"]["connection"]
+        logging.debug("Instance: %s" % params["instance"])
         volume = ec2connection.create_volume(10, params["instance"]["placement"])
         logging.debug("Volume %s created" % volume.id)
         time.sleep(5)
