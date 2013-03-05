@@ -10,8 +10,16 @@ class testcase_36_ebs(ValidTestcase):
         prod = params["product"].upper()
         ver = params["version"].upper()
         ec2connection = params["instance"]["connection"]
-        logging.debug("Instance: %s" % params["instance"])
-        volume = ec2connection.create_volume(10, params["instance"]["placement"])
+        if "placement" in params["instance"]:
+            volume = ec2connection.create_volume(10, params["instance"]["placement"])
+        elif "_placement" in params["instance"]:
+            volume = ec2connection.create_volume(10, params["instance"]["_placement"])
+        else:
+            self.log.append({
+                    "result": "failure",
+                    "comment": "Failed to get instance placement"
+                    })
+            return self.log
         logging.debug("Volume %s created" % volume.id)
         time.sleep(5)
         volume.update()
