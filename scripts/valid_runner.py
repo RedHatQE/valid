@@ -33,7 +33,7 @@ from boto.ec2.blockdevicemapping import BlockDeviceType
 from boto.ec2.blockdevicemapping import BlockDeviceMapping
 
 import valid
-
+from valid import valid_result
 
 def csv(value):
     return map(str, value.split(","))
@@ -432,16 +432,20 @@ class ReportingThread(threading.Thread):
                         result_fd.write(result_yaml)
                         result_fd.close()
                         if emails:
-                            msg = MIMEMultipart()
-                            msg.preamble = "Transaction " + transaction_id + " finished."
-                            msg['Subject'] = "Validation %s result" % transaction_id
-                            msg['From'] = mailfrom
-                            msg['To'] = emails
-                            txt = MIMEText(result_yaml, "json")
-                            msg.attach(txt)
-                            s = smtplib.SMTP('localhost')
-                            s.sendmail(mailfrom, emails.split(","), msg.as_string())
-                            s.quit()
+                            for ami in result:
+                                overall_result, bug_summary, bug_description = valid_result.get_overall_result(ami)
+                                msg = MIMEMultipart()
+                                msg.preamble = "Validation result"
+                                msg['Subject'] = bug_summary
+                                msg['From'] = mailfrom
+                                msg['To'] = emails
+                                txt = MIMEText(bug_description + "\n")
+                                msg.attach(txt)
+                                txt = MIMEText(yaml.safe_dump(ami), "yaml")
+                                msg.attach(txt)
+                                s = smtplib.SMTP('localhost')
+                                s.sendmail(mailfrom, emails.split(","), msg.as_string())
+                                s.quit()
                     except Exception, e:
                         logging.error("ReportThread: saving result failed, %s" % e)
                     logging.info("Transaction " + transaction_id + " finished. Result: " + resfile)
