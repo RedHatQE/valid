@@ -122,7 +122,15 @@ if args.debug:
 else:
     loglevel = logging.INFO
 
-logging.basicConfig(level=loglevel, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+if not httpserver:
+    logging.basicConfig(level=loglevel, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+else:
+    # We use systemd-journald, skip date-time
+    if args.debug:
+        logging.basicConfig(level=loglevel, format='%(levelname)s %(message)s')
+    else:
+        # skip loglevel as well
+        logging.basicConfig(level=loglevel, format='%(message)s')
 
 if args.debug:
     logging.getLogger("paramiko").setLevel(logging.DEBUG)
