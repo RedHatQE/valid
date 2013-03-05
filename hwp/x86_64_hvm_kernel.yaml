@@ -1,9 +1,13 @@
 - arch: x86_64
-  bmap:
-  - {delete_on_termination: true, name: /dev/sda1, size: '15'}
-  - {ephemeral_name: ephemeral0, name: /dev/sdf}
   cpu: '4'
   ec2name: m3.xlarge
   memory: '14000000'
   virtualization: hvm
-- {arch: 'x86_64', cpu: '32', memory: '244000000', ec2name: cr1.8xlarge, virtualization: 'hvm'}
+- arch: x86_64
+  bmap:
+  - {delete_on_termination: true, name: /dev/sda1, size: '15'}
+  - {ephemeral_name: ephemeral0, name: /dev/sdf}
+  cpu: '32'
+  ec2name: cr1.8xlarge
+  memory: '244000000'
+  virtualization: 'hvm'
