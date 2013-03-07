@@ -1,0 +1,2 @@
+- {ami: ami-8bf2f7ff, arch: x86_64_c1.xlarge_bug874053, itype: hourly, product: RHEL, region: eu-west-1,
+  version: '6.3'}
