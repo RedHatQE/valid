@@ -44,9 +44,17 @@ argparser.add_argument('--config',
                        default="/etc/validation.yaml", help='use supplied yaml config file')
 argparser.add_argument('--debug', action='store_const', const=True,
                        default=False, help='debug mode')
+
 argparser.add_argument('--disable-stages', type=csv, help='disable specified stages')
+argparser.add_argument('--enable-stages', type=csv, help='enable specified stages (overrides --disable' )
+
 argparser.add_argument('--disable-tests', type=csv, help='disable specified tests')
 argparser.add_argument('--enable-tests', type=csv, help='enable specified tests only (overrides --disabe-tests)')
+
+argparser.add_argument('--disable-tags', type=csv, help='disable specified tags')
+argparser.add_argument('--enable-tags', type=csv, help='enable specified tags only (overrides --disabe-tags)', 
+                       default="default")
+
 argparser.add_argument('--maxtries', type=int,
                        default=30, help='maximum number of tries')
 argparser.add_argument('--maxwait', type=int,
@@ -109,10 +117,25 @@ if args.disable_tests:
 else:
     disable_tests = set()
 
+if args.enable_stages:
+    enable_stages = set(args.enable_stages)
+else:
+    enable_stages = set()
+
 if args.disable_stages:
     disable_stages = set(args.disable_stages)
 else:
     disable_stages = set()
+
+if args.enable_tags:
+    enable_tags = set(args.enable_tags)
+else:
+    enable_tags = None
+
+if args.disable_tags:
+    disable_tags = set(args.disable_tags)
+else:
+    disable_tags = set()
 
 ec2_key = yamlconfig["ec2"]["ec2-key"]
 ec2_secret_key = yamlconfig["ec2"]["ec2-secret-key"]
