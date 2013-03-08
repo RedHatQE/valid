@@ -26,14 +26,11 @@ class testcase_90_1_kernel_bug874053(ValidTestcase):
         self.get_return_value(connection, "yum -y install gcc", 240)
         connection.sftp.put("/usr/share/valid/data/bug874053.c","/root/fork.c")
         self.get_return_value(connection, "gcc /root/fork.c")
-        self.get_result(connection, "echo 'beginning-of-testing testcase_90_1_kernel_bug874053' > /dev/kmsg")
         self.get_return_value(connection, "taskset -c 0 ./a.out &")
         time.sleep(5)
         try:
             self.get_result(connection, "for i in `seq 1 7`; do taskset -c $i dd if=/dev/zero of=/mnt/$i/testfile bs=10M count=10000 oflag=direct & echo $i ; done")
             time.sleep(10)
-            self.get_result(connection, "echo 'end-of-testing testcase_90_1_kernel_bug874053' > /dev/kmsg")
-            time.sleep(45)
             self.get_return_value(connection, "id")
         except:
             self.log.append({"result": "failed", "command": "bug reproducer succeeded"})
