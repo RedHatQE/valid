@@ -13,7 +13,7 @@ class testcase_98_dmesg_stage1(ValidTestcase):
         self.get_return_value(connection, "dmesg > /tmp/dmesg")
         tf = tempfile.NamedTemporaryFile(delete=False)
         tf.close()
-        connection.get.put("/tmp/dmesg",tf.name)
+        connection.sftp.get("/tmp/dmesg",tf.name)
         fd = open(tf.name, "r")
         dmesg = fd.read()
         fd.close()
@@ -21,6 +21,6 @@ class testcase_98_dmesg_stage1(ValidTestcase):
         self.log.append({
                 "result": "passed",
                 "comand": "get dmesg",
-                "dmesg": "dmesg"
+                "dmesg": dmesg
                 })
         return self.log
