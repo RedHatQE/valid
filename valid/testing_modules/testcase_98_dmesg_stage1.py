@@ -1,0 +1,26 @@
+import os
+import tempfile
+import paramiko
+import time
+from valid.valid_testcase import *
+
+
+class testcase_98_dmesg_stage1(ValidTestcase):
+    tags = ["kernel"]
+    stages = ["stage1"]
+
+    def test(self, connection, params):
+        self.get_return_value(connection, "dmesg > /tmp/dmesg")
+        tf = tempfile.NamedTemporaryFile(delete=False)
+        tf.close()
+        connection.get.put("/tmp/dmesg",tf.name)
+        fd = open(tf.name, "r")
+        dmesg = fd.read()
+        fd.close()
+        os.unlink(tf.name)
+        self.log.append({
+                "result": "passed",
+                "comand": "get dmesg",
+                "dmesg": "dmesg"
+                })
+        return self.log
