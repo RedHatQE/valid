@@ -10,11 +10,17 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
 
     def test(self, connection, params):
         if "kernelpkg" in params:
-            kernelfile = params["kernelpkg"]
-            kernelbase = os.path.basename(kernelfile)
-            connection.sftp.put(kernelfile,"/tmp/%s" % kernelbase)
-            self.get_return_value(connection, "ls -l /tmp/%s" % kernelbase)
-            self.get_return_value(connection, "yum -y install /tmp/%s" % kernelbase, 300)
+            kernelfiles = ""
+            if type(params["kernelpkg"]) == str:
+                pkgs_files = [params["kernelpkg"]]
+            else:
+                pkgs_files = params["kernelpkg"]
+            for pkg in pkgs_files:
+                pkgbase = os.path.basename(pkg)
+                connection.sftp.put(pkg,"/tmp/%s" % pkgbase)
+                kernelfiles += "/tmp/%s " % pkgbase
+                self.get_return_value(connection, "ls -l /tmp/%s" % pkgbase)
+            self.get_return_value(connection, "yum -y install %s" % kernelfiles, 300)
         else:
             # doing upgrade from repo
             self.get_return_value(connection, "yum -y install kernel", 300)
