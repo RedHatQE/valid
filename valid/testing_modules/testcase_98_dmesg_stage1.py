@@ -10,7 +10,7 @@ class testcase_98_dmesg_stage1(ValidTestcase):
     stages = ["stage1"]
 
     def test(self, connection, params):
-        self.get_return_value(connection, "dmesg > /tmp/dmesg")
+        self.get_result(connection, "dmesg > /tmp/dmesg; echo")
         tf = tempfile.NamedTemporaryFile(delete=False)
         tf.close()
         connection.sftp.get("/tmp/dmesg",tf.name)

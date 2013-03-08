@@ -17,10 +17,10 @@ class testcase_90_1_kernel_bug874053(ValidTestcase):
             return self.log
         # Will assume EL6 device mapping
         for dev in ['f', 'g', 'h', 'i', 'j', 'k', 'l']:
-            self.get_return_value(connection, "mkfs.ext3 /dev/xvd%s > /dev/null &" % dev)
+            self.get_result(connection, "mkfs.ext3 /dev/xvd%s > /dev/null & echo /dev/xvd%s" % (dev, dev))
         
         # Wait for all mkfs processes    
-        self.get_return_value(connection, "while pidof mkfs.ext3 > /dev/null; do sleep 1; done", 120)
+        self.get_result(connection, "while pidof mkfs.ext3 > /dev/null; do sleep 1; done", 60)
 
         i = 1
         for dev in ['f', 'g', 'h', 'i', 'j', 'k', 'l']:
