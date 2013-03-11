@@ -4,6 +4,7 @@ from valid.valid_testcase import *
 class testcase_12_passwd_group(ValidTestcase):
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*"}
+    tags = ["default"]
 
     def test(self, connection, params):
         self.get_return_value(connection, "grep '^root:x:0:0:root:/root:/bin/bash' /etc/passwd")

@@ -4,6 +4,7 @@ import logging
 
 class testcase_50_yum_package_install(ValidTestcase):
     stages = ["stage1"]
+    tags = ["default"]
 
     def test(self, connection, params):
         self.get_return_value(connection, "yum repolist", 120)

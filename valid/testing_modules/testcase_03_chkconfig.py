@@ -3,6 +3,7 @@ from valid.valid_testcase import *
 
 class testcase_03_chkconfig(ValidTestcase):
     stages = ["stage1"]
+    tags = ["default"]
 
     def test(self, connection, params):
         is_systemd = self.get_result(connection, "rpm -q systemd > /dev/null && echo True || echo False")

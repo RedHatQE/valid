@@ -3,6 +3,7 @@ from valid.valid_testcase import *
 
 class testcase_32_ephemeral(ValidTestcase):
     stages = ["stage1"]
+    tags = ["default"]
 
     def test(self, connection, params):
         prod = params["product"].upper()

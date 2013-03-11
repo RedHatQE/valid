@@ -3,6 +3,7 @@ from valid.valid_testcase import *
 
 class testcase_16_selinux(ValidTestcase):
     stages = ["stage1"]
+    tags = ["default"]
 
     def test(self, connection, params):
         self.ping_pong(connection, "getenforce", "\r\nEnforcing\r\n")

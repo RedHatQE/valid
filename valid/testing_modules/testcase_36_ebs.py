@@ -5,6 +5,7 @@ from valid.valid_testcase import *
 
 class testcase_36_ebs(ValidTestcase):
     stages = ["stage1"]
+    tags = ["default", "kernel"]
 
     def test(self, connection, params):
         prod = params["product"].upper()

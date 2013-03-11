@@ -3,6 +3,7 @@ from valid.valid_testcase import *
 
 class testcase_34_cpu(ValidTestcase):
     stages = ["stage1"]
+    tags = ["default", "kernel"]
 
     def test(self, connection, params):
         if "cpu" in params.keys():

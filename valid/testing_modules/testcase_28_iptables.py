@@ -4,6 +4,7 @@ from valid.valid_testcase import *
 class testcase_28_iptables(ValidTestcase):
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA"}
+    tags = ["default"]
 
     def test(self, connection, params):
         ver = params["version"]

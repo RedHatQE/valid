@@ -4,6 +4,7 @@ import re
 
 class testcase_08_memory(ValidTestcase):
     stages = ["stage1", "stage2"]
+    tags = ["default", "kernel"]
 
     def test(self, connection, params):
         if not "memory" in params.keys():

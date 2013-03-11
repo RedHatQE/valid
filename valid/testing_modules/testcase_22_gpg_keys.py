@@ -4,6 +4,7 @@ from valid.valid_testcase import *
 class testcase_22_gpg_keys(ValidTestcase):
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*"}
+    tags = ["default"]
 
     def test(self, connection, params):
         self.ping_pong(connection, "grep '^gpgcheck=' /etc/yum.repos.d/redhat-*.repo | cut -d\= -f2 | sort -uf | tr -d ' '", "\r\n1\r\n")

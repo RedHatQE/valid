@@ -4,6 +4,7 @@ import json
 
 class testcase_14_host_details(ValidTestcase):
     stages = ["stage1"]
+    tags = ["default"]
 
     def test(self, connection, params):
         prod = params["product"].upper()

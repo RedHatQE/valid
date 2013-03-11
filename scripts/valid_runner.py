@@ -120,7 +120,7 @@ else:
 if args.enable_stages:
     enable_stages = set(args.enable_stages)
 else:
-    enable_stages = set()
+    enable_stages = None
 
 if args.disable_stages:
     disable_stages = set(args.disable_stages)
@@ -166,20 +166,62 @@ except re.error as e:
     print "error compiling hwp-filter: %s: %s" % (args.hwp_filter, e)
     sys.exit(1)
 
-testing_stages = []
-for m in sys.modules.keys():
-    if m.startswith("valid.testing_modules.testcase"):
+logging.debug("Tags enabled: %s" % enable_tags)
+logging.debug("Tags disabled: %s" % disable_tags)
+logging.debug("Stages enabled: %s" % enable_stages)
+logging.debug("Stages disabled: %s" % disable_stages)
+logging.debug("Tests enabled: %s" % enable_tests)
+logging.debug("Tests disabled: %s" % disable_tests)
+
+def test_get_enabled_stages(test_name):
+    logging.debug("Getting enabled stages for %s" % test_name)
+    module_name = "valid.testing_modules." + test_name
+    result = []
+    testcase = getattr(sys.modules[module_name], test_name)()
+    while True:
         try:
-            test_name = m.split('.')[2]
-            testcase = getattr(sys.modules[m], test_name)()
-            if ((enable_tests and test_name in enable_tests) or (not enable_tests and not test_name in disable_tests)):
-                for stage in testcase.stages:
-                    if not (stage in testing_stages) and not (stage in disable_stages):
-                        testing_stages.append(stage)
+            testcase = getattr(sys.modules[module_name], test_name)()
+            if test_name in disable_tests:
+                # Test is disabled, skipping
+                break
+            if enable_tests and not test_name in enable_tests:
+                # Test is not enabled, skipping
+                break
+            tags = set(testcase.tags)
+            if len(tags.intersection(disable_tags)) != 0:
+                # Test disabled as it contains disabled tags
+                break
+            if enable_tags and len(tags.intersection(enable_tags)) == 0:
+                # Test disabled as it doesn't contain enabled tags
+                break
+            for stage in testcase.stages:
+                if stage in result:
+                    # Stage was specified twice
+                    logging.info("Stage %s specified twice for %s\n" % (stage, test_name))
+                    continue
+                if stage in disable_stages:
+                    # Stage is disabled
+                    continue
+                if enable_stages and not stage in enable_stages:
+                    # Stage is not enabled
+                    continue
+                # Everything is fine, appending stage to the result
+                result.append(stage)
         except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), e:
             logging.error("bad test, %s %s" % (m, e))
             logging.debug(traceback.format_exc())
             sys.exit(1)
+        break
+    logging.debug("Testing stages %s discovered for %s" % (result, test_name))
+    return result
+
+testing_stages = set([])
+for m in sys.modules.keys():
+    if m.startswith("valid.testing_modules.testcase"):
+        test_name = m.split('.')[2]
+        testing_stages.update(test_get_enabled_stages(test_name))
+
+testing_stages = list(testing_stages)
 testing_stages.sort()
 
 if testing_stages == []:
@@ -623,7 +665,7 @@ class InstanceThread(threading.Thread):
                     try:
                         test_name = m.split('.')[2]
                         testcase = getattr(sys.modules[m], test_name)()
-                        if (stage in testcase.stages) and ((enable_tests and test_name in enable_tests) or (not enable_tests and not test_name in disable_tests)):
+                        if stage in test_get_enabled_stages(test_name):
                             applicable_flag = True
                             if hasattr(testcase, "not_applicable"):
                                 logging.debug(self.getName() + ": checking not_applicable list for " + test_name)

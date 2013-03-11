@@ -5,6 +5,7 @@ import time
 
 class testcase_99_reboot(ValidTestcase):
     stages = ["stage1"]
+    tags = ["default"]
 
     def test(self, connection, params):
         prod = params["product"].upper()

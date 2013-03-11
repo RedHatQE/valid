@@ -3,6 +3,7 @@ from valid.valid_testcase import *
 
 class testcase_60_yum_update(ValidTestcase):
     stages = ["stage1"]
+    tags = ["default"]
 
     def test(self, connection, params):
         prod = params["product"].upper()

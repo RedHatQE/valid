@@ -6,6 +6,7 @@ yum_timeout = 300
 
 class testcase_61_yum_proxy(ValidTestcase):
     stages = ["stage1"]
+    tags = ["default"]
 
     def test(self, connection, params):
         try:

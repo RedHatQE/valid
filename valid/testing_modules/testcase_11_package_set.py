@@ -5,6 +5,7 @@ from valid.valid_testcase import *
 class testcase_11_package_set(ValidTestcase):
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA|FEDORA"}
+    tags = ["default"]
 
     def test(self, connection, params):
         packages = self.match(connection, "rpm -qa --queryformat '%{NAME},' && echo", re.compile(".*\r\n(.*),\r\n.*", re.DOTALL), timeout=30)

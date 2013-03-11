@@ -4,6 +4,7 @@ from valid.valid_testcase import *
 class testcase_13_resize2fs(ValidTestcase):
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*", "virtualization": "(?!hvm)"}
+    tags = ["default"]
 
     def test(self, connection, params):
         """The instances are always created with a 15GB root device (unlike

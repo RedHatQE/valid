@@ -3,6 +3,7 @@ from valid.valid_testcase import *
 
 class testcase_33_userdata(ValidTestcase):
     stages = ["stage1"]
+    tags = ["default"]
 
     def test(self, connection, params):
         if params["userdata"]:

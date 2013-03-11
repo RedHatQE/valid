@@ -4,6 +4,7 @@ from valid.valid_testcase import *
 class testcase_20_auditd(ValidTestcase):
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*"}
+    tags = ["default"]
 
     def test(self, connection, params):
         if params["version"].startswith("6."):

@@ -4,6 +4,7 @@ from valid.valid_testcase import *
 class testcase_23_syslog(ValidTestcase):
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*"}
+    tags = ["default"]
 
     def test(self, connection, params):
         ver = params["version"]
