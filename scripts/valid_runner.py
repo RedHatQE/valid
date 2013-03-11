@@ -187,13 +187,14 @@ def test_get_enabled_stages(test_name):
             if enable_tests and not test_name in enable_tests:
                 # Test is not enabled, skipping
                 break
-            tags = set(testcase.tags)
-            if len(tags.intersection(disable_tags)) != 0:
-                # Test disabled as it contains disabled tags
-                break
-            if enable_tags and len(tags.intersection(enable_tags)) == 0:
-                # Test disabled as it doesn't contain enabled tags
-                break
+            if not enable_tests:
+                tags = set(testcase.tags)
+                if len(tags.intersection(disable_tags)) != 0:
+                    # Test disabled as it contains disabled tags
+                    break
+                if enable_tags and len(tags.intersection(enable_tags)) == 0:
+                    # Test disabled as it doesn't contain enabled tags
+                    break
             for stage in testcase.stages:
                 if stage in result:
                     # Stage was specified twice
