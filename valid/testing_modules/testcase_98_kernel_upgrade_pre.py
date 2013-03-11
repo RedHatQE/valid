@@ -32,7 +32,7 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
             self.get_return_value(connection, "rpm -e kernel-`uname -r`", 30)
             if prod == "FEDORA" and ver == "18":
                 # we have a bug in kernel upgrade
-                self.get_return_value(connection, "cat /boot/grub/grub.conf | sed 's|hd0,0|hd0|' > /boot/grub/menu.ls")
+                self.get_return_value(connection, "cat /boot/grub/grub.conf | sed 's|hd0,0|hd0|' > /boot/grub/menu.lst")
             try:
                 self.get_return_value(connection, "reboot", nolog=True)
             except (paramiko.SSHException, EOFError), e:
