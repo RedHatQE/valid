@@ -15,17 +15,26 @@ class testcase_90_1_kernel_bug874053(ValidTestcase):
                     "comment": "Inappropriate bmap"
                     })
             return self.log
-        # Will assume EL6 device mapping
-        for dev in ['f', 'g', 'h', 'i', 'j', 'k', 'l']:
-            self.get_result(connection, "mkfs.ext3 /dev/xvd%s > /dev/null & echo /dev/xvd%s" % (dev, dev))
+        if (params["product"].upper() == "RHEL" or params["product"].upper() == "BETA") and params["version"].startswith("6."):
+            # Will assume EL6 device mapping
+            devlist = ["xvdf", "xvdg", "xvdh", "xvdi", "xvdj", "xvdk", "xvdl"]
+        elif (params["product"].upper() == "RHEL" or params["product"].upper() == "BETA") and params["version"].startswith("5."):
+            # Will assume EL5 device mapping
+            devlist = ["sdb", "sdc", "sdd", "sde", "sdf", "sdg", "sdh"]
+        else:
+            # Will assume Fedora device mapping
+            devlist = ["xvdb", "xvdc", "xvdd", "xvde", "xvdf", "xvdg", "xvdh"]
+
+        for dev in devlist:
+            self.get_result(connection, "mkfs.ext3 /dev/%s > /dev/null & echo /dev/%s" % (dev, dev))
         
         # Wait for all mkfs processes    
         self.get_result(connection, "while pidof mkfs.ext3 > /dev/null; do sleep 1; done", 60)
 
         i = 1
-        for dev in ['f', 'g', 'h', 'i', 'j', 'k', 'l']:
+        for dev in devlist:
             self.get_return_value(connection, "mkdir /mnt/%i" % i)
-            self.get_return_value(connection, "mount /dev/xvd%s /mnt/%i" % (dev, i))
+            self.get_return_value(connection, "mount /dev/%s /mnt/%i" % (dev, i))
             i += 1
 
         self.get_return_value(connection, "yum -y install gcc", 240)
