@@ -1,4 +1,5 @@
 import time
+import threading
 import logging
 from valid.valid_testcase import *
 
@@ -21,7 +22,7 @@ class testcase_36_ebs(ValidTestcase):
                     "comment": "Failed to get instance placement"
                     })
             return self.log
-        logging.debug("Volume %s created" % volume.id)
+        logging.debug(threading.currentThread().name + ": Volume %s created" % volume.id)
         time.sleep(5)
         volume.update()
         wait = 0
@@ -36,14 +37,14 @@ class testcase_36_ebs(ValidTestcase):
                 ec2connection.delete_volume(volume.id)
                 return self.log
         if volume.volume_state() == "available":
-            logging.debug("Ready to attach %s: %s %s" % (volume.id, volume.volume_state(), volume.attachment_state()))
+            logging.debug(threading.currentThread().name + ": Ready to attach %s: %s %s" % (volume.id, volume.volume_state(), volume.attachment_state()))
             ec2connection.attach_volume(volume.id, params["instance"]["id"], "/dev/sdk")
             time.sleep(5)
             volume.update()
             wait = 0
             while volume.attachment_state() == "attaching":
                 volume.update()
-                logging.debug("Wait attaching %s: %s %s" % (volume.id, volume.volume_state(), volume.attachment_state()))
+                logging.debug(threading.currentThread().name + ": Wait attaching %s: %s %s" % (volume.id, volume.volume_state(), volume.attachment_state()))
                 time.sleep(1)
                 wait += 1
                 if wait > 300:
@@ -54,7 +55,7 @@ class testcase_36_ebs(ValidTestcase):
                     ec2connection.delete_volume(volume.id)
                     return self.log
             if volume.attachment_state() != "attached":
-                logging.debug("Error attaching volume %s" % volume.id)
+                logging.debug(threading.currentThread().name + ": Error attaching volume %s" % volume.id)
                 self.log.append({
                         "result": "failure",
                         "comment": "Failed to attach EBS volume %s" % volume.id
@@ -77,14 +78,14 @@ class testcase_36_ebs(ValidTestcase):
                 self.get_return_value(connection, "mkfs.vfat -I %s" % name, 60)
             else:
                 self.get_return_value(connection, "mkfs.ext3 %s" % name, 300)
-            logging.debug("Ready to detach %s: %s %s" % (volume.id, volume.volume_state(), volume.attachment_state()))
+            logging.debug(threading.currentThread().name + ": Ready to detach %s: %s %s" % (volume.id, volume.volume_state(), volume.attachment_state()))
             ec2connection.detach_volume(volume.id)
             time.sleep(5)
             volume.update()
             wait = 0
             while volume.attachment_state() == "detaching":
                 volume.update()
-                logging.debug("Wait detaching %s: %s %s" % (volume.id, volume.volume_state(), volume.attachment_state()))
+                logging.debug(threading.currentThread().name + ": Wait detaching %s: %s %s" % (volume.id, volume.volume_state(), volume.attachment_state()))
                 time.sleep(1)
                 wait += 1
                 if wait > 300:
@@ -95,13 +96,13 @@ class testcase_36_ebs(ValidTestcase):
                     ec2connection.delete_volume(volume.id)
                     return self.log
             if volume.volume_state() != "available":
-                logging.debug("Error detaching volume %s" % volume.id)
+                logging.debug(threading.currentThread().name + ": Error detaching volume %s" % volume.id)
                 self.log.append({
                         "result": "failure",
                         "comment": "Failed to attach EBS volume %s" % volume.id
                         })
                 return self.log
-            logging.debug("Ready to delete %s: %s %s" % (volume.id, volume.volume_state(), volume.attachment_state()))
+            logging.debug(threading.currentThread().name + ": Ready to delete %s: %s %s" % (volume.id, volume.volume_state(), volume.attachment_state()))
             if not ec2connection.delete_volume(volume.id):
                 self.log.append({
                         "result": "failure",
