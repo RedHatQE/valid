@@ -46,6 +46,14 @@ class testcase_90_1_kernel_bug874053(ValidTestcase):
             self.get_result(connection, "for i in `seq 1 7`; do taskset -c $i dd if=/dev/zero of=/mnt/$i/testfile bs=10M count=10000 oflag=direct & echo $i ; done")
             time.sleep(10)
             self.get_return_value(connection, "id")
+            self.get_return_value(connection, "killall dd ||:")
+            self.get_return_value(connection, "killall a.out ||:")
+            for i in range(1,8):
+                self.get_return_value(connection, "rm -f /mnt/%i/testfile" % i, 30)
+                self.get_return_value(connection, "cp -a /bin/bash /mnt/%i/" % i)
+                self.get_return_value(connection, "[ \"`md5sum /bin/bash`\" = \"`md5sum /mnt/%i/bash`\" ]" % i)
+                self.get_return_value(connection, "rm -f /mnt/%i/bash" % i)
+                self.get_return_value(connection, "umount /mnt/%i" % i)
         except:
             self.log.append({"result": "failed", "command": "bug reproducer succeeded"})
         return self.log
