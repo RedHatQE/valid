@@ -30,7 +30,7 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
         if kernel_updated == 0:
             if prod == "FEDORA" and ver == "18":
                 # we have a bug in kernel upgrade
-                self.get_return_value(connection, "cat /boot/grub/grub.conf | sed -e 's|hd0,0|hd0|' -e 's|default=1|default=0|' > /boot/grub/menu.lst")
+                self.get_result(connection, "cat /boot/grub/grub.conf | sed -e 's|hd0,0|hd0|' -e 's|default=1|default=0|' > /boot/grub/menu.lst && echo SUCCESS")
             else:
                 # removing old kernel - no way to boot it on EC2 anyway :-)
                 self.get_return_value(connection, "rpm -e kernel-`uname -r`", 30)
