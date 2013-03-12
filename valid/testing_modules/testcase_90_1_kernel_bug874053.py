@@ -51,7 +51,8 @@ class testcase_90_1_kernel_bug874053(ValidTestcase):
             for i in range(1,8):
                 self.get_return_value(connection, "rm -f /mnt/%i/testfile" % i, 30)
                 self.get_return_value(connection, "cp -a /bin/bash /mnt/%i/" % i)
-                self.get_return_value(connection, "[ \"`md5sum /bin/bash`\" = \"`md5sum /mnt/%i/bash`\" ]" % i)
+                self.get_result(connection, "md5sum /bin/bash")
+                self.get_result(connection, "md5sum /mnt/%i/bash" % i)
                 self.get_return_value(connection, "rm -f /mnt/%i/bash" % i)
                 self.get_return_value(connection, "umount /mnt/%i" % i)
         except:
