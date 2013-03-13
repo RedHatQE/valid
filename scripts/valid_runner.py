@@ -229,7 +229,7 @@ def get_test_stages(params):
                         # Everything is fine, appending stage to the result
                         result.append(stage + ":" + test_name)
                 except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), e:
-                    logging.error("bad test, %s %s" % (m, e))
+                    logging.error("bad test, %s %s" % (module_name, e))
                     logging.debug(traceback.format_exc())
                     sys.exit(1)
                 break
@@ -689,7 +689,7 @@ class InstanceThread(threading.Thread):
                 logging.debug(self.getName() + ": " + params["iname"] + ": test " + test_name + " finised with " + str(test_result))
                 result = test_result
             except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), e:
-                logging.error(self.getName() + ": bad test, %s %s" % (m, e))
+                logging.error(self.getName() + ": bad test, %s %s" % (stage, e))
                 logging.debug(self.getName() + ":" + traceback.format_exc())
                 result[test_name] = "Failure"
 

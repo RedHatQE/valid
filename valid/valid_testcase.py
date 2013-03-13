@@ -56,5 +56,5 @@ class ValidTestcase(object):
                 self.log.append({"result": "passed", "command": command})
             else:
                 self.log.append({"result": "failed", "command": command, "actual": str(status)})
-        logging.debug(threading.currentThread().name + ": got '%i' status" % status)
+        logging.debug(threading.currentThread().name + ": got '%s' status" % status)
         return status
