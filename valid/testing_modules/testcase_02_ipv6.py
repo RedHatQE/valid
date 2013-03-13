@@ -1,7 +1,7 @@
 from valid.valid_testcase import *
 
 
-class testcase_01_ipv6(ValidTestcase):
+class testcase_02_ipv6(ValidTestcase):
     stages = ["stage1"]
     tags = ["default"]
 
