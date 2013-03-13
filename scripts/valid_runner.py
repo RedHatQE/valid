@@ -173,63 +173,69 @@ logging.debug("Stages disabled: %s" % disable_stages)
 logging.debug("Tests enabled: %s" % enable_tests)
 logging.debug("Tests disabled: %s" % disable_tests)
 
-def test_get_enabled_stages(test_name):
-    logging.debug("Getting enabled stages for %s" % test_name)
-    module_name = "valid.testing_modules." + test_name
+def get_test_stages(params):
+    logging.debug("Getting enabled stages for %s" % params["iname"])
     result = []
-    testcase = getattr(sys.modules[module_name], test_name)()
-    while True:
-        try:
-            testcase = getattr(sys.modules[module_name], test_name)()
-            if test_name in disable_tests:
-                # Test is disabled, skipping
+    for module_name in sys.modules.keys():
+        if module_name.startswith("valid.testing_modules.testcase"):
+            test_name = module_name.split('.')[2]
+            while True:
+                try:
+                    testcase = getattr(sys.modules[module_name], test_name)()
+                    if test_name in params["disable_tests"]:
+                        # Test is disabled, skipping
+                        break
+                    if params["enable_tests"] and not test_name in params["enable_tests"]:
+                        # Test is not enabled, skipping
+                        break
+                    if not params["enable_tests"]:
+                        tags = set(testcase.tags)
+                        if len(tags.intersection(params["disable_tags"])) != 0:
+                            # Test disabled as it contains disabled tags
+                            break
+                        if params["enable_tags"] and len(tags.intersection(params["enable_tags"])) == 0:
+                            # Test disabled as it doesn't contain enabled tags
+                            break
+                    applicable_flag = True
+                    if hasattr(testcase, "not_applicable"):
+                        logging.debug("Checking not_applicable list for " + test_name)
+                        not_applicable = testcase.not_applicable
+                        for key in not_applicable.keys():
+                            logging.debug("not_applicable key %s %s ... " % (key, not_applicable[key]))
+                            r = re.compile(not_applicable[key])
+                            if r.match(params[key]):
+                                logging.debug("got not_applicable for " + test_name + " %s = %s" % (key, params[key]))
+                                applicable_flag = False
+                                break
+                    if hasattr(testcase, "applicable"):
+                        logging.debug("Checking applicable list for " + test_name)
+                        applicable = testcase.applicable
+                        for key in applicable.keys():
+                            logging.debug("applicable key %s %s ... " % (key, applicable[key]))
+                            r = re.compile(applicable[key])
+                            if not r.match(params[key]):
+                                logging.debug("Got 'not applicable' for " + test_name + " %s = %s" % (key, params[key]))
+                                applicable_flag = False
+                                break
+                    if not applicable_flag:
+                        break
+                    for stage in testcase.stages:
+                        if stage in params["disable_stages"]:
+                            # Stage is disabled
+                            continue
+                        if params["enable_stages"] and not stage in params["enable_stages"]:
+                            # Stage is not enabled
+                            continue
+                        # Everything is fine, appending stage to the result
+                        result.append(stage + ":" + test_name)
+                except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), e:
+                    logging.error("bad test, %s %s" % (m, e))
+                    logging.debug(traceback.format_exc())
+                    sys.exit(1)
                 break
-            if enable_tests and not test_name in enable_tests:
-                # Test is not enabled, skipping
-                break
-            if not enable_tests:
-                tags = set(testcase.tags)
-                if len(tags.intersection(disable_tags)) != 0:
-                    # Test disabled as it contains disabled tags
-                    break
-                if enable_tags and len(tags.intersection(enable_tags)) == 0:
-                    # Test disabled as it doesn't contain enabled tags
-                    break
-            for stage in testcase.stages:
-                if stage in result:
-                    # Stage was specified twice
-                    logging.info("Stage %s specified twice for %s\n" % (stage, test_name))
-                    continue
-                if stage in disable_stages:
-                    # Stage is disabled
-                    continue
-                if enable_stages and not stage in enable_stages:
-                    # Stage is not enabled
-                    continue
-                # Everything is fine, appending stage to the result
-                result.append(stage)
-        except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), e:
-            logging.error("bad test, %s %s" % (m, e))
-            logging.debug(traceback.format_exc())
-            sys.exit(1)
-        break
-    logging.debug("Testing stages %s discovered for %s" % (result, test_name))
+    result.sort()
+    logging.debug("Testing stages %s discovered for %s" % (result, params["iname"]))
     return result
-
-testing_stages = set([])
-for m in sys.modules.keys():
-    if m.startswith("valid.testing_modules.testcase"):
-        test_name = m.split('.')[2]
-        testing_stages.update(test_get_enabled_stages(test_name))
-
-testing_stages = list(testing_stages)
-testing_stages.sort()
-
-if testing_stages == []:
-    logging.error("no tests to run, exiting")
-    sys.exit(1)
-
-logging.info("Testing stages %s discovered" % str(testing_stages))
 
 mailfrom = "root@localhost"
 if httpserver:
@@ -289,7 +295,7 @@ def add_data(data, emails=None):
                                 str(hwp[0]['ec2name'])
                             )
                         )
-                        resultdic[transaction_id][params["ami"]] = {"ninstances": len(hwp) * len(testing_stages), "instances": []}
+                        ninstances = 0
                         if emails:
                             resultdic[transaction_id][params["ami"]]["emails"] = emails
                         for hwp_item in hwp:
@@ -299,12 +305,28 @@ def add_data(data, emails=None):
                                 params_copy["bmap"] = [{"name": "/dev/sda1", "size": "15", "delete_on_termination": True}]
                             if not "userdata" in params_copy.keys():
                                 params_copy["userdata"] = None
+
+                            if not "enable_stages" in params_copy.keys():
+                                params_copy["enable_stages"] = enable_stages
+                            if not "disable_stages" in params_copy.keys():
+                                params_copy["disable_stages"] = disable_stages
+                            if not "enable_tags" in params_copy.keys():
+                                params_copy["enable_tags"] = enable_tags
+                            if not "disable_tags" in params_copy.keys():
+                                params_copy["disable_tags"] = disable_tags
+                            if not "enable_tests" in params_copy.keys():
+                                params_copy["enable_tests"] = enable_tests
+                            if not "disable_tests" in params_copy.keys():
+                                params_copy["disable_tests"] = disable_tests
+
                             params_copy["transaction_id"] = transaction_id
                             params_copy["iname"] = "Instance" + str(count) + "_" + transaction_id
-                            params_copy["stages"] = testing_stages
+                            params_copy["stages"] = get_test_stages(params_copy)
+                            ninstances += len(params_copy["stages"])
                             logging.info("Adding " + params_copy["iname"] + ": " + hwp_item["ec2name"] + " instance for " + params_copy["ami"] + " testing in " + params_copy["region"])
                             mainq.put((0, "create", params_copy))
                             count += 1
+                        resultdic[transaction_id][params["ami"]] = {"ninstances": ninstances, "instances": []}
                         hwp_found = True
                         break
                     except:
@@ -630,7 +652,7 @@ class InstanceThread(threading.Thread):
                 con.sftp.chmod(remote_script_path, 0700)
                 remote_command(con, remote_script_path)
             os.unlink(tf.name)
-
+            con.disconnect()
             mainq.put((0, "test", params.copy()))
         except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
             logging.debug(self.getName() + ": got 'predictable' error during instance setup, %s, ntry: %i" % (e, ntry))
@@ -651,8 +673,6 @@ class InstanceThread(threading.Thread):
             stage = params["stages"][0]
             logging.debug(self.getName() + ": trying to do testing for " + params["iname"] + " " + stage + ", ntry " + str(ntry))
 
-            result = {}
-
             (ssh_key_name, ssh_key) = yamlconfig["ssh"][params["region"]]
             logging.debug(self.getName() + ": ssh-key " + ssh_key)
 
@@ -661,47 +681,17 @@ class InstanceThread(threading.Thread):
 
             logging.info(self.getName() + ": doing testing for " + params["iname"] + " " + stage)
 
-            for m in sorted(sys.modules.keys()):
-                if m.startswith("valid.testing_modules.testcase"):
-                    try:
-                        test_name = m.split('.')[2]
-                        testcase = getattr(sys.modules[m], test_name)()
-                        if stage in test_get_enabled_stages(test_name):
-                            applicable_flag = True
-                            if hasattr(testcase, "not_applicable"):
-                                logging.debug(self.getName() + ": checking not_applicable list for " + test_name)
-                                not_applicable = testcase.not_applicable
-                                for key in not_applicable.keys():
-                                    logging.debug(self.getName() + ": not_applicable key %s %s ... " % (key, not_applicable[key]))
-                                    r = re.compile(not_applicable[key])
-                                    if r.match(params[key]):
-                                        logging.debug(self.getName() + ": got not_applicable for " + test_name + " %s = %s" % (key, params[key]))
-                                        result[test_name] = {"result": "skipped", "comment": "not applicable for %s = %s" % (key, params[key])}
-                                        applicable_flag = False
-                                        break
-                            if hasattr(testcase, "applicable"):
-                                logging.debug(self.getName() + ": checking applicable list for " + test_name)
-                                applicable = testcase.applicable
-                                for key in applicable.keys():
-                                    logging.debug(self.getName() + ": applicable key %s %s ... " % (key, applicable[key]))
-                                    r = re.compile(applicable[key])
-                                    if not r.match(params[key]):
-                                        logging.debug(self.getName() + ": got 'not applicable' for " + test_name + " %s = %s" % (key, params[key]))
-                                        result[test_name] = {"result": "skipped", "comment": "not applicable for %s = %s" % (key, params[key])}
-                                        applicable_flag = False
-                                        break
-                            if not applicable_flag:
-                                continue
-                            logging.debug(self.getName() + ": doing test " + test_name + " for " + params["iname"] + " " + stage)
-                            test_result = testcase.test(con, params)
-                            logging.debug(self.getName() + ": " + params["iname"] + ": test " + test_name + " finised with " + str(test_result))
-                            result[test_name] = test_result
-                        else:
-                            logging.debug(self.getName() + ": skipping test " + test_name + " for " + params["iname"] + " " + stage)
-                    except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), e:
-                        logging.error(self.getName() + ": bad test, %s %s" % (m, e))
-                        logging.debug(self.getName() + ":" + traceback.format_exc())
-                        result[test_name] = "Failure"
+            try:
+                test_name = stage.split(':')[1]
+                testcase = getattr(sys.modules["valid.testing_modules." + test_name], test_name)()
+                logging.debug(self.getName() + ": doing test " + test_name + " for " + params["iname"] + " " + stage)
+                test_result = testcase.test(con, params)
+                logging.debug(self.getName() + ": " + params["iname"] + ": test " + test_name + " finised with " + str(test_result))
+                result = test_result
+            except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), e:
+                logging.error(self.getName() + ": bad test, %s %s" % (m, e))
+                logging.debug(self.getName() + ":" + traceback.format_exc())
+                result[test_name] = "Failure"
 
             logging.info(self.getName() + ": done testing for " + params["iname"] + " " + stage)
 
@@ -713,6 +703,7 @@ class InstanceThread(threading.Thread):
                 mainq.put((0, "terminate", params_new))
             logging.debug(self.getName() + ": done testing for " + params["iname"] + ", result: " + str(result))
             params["result"] = {params["stages"][0]: result}
+            con.disconnect()
             self.report_results(params)
         except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
             # Looks like we've failed to connect to the instance
