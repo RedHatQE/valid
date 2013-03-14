@@ -59,8 +59,12 @@ argparser.add_argument('--maxtries', type=int,
                        default=30, help='maximum number of tries')
 argparser.add_argument('--maxwait', type=int,
                        default=900, help='maximum wait time for instance creation')
-argparser.add_argument('--numthreads', type=int,
-                       default=10, help='number of worker threads')
+
+argparser.add_argument('--minthreads', type=int,
+                       default=10, help='minimum number of worker threads')
+argparser.add_argument('--maxthreads', type=int,
+                       default=100, help='maximum number of worker threads')
+
 argparser.add_argument('--results-dir',
                        default=False, help='put resulting yaml files to specified location')
 argparser.add_argument('--server', action='store_const', const=True,
@@ -74,7 +78,10 @@ args = argparser.parse_args()
 maxtries = args.maxtries
 maxwait = args.maxwait
 settlewait = args.settlewait
-num_worker_threads = args.numthreads
+
+minthreads = args.minthreads
+maxthreads = args.maxthreads
+
 httpserver = args.server
 
 confd = open(args.config, 'r')
@@ -467,14 +474,31 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 s.wfile.write(e.message)
 
 
-class ReportingThread(threading.Thread):
+class WatchmanThread(threading.Thread):
     def run(self):
         while True:
+            with numthreads_lock:
+                logging.debug("WatchmanThread: heartbeat numthreads: %i" % numthreads)
             time.sleep(random.randint(2, 10))
             self.report_results()
+            self.add_worker_threads()
             with resultdic_lock:
                 if resultdic == {} and not httpserver:
                     break
+
+    def add_worker_threads(self):
+        ''' Create additional worker threads when something has to be done '''
+        global numthreads
+        global numthreads_lock
+        with numthreads_lock:
+            threads_to_create = min(maxthreads - numthreads, mainq.qsize())
+        if threads_to_create > 0:
+            logging.debug("WatchmanThread: shoulkd create %i additional worker threads" % threads_to_create)
+            for i in range(threads_to_create):
+                wthread = WorkerThread()
+                with numthreads_lock:
+                    numthreads += 1
+                wthread.start()
 
     def report_results(self):
         ''' Looking if we can report some transactions '''
@@ -487,7 +511,7 @@ class ReportingThread(threading.Thread):
                     ''' Checking all amis: they should be finished '''
                     if resultdic[transaction_id][ami]["ninstances"] != len(resultdic[transaction_id][ami]["instances"]):
                         ''' Still have some jobs running ...'''
-                        logging.debug("ReportThread: " + transaction_id + ": " + ami + ":  waiting for " + str(resultdic[transaction_id][ami]["ninstances"]) + " results, got " + str(len(resultdic[transaction_id][ami]["instances"])))
+                        logging.debug("WatchmanThread: " + transaction_id + ": " + ami + ":  waiting for " + str(resultdic[transaction_id][ami]["ninstances"]) + " results, got " + str(len(resultdic[transaction_id][ami]["instances"])))
                         report_ready = False
                 if report_ready:
                     resfile = resdir + "/" + transaction_id + ".yaml"
@@ -535,21 +559,34 @@ class ReportingThread(threading.Thread):
                                 s.sendmail(mailfrom, emails.split(","), msg.as_string())
                                 s.quit()
                     except Exception, e:
-                        logging.error("ReportThread: saving result failed, %s" % e)
+                        logging.error("WatchmanThread: saving result failed, %s" % e)
                     logging.info("Transaction " + transaction_id + " finished. Result: " + resfile)
                     resultdic.pop(transaction_id)
 
 
-class InstanceThread(threading.Thread):
+class WorkerThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
 
     def run(self):
+        global numthreads
+        global numthreads_lock
         while True:
+            with numthreads_lock:
+                logging.debug(self.getName() + ": heartbeat numthreads: %i" % numthreads)
             with resultdic_lock:
                 if resultdic == {} and not httpserver:
+                    with numthreads_lock:
+                        logging.debug(self.getName() + ": not in server mode and nothing to do, suiciding")
+                        numthreads -= 1
+                        break
                     break
             if mainq.empty():
+                with numthreads_lock:
+                    if numthreads > minthreads:
+                        logging.debug(self.getName() + ": too many worker threads and nothing to do, suiciding")
+                        numthreads -= 1
+                        break
                 time.sleep(random.randint(2, 10))
                 continue
             try:
@@ -688,7 +725,7 @@ class InstanceThread(threading.Thread):
                 test_result = testcase.test(con, params)
                 logging.debug(self.getName() + ": " + params["iname"] + ": test " + test_name + " finised with " + str(test_result))
                 result = test_result
-            except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), e:
+            except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError, boto.exception.EC2ResponseError), e:
                 logging.error(self.getName() + ": bad test, %s %s" % (stage, e))
                 logging.debug(self.getName() + ":" + traceback.format_exc())
                 result[test_name] = "Failure"
@@ -850,6 +887,10 @@ resultdic_lock = threading.Lock()
 resultdic_yaml = {}
 resultdic_yaml_lock = threading.Lock()
 
+# number of running threads
+numthreads = 0
+numthreads_lock = threading.Lock()
+
 if args.data:
     try:
         datafd = open(args.data, "r")
@@ -863,12 +904,14 @@ elif not httpserver:
     logging.error("You need to set --data or --server option!")
     sys.exit(1)
 
-for i in range(num_worker_threads):
-    i = InstanceThread()
-    i.start()
+for i in range(minthreads):
+    wthread = WorkerThread()
+    with numthreads_lock:
+        numthreads += 1
+    wthread.start()
 
-r = ReportingThread()
-r.start()
+w = WatchmanThread()
+w.start()
 
 if httpserver:
     s = ServerThread()
