@@ -303,8 +303,6 @@ def add_data(data, emails=None):
                             )
                         )
                         ninstances = 0
-                        if emails:
-                            resultdic[transaction_id][params["ami"]]["emails"] = emails
                         for hwp_item in hwp:
                             params_copy = params.copy()
                             params_copy.update(hwp_item)
@@ -334,6 +332,8 @@ def add_data(data, emails=None):
                             mainq.put((0, "create", params_copy))
                             count += 1
                         resultdic[transaction_id][params["ami"]] = {"ninstances": ninstances, "instances": []}
+                        if emails:
+                            resultdic[transaction_id][params["ami"]]["emails"] = emails
                         hwp_found = True
                         break
                     except:
