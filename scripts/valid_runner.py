@@ -311,18 +311,21 @@ def add_data(data, emails=None):
                             if not "userdata" in params_copy.keys():
                                 params_copy["userdata"] = None
 
-                            if not "enable_stages" in params_copy.keys():
+                            if not "enable_stages" in params_copy:
                                 params_copy["enable_stages"] = enable_stages
-                            if not "disable_stages" in params_copy.keys():
+                            if not "disable_stages" in params_copy:
                                 params_copy["disable_stages"] = disable_stages
-                            if not "enable_tags" in params_copy.keys():
+                            if not "enable_tags" in params_copy:
                                 params_copy["enable_tags"] = enable_tags
-                            if not "disable_tags" in params_copy.keys():
+                            if not "disable_tags" in params_copy:
                                 params_copy["disable_tags"] = disable_tags
-                            if not "enable_tests" in params_copy.keys():
+                            if not "enable_tests" in params_copy:
                                 params_copy["enable_tests"] = enable_tests
-                            if not "disable_tests" in params_copy.keys():
+                            if not "disable_tests" in params_copy:
                                 params_copy["disable_tests"] = disable_tests
+
+                            if not "name" in params_copy:
+                                params_copy["name"] = params_copy["ami"] + " validation"
 
                             params_copy["transaction_id"] = transaction_id
                             params_copy["iname"] = "Instance" + str(count) + "_" + transaction_id
@@ -805,7 +808,7 @@ class WorkerThread(threading.Thread):
             instance_state = myinstance.update()
             if instance_state == 'running':
                 # Instance appeared - scheduling 'setup' stage
-                myinstance.add_tag("Name", params["ami"] + " validation")
+                myinstance.add_tag("Name", params["name"])
                 result = myinstance.__dict__
                 logging.info(self.getName() + ": created instance " + params["iname"] + ", " + result["id"] + ":" + result["public_dns_name"])
                 # packing creation results into params
