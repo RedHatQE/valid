@@ -331,12 +331,16 @@ def add_data(data, emails=None):
                             params_copy["iname"] = "Instance" + str(count) + "_" + transaction_id
                             params_copy["stages"] = get_test_stages(params_copy)
                             ninstances += len(params_copy["stages"])
-                            logging.info("Adding " + params_copy["iname"] + ": " + hwp_item["ec2name"] + " instance for " + params_copy["ami"] + " testing in " + params_copy["region"])
-                            mainq.put((0, "create", params_copy))
-                            count += 1
-                        resultdic[transaction_id][params["ami"]] = {"ninstances": ninstances, "instances": []}
-                        if emails:
-                            resultdic[transaction_id][params["ami"]]["emails"] = emails
+                            if params_copy["stages"] != []:
+                                logging.info("Adding " + params_copy["iname"] + ": " + hwp_item["ec2name"] + " instance for " + params_copy["ami"] + " testing in " + params_copy["region"])
+                                mainq.put((0, "create", params_copy))
+                                count += 1
+                            else:
+                                logging.info("No tests for " + params_copy["iname"] + ": " + hwp_item["ec2name"] + " instance for " + params_copy["ami"] + " testing in " + params_copy["region"])
+                        if ninstances > 0:
+                            resultdic[transaction_id][params["ami"]] = {"ninstances": ninstances, "instances": []}
+                            if emails:
+                                resultdic[transaction_id][params["ami"]]["emails"] = emails
                         hwp_found = True
                         break
                     except:
@@ -350,6 +354,7 @@ def add_data(data, emails=None):
             logging.info("Validation transaction " + transaction_id + " added")
             return transaction_id
         else:
+            resultdic.pop(transaction_id)
             logging.info("No data added")
             return None
 
