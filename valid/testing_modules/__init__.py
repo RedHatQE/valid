@@ -39,6 +39,7 @@ import testcase_55_yum_group_install
 import testcase_60_yum_update
 import testcase_61_yum_proxy
 import testcase_90_1_kernel_bug874053
+import testcase_90_2_cgroups_kernel_bug914737
 import testcase_98_dmesg_stage1
 import testcase_98_kernel_upgrade_pre
 import testcase_99_reboot
