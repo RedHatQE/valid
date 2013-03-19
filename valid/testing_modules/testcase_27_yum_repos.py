@@ -9,17 +9,17 @@ class testcase_27_yum_repos(ValidTestcase):
     """
     Check for enabled yum repos
     """
-    stages = ["stage1"]
-    applicable = {"product": "(?i)RHEL|BETA"}
-    tags = ["default"]
+    stages = ['stage1']
+    applicable = {'product': '(?i)RHEL|BETA'}
+    tags = ['default']
 
     def test(self, connection, params):
-        prod = params["product"].upper()
-        ver = params["version"]
+        prod = params['product'].upper()
+        ver = params['version']
         # get repo details file
         self.get_return_value(
             connection,
-            '''yum repolist -v all | csplit --prefix=repolist_xx - "%Repo-id\s*:%"''',
+            'yum repolist -v all | csplit --prefix=repolist_xx - \'%Repo-id\s*:%\'',
             40
         )
         # translate the details into an ini-like structure
@@ -29,8 +29,8 @@ class testcase_27_yum_repos(ValidTestcase):
             repos_fp.close()
         except IOError, e:
             self.log.append({
-                "result": "failure",
-                "comment": "failed to get actual repo list %s" % e
+                'result': 'failure',
+                'comment': 'failed to get actual repo list %s' % e
                 })
             return self.log
 
@@ -60,8 +60,8 @@ class testcase_27_yum_repos(ValidTestcase):
             expected_repos_ = all_repos[params['region']]['%s_%s' % (prod, ver)]
         except KeyError as e:
             self.log.append({
-                "result": "skip",
-                "comment": "unsupported region and/or product-version combination"
+                'result': 'skip',
+                'comment': 'unsupported region and/or product-version combination'
                 })
             return self.log
         # expand %region%
@@ -69,8 +69,8 @@ class testcase_27_yum_repos(ValidTestcase):
         for k, v in expected_repos_.items():
             expected_repos[k.replace('%region%', params['region'])] = v
         ret = {
-            "expected repos": expected_repos,
-            "actual repos": repos
+            'expected repos': expected_repos,
+            'actual repos': repos
         }
         ret['result'] = expected_repos == repos and 'passed' or 'failed'
         self.log.append(ret)

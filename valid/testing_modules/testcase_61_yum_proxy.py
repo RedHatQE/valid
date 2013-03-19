@@ -9,13 +9,13 @@ class testcase_61_yum_proxy(ValidTestcase):
     """
     Try to use yum with proxy
     """
-    stages = ["stage1"]
-    tags = ["default"]
+    stages = ['stage1']
+    tags = ['default']
 
     def test(self, connection, params):
         try:
-            proxy = params["proxy"]
-            if params["version"].startswith('5'):
+            proxy = params['proxy']
+            if params['version'].startswith('5'):
                 yum_test_command = 'yum --disableplugin=fastestmirror repolist'
             else:
                 yum_test_command = 'yum repolist'
@@ -26,10 +26,10 @@ class testcase_61_yum_proxy(ValidTestcase):
         # the repo id is: rhui-<region>-client-config-server-<major version nr>
         self.get_return_value(
             connection,
-            "yum --disablerepo=* --enablerepo=" +
-            "rhui-%s-client-config-server-%s" % (params['region'],
+            'yum --disablerepo=* --enablerepo=' +
+            'rhui-%s-client-config-server-%s' % (params['region'],
                 params['version'].split('.')[0]) +
-            " --nogpgcheck update -y",
+            ' --nogpgcheck update -y',
             timeout=yum_timeout
         )
 
@@ -42,7 +42,7 @@ class testcase_61_yum_proxy(ValidTestcase):
             # disable the cdses in firewall
             self.get_return_value(
                 connection,
-                "iptables -I OUTPUT -d %s -j DROP" % cds
+                'iptables -I OUTPUT -d %s -j DROP' % cds
             )
         # read the yum.conf
         # and provide the proxy setup
@@ -52,8 +52,8 @@ class testcase_61_yum_proxy(ValidTestcase):
             yum_conf_fp.close()
         except IOError, e:
             self.log.append({
-                "result": "failure",
-                "comment": "failed to get actual repo list %s" % e
+                'result': 'failure',
+                'comment': 'failed to get actual repo list %s' % e
                 })
             return self.log
         # read as INI
@@ -65,16 +65,16 @@ class testcase_61_yum_proxy(ValidTestcase):
             yum_conf.readfp(yum_conf_fp)
         except Exception as e:
             self.log.append({
-                "result": "failure",
-                "comment": "failed parsing yum.conf: %s" % e
+                'result': 'failure',
+                'comment': 'failed parsing yum.conf: %s' % e
             })
             return self.log
         # provide the proxy config details
         if 'port' in proxy:
-            yum_conf.set('main', 'proxy', "https://" + proxy['host'] +
-                         ":" + str(proxy['port']))
+            yum_conf.set('main', 'proxy', 'https://' + proxy['host'] +
+                         ':' + str(proxy['port']))
         else:
-            yum_conf.set('main', 'proxy', "https://" + proxy['host'])
+            yum_conf.set('main', 'proxy', 'https://' + proxy['host'])
         if 'user' in proxy:
             yum_conf.set('main', 'proxy_username', proxy['user'])
         if 'password' in proxy:
@@ -86,14 +86,14 @@ class testcase_61_yum_proxy(ValidTestcase):
             yum_conf_fp.close()
         except Error as e:
             self.log.append({
-                "result": "failure",
-                "comment": "couldn't write '/etc/yum.conf': %s" % e
+                'result': 'failure',
+                'comment': 'couldn\'t write \'/etc/yum.conf\': %s' % e
             })
             return self.log
         # test all works
         self.get_result(
             connection,
-            "yum clean all; " + yum_test_command,
+            'yum clean all; ' + yum_test_command,
             timeout=yum_timeout
         )
         # restore original yum conf
@@ -103,29 +103,29 @@ class testcase_61_yum_proxy(ValidTestcase):
             yum_conf_fp.close()
         except Error as e:
             self.log.append({
-                "result": "failure",
-                "comment": "couldn't write '/etc/yum.conf': %s" % e
+                'result': 'failure',
+                'comment': 'couldn\'t write \'/etc/yum.conf\': %s' % e
             })
             return self.log
         # try the same with an env variable
         if 'port' in proxy:
-            https_proxy = proxy['host'] + ":" + str(proxy['port'])
+            https_proxy = proxy['host'] + ':' + str(proxy['port'])
         if 'user' in proxy and 'password' in proxy:
-            https_proxy = "https://" + proxy['user'] + ":" + proxy['password'] +\
-                "@" + https_proxy
+            https_proxy = 'https://' + proxy['user'] + ':' + proxy['password'] +\
+                '@' + https_proxy
         else:
-            https_proxy = "https://" + https_proxy
+            https_proxy = 'https://' + https_proxy
         # check all works
         self.get_result(
             connection,
-            "yum clean all; " +
-            "https_proxy='" + https_proxy + "' " +
+            'yum clean all; ' +
+            'https_proxy='' + https_proxy + '' ' +
             yum_test_command,
             timeout=yum_timeout
         )
         # restore firewall
         self.get_return_value(
             connection,
-            "service iptables restart"
+            'service iptables restart'
         )
         return self.log

@@ -6,14 +6,14 @@ class testcase_08_memory(ValidTestcase):
     """
     Check for available amount of memory
     """
-    stages = ["stage1", "stage2"]
-    tags = ["default", "kernel"]
+    stages = ['stage1', 'stage2']
+    tags = ['default', 'kernel']
 
     def test(self, connection, params):
-        if not "memory" in params.keys():
-            self.log.append({"result": "skip", "comment": "memory parameter is not set, nothing to check"})
+        if not 'memory' in params.keys():
+            self.log.append({'result': 'skip', 'comment': 'memory parameter is not set, nothing to check'})
         else:
-            values = self.match(connection, "grep --color=none 'MemTotal:' /proc/meminfo", re.compile(".*\r\nMemTotal:\s*([0-9]+) ", re.DOTALL))
+            values = self.match(connection, 'grep --color=none \'MemTotal:\' /proc/meminfo', re.compile('.*\r\nMemTotal:\s*([0-9]+) ', re.DOTALL))
             if values:
-                self.get_return_value(connection, "[ %s -gt %s ]" % (values[0], params["memory"]))
+                self.get_return_value(connection, '[ %s -gt %s ]' % (values[0], params['memory']))
         return self.log

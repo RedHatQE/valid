@@ -5,23 +5,23 @@ class testcase_31_subscription_management(ValidTestcase):
     """
     Subscription manager shoud be disabled
     """
-    stages = ["stage1"]
-    applicable = {"product": "(?i)RHEL|BETA", "version": "(?!^5\.[12345678]$|^6\.[123]$)"}
-    tags = ["default"]
+    stages = ['stage1']
+    applicable = {'product': '(?i)RHEL|BETA', 'version': '(?!^5\.[12345678]$|^6\.[123]$)'}
+    tags = ['default']
 
     def test(self, connection, params):
         # check subscription-manager plugin is disabled
         self.ping_pong(
             connection,
-            'yum --disablerepo="*" -v repolist',
-            expectation='Not loading "subscription-manager" plugin',
+            'yum --disablerepo=\'*\' -v repolist',
+            expectation='Not loading \'subscription-manager\' plugin',
             timeout=30
         )
         # check subscription-manager plugin can be enabled
         self.ping_pong(
             connection,
-            'yum --enableplugin=subscription-manager --disablerepo="*" -v repolist',
-            expectation='Loading "subscription-manager" plugin',
+            'yum --enableplugin=subscription-manager --disablerepo=\'*\' -v repolist',
+            expectation='Loading \'subscription-manager\' plugin',
             timeout=30
         )
         # check system isn't subscribbed
