@@ -5,6 +5,14 @@ from valid.valid_testcase import *
 
 
 class testcase_36_ebs(ValidTestcase):
+    """
+    Perform EBS test:
+    - Create the volume
+    - Attach the volume
+    - Try to use the volume
+    - Detach the volume
+    - Remove volume
+    """
     stages = ["stage1"]
     tags = ["default", "kernel"]
 

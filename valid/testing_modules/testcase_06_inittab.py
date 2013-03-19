@@ -2,6 +2,9 @@ from valid.valid_testcase import *
 
 
 class testcase_06_inittab(ValidTestcase):
+    """
+    Check default runlevel or systemd target
+    """
     stages = ["stage1"]
     tags = ["default"]
 

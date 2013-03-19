@@ -2,6 +2,9 @@ from valid.valid_testcase import *
 
 
 class testcase_33_userdata(ValidTestcase):
+    """
+    Dumb test for userdata script execution
+    """
     stages = ["stage1"]
     tags = ["default"]
 

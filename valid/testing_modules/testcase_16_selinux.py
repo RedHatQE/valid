@@ -2,6 +2,10 @@ from valid.valid_testcase import *
 
 
 class testcase_16_selinux(ValidTestcase):
+    """
+    SELinux should be in enforcing/targeted mode
+    """
+
     stages = ["stage1"]
     tags = ["default"]
 

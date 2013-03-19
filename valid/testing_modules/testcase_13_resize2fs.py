@@ -2,15 +2,16 @@ from valid.valid_testcase import *
 
 
 class testcase_13_resize2fs(ValidTestcase):
+    """
+    The instances are always created with a 15GB root device (unlike
+    the AWS default of 8GB. The point is whether we're able to allocate
+    the space. Please note that cloud-init does the resize automatically.
+    """
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*", "virtualization": "(?!hvm)"}
     tags = ["default"]
 
     def test(self, connection, params):
-        """The instances are always created with a 15GB root device (unlike
-        the AWS default of 8GB. The point is whether we're able to allocate
-        the space. Please note that cloud-init does the resize automatically.
-        """
         if self.get_return_value(connection, 'rpm -q cloud-init', nolog=True) == 1:
             # cloud-init not installed, resize
             if (params["product"].upper() == "RHEL" or params["product"].upper() == "BETA") and params["version"].startswith("6."):

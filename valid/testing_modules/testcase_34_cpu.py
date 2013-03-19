@@ -2,6 +2,9 @@ from valid.valid_testcase import *
 
 
 class testcase_34_cpu(ValidTestcase):
+    """
+    Check the number of cpu cores available
+    """
     stages = ["stage1"]
     tags = ["default", "kernel"]
 

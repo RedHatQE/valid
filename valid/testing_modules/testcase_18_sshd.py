@@ -2,6 +2,9 @@ from valid.valid_testcase import *
 
 
 class testcase_18_sshd(ValidTestcase):
+    """
+    Sshd service shoud be on, password authentication shoud be disabled
+    """
     stages = ["stage1"]
     tags = ["default"]
 

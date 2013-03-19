@@ -2,6 +2,9 @@ from valid.valid_testcase import *
 
 
 class testcase_24_yum_plugin(ValidTestcase):
+    """
+    RHN plugin should be disabled
+    """
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*"}
     tags = ["default"]

@@ -2,6 +2,11 @@ from valid.valid_testcase import *
 
 
 class testcase_20_auditd(ValidTestcase):
+    """
+    Check auditd:
+    - service should be on
+    - config files shoud have specified checksums
+    """
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*"}
     tags = ["default"]

@@ -2,6 +2,9 @@ from valid.valid_testcase import *
 
 
 class testcase_32_ephemeral(ValidTestcase):
+    """
+    It should be possible to use ephemeral device (if we have one)
+    """
     stages = ["stage1"]
     tags = ["default"]
 

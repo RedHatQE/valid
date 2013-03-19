@@ -2,6 +2,9 @@ from valid.valid_testcase import *
 
 
 class testcase_02_ipv6(ValidTestcase):
+    """
+    Check that ipv6 networking is disabled
+    """
     stages = ["stage1"]
     tags = ["default"]
 

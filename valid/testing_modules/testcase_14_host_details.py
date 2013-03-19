@@ -3,6 +3,9 @@ import json
 
 
 class testcase_14_host_details(ValidTestcase):
+    """
+    Try to fetch host details from EC2 and compare with expectation
+    """
     stages = ["stage1"]
     tags = ["default"]
 

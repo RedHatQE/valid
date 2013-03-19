@@ -2,6 +2,9 @@ from valid.valid_testcase import *
 
 
 class testcase_12_passwd_group(ValidTestcase):
+    """
+    Check for root/nobody/sshd users and root/daemon/bin groups
+    """
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*"}
     tags = ["default"]

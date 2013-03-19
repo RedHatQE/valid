@@ -2,6 +2,12 @@ from valid.valid_testcase import *
 
 
 class testcase_03_chkconfig(ValidTestcase):
+    """
+    Check for several services runnung
+    - crond
+    - iptables
+    - yum-updatesd (RHEL5 only)
+    """
     stages = ["stage1"]
     tags = ["default"]
 

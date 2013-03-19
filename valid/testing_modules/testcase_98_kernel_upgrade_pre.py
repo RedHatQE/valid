@@ -5,6 +5,10 @@ from valid.valid_testcase import *
 
 
 class testcase_98_kernel_upgrade_pre(ValidTestcase):
+    """
+    Do kernel upgrate (with specified package set or from repo) before testing
+    """
+
     tags = ["kernel"]
     stages = ["stage0"]
 
@@ -19,7 +23,7 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
                 pkgs_files = params["kernelpkg"]
             for pkg in pkgs_files:
                 pkgbase = os.path.basename(pkg)
-                connection.sftp.put(pkg,"/tmp/%s" % pkgbase)
+                connection.sftp.put(pkg, "/tmp/%s" % pkgbase)
                 kernelfiles += "/tmp/%s " % pkgbase
                 self.get_return_value(connection, "ls -l /tmp/%s" % pkgbase)
             self.get_return_value(connection, "yum -y install %s" % kernelfiles, 300)

@@ -5,6 +5,9 @@ from valid.valid_testcase import *
 
 
 class testcase_90_1_kernel_bug874053(ValidTestcase):
+    """
+    Reproducer for kernel bug 874053
+    """
     stages = ["stage1"]
     tags = ["kernel"]
 
@@ -27,8 +30,8 @@ class testcase_90_1_kernel_bug874053(ValidTestcase):
 
         for dev in devlist:
             self.get_result(connection, "mkfs.ext3 /dev/%s > /dev/null & echo /dev/%s" % (dev, dev))
-        
-        # Wait for all mkfs processes    
+
+        # Wait for all mkfs processes
         self.get_result(connection, "while pidof mkfs.ext3 > /dev/null; do sleep 1; done", 60)
 
         i = 1
@@ -38,7 +41,7 @@ class testcase_90_1_kernel_bug874053(ValidTestcase):
             i += 1
 
         self.get_return_value(connection, "yum -y install gcc", 240)
-        connection.sftp.put("/usr/share/valid/data/bug874053.c","/root/fork.c")
+        connection.sftp.put("/usr/share/valid/data/bug874053.c", "/root/fork.c")
         self.get_return_value(connection, "gcc /root/fork.c")
         self.get_return_value(connection, "taskset -c 0 ./a.out &")
         time.sleep(5)
@@ -48,7 +51,7 @@ class testcase_90_1_kernel_bug874053(ValidTestcase):
             self.get_return_value(connection, "id")
             self.get_return_value(connection, "killall dd ||:")
             self.get_return_value(connection, "killall a.out ||:")
-            for i in range(1,8):
+            for i in range(1, 8):
                 self.get_return_value(connection, "rm -f /mnt/%i/testfile" % i, 30)
                 self.get_return_value(connection, "cp -a /bin/bash /mnt/%i/" % i)
                 self.get_result(connection, "md5sum /bin/bash")

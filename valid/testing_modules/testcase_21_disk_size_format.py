@@ -2,6 +2,12 @@ from valid.valid_testcase import *
 
 
 class testcase_21_disk_size_format(ValidTestcase):
+    """
+    Check filesystems:
+    - / shoud be ext3 on RHEL5, ext4 otherwise
+    - other filesystems shoud be always be ext3
+    - all filesystems show have at least 4gb of available space (weird)
+    """
     stages = ["stage1"]
     tags = ["default"]
 
@@ -21,6 +27,6 @@ class testcase_21_disk_size_format(ValidTestcase):
                         # ext4 for / in other OSes
                         self.get_return_value(connection, "[ %s = ext4 ]" % fs[0])
                     elif mpoint[0] != '/':
-                        # ext4 for all other FS in other OSes
+                        # ext3 for all other FS in other OSes
                         self.get_return_value(connection, "[ %s = ext3 ]" % fs[0])
         return self.log

@@ -2,6 +2,13 @@ from valid.valid_testcase import *
 
 
 class testcase_25_uname(ValidTestcase):
+    """
+    Check uname output:
+    - kernel shoud be equal to latest installed
+    - -o shoud return GNU/Linux
+    - /etc/sysconfig/kernel shoud contain UPDATEDEFAULT=yes and
+       DEFAULTKERNEL=kernel
+    """
     stages = ["stage1", "stage2"]
     tags = ["default"]
 
@@ -19,7 +26,7 @@ class testcase_25_uname(ValidTestcase):
                 uname_r = self.get_result(connection, "uname -r")
                 kernel_ver = self.get_result(connection, "rpm -q --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}\n' kernel | sort | tail -1", 30)
         elif prod == "FEDORA":
-            if ver == "18" and params["arch"]=="i386":
+            if ver == "18" and params["arch"] == "i386":
                 uname_r = self.get_result(connection, "uname -r | sed 's,\.PAE,,'")
                 kernel_ver = self.get_result(connection, "rpm -q --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}\n' kernel-PAE | sort | tail -1", 30)
             else:

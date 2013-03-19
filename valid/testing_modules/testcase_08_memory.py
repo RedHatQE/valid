@@ -3,12 +3,15 @@ import re
 
 
 class testcase_08_memory(ValidTestcase):
+    """
+    Check for available amount of memory
+    """
     stages = ["stage1", "stage2"]
     tags = ["default", "kernel"]
 
     def test(self, connection, params):
         if not "memory" in params.keys():
-            self.log.append({"result": "failure", "comment": "memory parameter is not set"})
+            self.log.append({"result": "skip", "comment": "memory parameter is not set, nothing to check"})
         else:
             values = self.match(connection, "grep --color=none 'MemTotal:' /proc/meminfo", re.compile(".*\r\nMemTotal:\s*([0-9]+) ", re.DOTALL))
             if values:

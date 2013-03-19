@@ -4,7 +4,11 @@ import ConfigParser
 
 yum_timeout = 300
 
+
 class testcase_61_yum_proxy(ValidTestcase):
+    """
+    Try to use yum with proxy
+    """
     stages = ["stage1"]
     tags = ["default"]
 
@@ -105,12 +109,12 @@ class testcase_61_yum_proxy(ValidTestcase):
             return self.log
         # try the same with an env variable
         if 'port' in proxy:
-            https_proxy=proxy['host'] + ":" + str(proxy['port'])
+            https_proxy = proxy['host'] + ":" + str(proxy['port'])
         if 'user' in proxy and 'password' in proxy:
-            https_proxy="https://" + proxy['user'] + ":" + proxy['password'] +\
+            https_proxy = "https://" + proxy['user'] + ":" + proxy['password'] +\
                 "@" + https_proxy
         else:
-            https_proxy="https://" + https_proxy
+            https_proxy = "https://" + https_proxy
         # check all works
         self.get_result(
             connection,
@@ -125,9 +129,3 @@ class testcase_61_yum_proxy(ValidTestcase):
             "service iptables restart"
         )
         return self.log
-
-
-
-
-
-

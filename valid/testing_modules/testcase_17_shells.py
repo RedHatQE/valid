@@ -2,6 +2,9 @@ from valid.valid_testcase import *
 
 
 class testcase_17_shells(ValidTestcase):
+    """
+    Check for bash/nologin shells in /etc/shells
+    """
     stages = ["stage1"]
     tags = ["default"]
 

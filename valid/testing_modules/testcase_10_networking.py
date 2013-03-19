@@ -2,6 +2,10 @@ from valid.valid_testcase import *
 
 
 class testcase_10_networking(ValidTestcase):
+    """
+    Check for Networking setup
+    """
+
     stages = ["stage1"]
     tags = ["default"]
 

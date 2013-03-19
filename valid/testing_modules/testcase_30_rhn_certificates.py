@@ -19,6 +19,9 @@ def _expiration_date(params):
 
 
 class testcase_30_rhn_certificates(ValidTestcase):
+    """
+    Check for rhn certificates lifetime
+    """
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*"}
     tags = ["default"]

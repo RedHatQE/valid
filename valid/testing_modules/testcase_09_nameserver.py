@@ -2,6 +2,10 @@ from valid.valid_testcase import *
 
 
 class testcase_09_nameserver(ValidTestcase):
+    """
+    Check if nameserver is working
+    """
+
     stages = ["stage1"]
     tags = ["default"]
 

@@ -3,6 +3,9 @@ import logging
 
 
 class testcase_50_yum_package_install(ValidTestcase):
+    """
+    Try to install package with yum
+    """
     stages = ["stage1"]
     tags = ["default"]
 

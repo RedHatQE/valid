@@ -2,6 +2,10 @@ from valid.valid_testcase import *
 
 
 class testcase_60_yum_update(ValidTestcase):
+    """
+    Test system update with 'yum update'
+    """
+
     stages = ["stage1"]
     tags = ["default"]
 

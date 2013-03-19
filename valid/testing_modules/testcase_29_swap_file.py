@@ -2,6 +2,10 @@ from valid.valid_testcase import *
 
 
 class testcase_29_swap_file(ValidTestcase):
+    """
+    Swap should be enabled and it should be possible to do swapoff/swapon
+    (not applicable for t1.micro and hvm instances)
+    """
     stages = ["stage1"]
     applicable = {"ec2name": "(?!t1\.micro)", "virtualization": "(?!hvm)", "arch": "(?!x86_64)"}
     tags = ["default"]

@@ -2,6 +2,10 @@ from valid.valid_testcase import *
 
 
 class testcase_22_gpg_keys(ValidTestcase):
+    """
+    Check that specified gpg keys are installed
+    """
+
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*"}
     tags = ["default"]

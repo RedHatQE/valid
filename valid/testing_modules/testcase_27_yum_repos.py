@@ -6,6 +6,9 @@ import yaml
 
 
 class testcase_27_yum_repos(ValidTestcase):
+    """
+    Check for enabled yum repos
+    """
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA"}
     tags = ["default"]

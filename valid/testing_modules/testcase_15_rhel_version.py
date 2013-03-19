@@ -2,6 +2,9 @@ from valid.valid_testcase import *
 
 
 class testcase_15_rhel_version(ValidTestcase):
+    """
+    Check redhat-release version
+    """
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA"}
     tags = ["default"]

@@ -2,6 +2,9 @@ from valid.valid_testcase import *
 
 
 class testcase_28_iptables(ValidTestcase):
+    """
+    Check default iptables setup
+    """
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA"}
     tags = ["default"]

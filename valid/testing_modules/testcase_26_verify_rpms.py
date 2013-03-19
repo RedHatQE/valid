@@ -2,6 +2,9 @@ from valid.valid_testcase import *
 
 
 class testcase_26_verify_rpms(ValidTestcase):
+    """
+    Do rpm -Va and compare the number of packages with modified files
+    """
     stages = ["stage1"]
     applicable = {"product": "(?i)RHEL|BETA", "version": "5.*|6.*"}
     tags = ["default"]

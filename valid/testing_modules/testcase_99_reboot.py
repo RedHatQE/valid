@@ -4,6 +4,9 @@ import time
 
 
 class testcase_99_reboot(ValidTestcase):
+    """
+    Reboot the instance
+    """
     stages = ["stage1"]
     tags = ["default"]
 
