@@ -49,7 +49,7 @@ class testcase_30_rhn_certificates(ValidTestcase):
                 connection,
                 'openssl x509 -in %s -noout -dates | grep notAfter' % cert
             )
-            if date_string and date_string.index('=') != -1:
+            if date_string and date_string.find('=') != -1:
                 cert_expiration = datetime.strptime(
                     # the date_string has the form:
                     #   notAfter=Nov 11 00:00:00 2020 GMT
