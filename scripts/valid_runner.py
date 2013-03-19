@@ -38,6 +38,15 @@ from valid import valid_result
 def csv(value):
     return map(str, value.split(","))
 
+def strzero(value, maxvalue):
+    """
+    Generate string from number with leading zeroes to save lexicographical order
+    """
+    result = str(value)
+    while len(result) < len(str(maxvalue)):
+        result = '0' + result
+    return result
+
 argparser = argparse.ArgumentParser(description='Run cloud image validation')
 argparser.add_argument('--data', help='data file for validation')
 argparser.add_argument('--config',
@@ -54,6 +63,9 @@ argparser.add_argument('--enable-tests', type=csv, help='enable specified tests 
 argparser.add_argument('--disable-tags', type=csv, help='disable specified tags')
 argparser.add_argument('--enable-tags', type=csv, help='enable specified tags only (overrides --disabe-tags)', 
                        default="default")
+
+argparser.add_argument('--repeat', type=int, help='repeat testing with the same instance N times',
+                       default=1)
 
 argparser.add_argument('--maxtries', type=int,
                        default=30, help='maximum number of tries')
@@ -143,6 +155,8 @@ if args.disable_tags:
     disable_tags = set(args.disable_tags)
 else:
     disable_tags = set()
+
+repeat = args.repeat
 
 ec2_key = yamlconfig["ec2"]["ec2-key"]
 ec2_secret_key = yamlconfig["ec2"]["ec2-secret-key"]
@@ -241,6 +255,13 @@ def get_test_stages(params):
                     sys.exit(1)
                 break
     result.sort()
+    if params["repeat"] > 1:
+        # need to repeat whole test procedure N times
+        result_repeat = []
+        for i in range(1, params["repeat"] + 1):
+            for stage in result:
+                result_repeat.append(strzero(i, params["repeat"]) + stage)
+        result = result_repeat
     logging.debug("Testing stages %s discovered for %s" % (result, params["iname"]))
     return result
 
@@ -323,6 +344,9 @@ def add_data(data, emails=None):
                                 params_copy["enable_tests"] = enable_tests
                             if not "disable_tests" in params_copy:
                                 params_copy["disable_tests"] = disable_tests
+
+                            if not "repeat" in params_copy:
+                                params_copy["repeat"] = repeat
 
                             if not "name" in params_copy:
                                 params_copy["name"] = params_copy["ami"] + " validation"
