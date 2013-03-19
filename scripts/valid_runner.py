@@ -289,7 +289,7 @@ def add_data(data, emails=None):
         resultdic[transaction_id] = {}
         count = 0
         for params in data:
-            mandatory_fields = ["product", "arch", "region", "itype", "version", "ami"]
+            mandatory_fields = ["product", "arch", "region", "version", "ami"]
             minimal_set = set(mandatory_fields)
             exact_set = set(params.keys())
             if minimal_set.issubset(exact_set):
@@ -331,6 +331,8 @@ def add_data(data, emails=None):
                                 params_copy["bmap"] = [{"name": "/dev/sda1", "size": "15", "delete_on_termination": True}]
                             if not "userdata" in params_copy.keys():
                                 params_copy["userdata"] = None
+                            if not "itype" in params_copy.keys():
+                                params_copy["itype"] = "hourly"
 
                             if not "enable_stages" in params_copy:
                                 params_copy["enable_stages"] = enable_stages
