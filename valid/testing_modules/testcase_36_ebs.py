@@ -73,7 +73,7 @@ class testcase_36_ebs(ValidTestcase):
 
             if (prod in ['RHEL', 'BETA']) and (ver.startswith('5.')):
                 name = '/dev/sdk'
-            if (prod in ['RHEL', 'BETA']) and (ver.startswith('6.')):
+            if (prod in ['RHEL', 'BETA']) and (ver.startswith('6.')) and (params['virtualization'] != 'hvm'):
                 # 4-letter shift
                 name = '/dev/xvdo'
             else:
