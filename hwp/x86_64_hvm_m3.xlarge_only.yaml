@@ -1,1 +1,12 @@
-- {arch: 'x86_64', cpu: '4', memory: '14000000', ec2name: m3.xlarge, virtualization: 'hvm'}
+- arch: x86_64
+  bmap:
+  - {delete_on_termination: true, name: /dev/sda1, size: '15'}
+  userdata: &USERDATA |
+      #! /bin/sh
+      yum -y install httpd ||:
+      touch /userdata_test
+      date >> /userdata_test
+  cpu: '4'
+  ec2name: m3.xlarge
+  memory: '14000000'
+  virtualization: hvm
