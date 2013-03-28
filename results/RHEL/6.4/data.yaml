@@ -1,28 +1,21 @@
-- {ami: ami-42bf3572, arch: x86_64_hvm, itype: access, product: RHEL, region: us-west-2, version: '6.4'}
-- {ami: ami-9b6ce89a, arch: x86_64_hvm, itype: hourly, product: RHEL, region: ap-northeast-1, version: '6.4'}
-- {ami: ami-e1b863fc, arch: x86_64_hvm, itype: access, product: RHEL, region: sa-east-1, version: '6.4'}
-- {ami: ami-87bf649a, arch: i386, itype: hourly, product: RHEL, region: sa-east-1, version: '6.4'}
-- {ami: ami-40bc3670, arch: i386, itype: access, product: RHEL, region: us-west-2, version: '6.4'}
-- {ami: ami-44bc3674, arch: i386, itype: hourly, product: RHEL, region: us-west-2, version: '6.4'}
-- {ami: ami-7cb79439, arch: x86_64_hvm, itype: access, product: RHEL, region: us-west-1, version: '6.4'}
-- {ami: ami-7eb7943b, arch: x86_64_hvm, itype: hourly, product: RHEL, region: us-west-1, version: '6.4'}
-- {ami: ami-44bf3574, arch: x86_64_hvm, itype: hourly, product: RHEL, region: us-west-2, version: '6.4'}
-- {ami: ami-996ce898, arch: x86_64_hvm, itype: access, product: RHEL, region: ap-northeast-1, version: '6.4'}
-- {ami: ami-e3b863fe, arch: x86_64_hvm, itype: hourly, product: RHEL, region: sa-east-1, version: '6.4'}
-- {ami: ami-b87970cc, arch: x86_64_hvm, itype: access, product: RHEL, region: eu-west-1, version: '6.4'}
-- {ami: ami-ba7970ce, arch: x86_64_hvm, itype: hourly, product: RHEL, region: eu-west-1, version: '6.4'}
-- {ami: ami-5c3d700e, arch: x86_64_hvm, itype: access, product: RHEL, region: ap-southeast-1, version: '6.4'}
-- {ami: ami-423d7010, arch: x86_64_hvm, itype: hourly, product: RHEL, region: ap-southeast-1, version: '6.4'}
-- {ami: ami-506afc6a, arch: x86_64_hvm, itype: access, product: RHEL, region: ap-southeast-2, version: '6.4'}
-- {ami: ami-4a6afc70, arch: x86_64_hvm, itype: hourly, product: RHEL, region: ap-southeast-2, version: '6.4'}
-- {ami: ami-3cb69579, arch: i386, itype: access, product: RHEL, region: us-west-1, version: '6.4'}
-- {ami: ami-38b6957d, arch: i386, itype: hourly, product: RHEL, region: us-west-1, version: '6.4'}
-- {ami: ami-8bbf6496, arch: i386, itype: access, product: RHEL, region: sa-east-1, version: '6.4'}
-- {ami: ami-cd6de9cc, arch: i386, itype: access, product: RHEL, region: ap-northeast-1, version: '6.4'}
-- {ami: ami-d96de9d8, arch: i386, itype: hourly, product: RHEL, region: ap-northeast-1, version: '6.4'}
-- {ami: ami-086bfd32, arch: i386, itype: access, product: RHEL, region: ap-southeast-2, version: '6.4'}
-- {ami: ami-026bfd38, arch: i386, itype: hourly, product: RHEL, region: ap-southeast-2, version: '6.4'}
-- {ami: ami-a03d70f2, arch: i386, itype: access, product: RHEL, region: ap-southeast-1, version: '6.4'}
-- {ami: ami-aa3d70f8, arch: i386, itype: hourly, product: RHEL, region: ap-southeast-1, version: '6.4'}
-- {ami: ami-82767ff6, arch: x86_64, itype: access, product: RHEL, region: eu-west-1, version: '6.4'}
-- {ami: ami-88767ffc, arch: x86_64, itype: hourly, product: RHEL, region: eu-west-1, version: '6.4'}
+- ami: ami-c2dc46ab
+  arch: x86_64
+  itype: access
+  product: RHEL
+  proxy: &id001
+    group: {id: !!python/unicode 'sg-3c0be357', name: squid-us-east-1-kvvhxoqc}
+    host: !!python/unicode 'ec2-54-224-113-204.compute-1.amazonaws.com'
+    id: !!python/unicode 'i-a8e746c3'
+    password: proxy-user-password
+    port: 3128
+    region: us-east-1
+    user: proxy
+  region: us-east-1
+  version: '6.4'
+- ami: ami-c4dc46ad
+  arch: x86_64
+  itype: hourly
+  product: RHEL
+  proxy: *id001
+  region: us-east-1
+  version: '6.4'
