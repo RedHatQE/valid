@@ -26,7 +26,10 @@
   - {ephemeral_name: ephemeral4, name: /dev/xvdaa}
   - {ephemeral_name: ephemeral5, name: /dev/xvdab}
   userdata: &USERDATA |
-      #! /bin/sh
+      #! /bin/bash
+      exec > /tmp/userdata.log
+      exec 2>&1
+      yum install -y httpd
       touch /userdata_test
       date >> /userdata_test
   cpu: '16'

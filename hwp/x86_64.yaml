@@ -4,7 +4,10 @@
   ec2name: t1.micro
   virtualization: 'paravirtual'
   userdata: &USERDATA |
-      #! /bin/sh
+      #! /bin/bash
+      exec > /tmp/userdata.log
+      exec 2>&1
+      yum install -y httpd
       touch /userdata_test
       date >> /userdata_test
 - arch: 'x86_64'

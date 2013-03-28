@@ -7,9 +7,14 @@ class testcase_33_userdata(ValidTestcase):
     def test(self, connection, params):
         if params["userdata"]:
             if self.get_result(connection, "rpm -q --queryformat '%{NAME}\n' cloud-init", 5) == "cloud-init":
-                if params["userdata"].find("touch /userdata_test") != -1:
+                testable = False
+                if "touch  /userdata_test" in params["userdata"]:
+                    testable = True
                     self.get_return_value(connection, "ls -l /userdata_test")
-                else:
+                if "yum install -y httpd" in params["userdata"]:
+                    testable = True
+                    self.get_return_value(connection, "rpm -q httpd")
+                if not testable:
                     self.log.append({
                             "result": "skip",
                             "comment": "cannot test provided userdata"
