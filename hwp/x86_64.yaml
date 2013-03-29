@@ -21,4 +21,4 @@
 - {arch: 'x86_64', cpu: '2', memory: '17100000', ec2name: m2.xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
 - {arch: 'x86_64', cpu: '4', memory: '34200000', ec2name: m2.2xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
 - {arch: 'x86_64', cpu: '8', memory: '68400000', ec2name: m2.4xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
-- {arch: 'x86_64', cpu: '8', memory: '7000000', ec2name: c1.xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
+- {arch: 'x86_64', cpu: '8', memory: '6998000', ec2name: c1.xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
