@@ -8,7 +8,7 @@ class ValidTestcase(object):
     def __init__(self):
         self.log = []
 
-    def ping_pong(self, connection, command, expectation, timeout=5):
+    def ping_pong(self, connection, command, expectation, timeout=10):
         logging.debug(threading.currentThread().name + ": ping_pong '%s' expecting '%s'" % (command, expectation))
         result = {"command": command, "expectation": expectation}
         try:
@@ -21,7 +21,7 @@ class ValidTestcase(object):
             logging.debug(threading.currentThread().name + ": ping_pong failed: '%s'" % e.message)
         self.log.append(result)
 
-    def match(self, connection, command, regexp, grouplist=[1], timeout=5):
+    def match(self, connection, command, regexp, grouplist=[1], timeout=10):
         try:
             logging.debug(threading.currentThread().name + ": matching '%s' against '%s'" % (command, regexp.pattern))
             Expect.enter(connection, command)
@@ -34,7 +34,7 @@ class ValidTestcase(object):
             logging.debug(threading.currentThread().name + ": match failed '%s'" % e.message)
             return None
 
-    def get_result(self, connection, command, timeout=5):
+    def get_result(self, connection, command, timeout=10):
         try:
             logging.debug(threading.currentThread().name + ": getting result for '%s'" % command)
             Expect.enter(connection, "echo '###START###'; " + command + "; echo '###END###'")
@@ -48,7 +48,7 @@ class ValidTestcase(object):
             logging.debug(threading.currentThread().name + ": getting failed: '%s'" % e.message)
             return None
 
-    def get_return_value(self, connection, command, timeout=5, expected_status=0, nolog=False):
+    def get_return_value(self, connection, command, timeout=15, expected_status=0, nolog=False):
         logging.debug(threading.currentThread().name + ": getting return value '%s'" % command)
         status = connection.recv_exit_status(command + " >/dev/null 2>&1", timeout)
         if not nolog:
