@@ -834,7 +834,7 @@ class WorkerThread(threading.Thread):
             except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError, boto.exception.EC2ResponseError), e:
                 logging.error(self.getName() + ': bad test, %s %s' % (stage, e))
                 logging.debug(self.getName() + ':' + traceback.format_exc())
-                result[test_name] = 'Failure'
+                result = 'Failure'
 
             logging.info(self.getName() + ': done testing for ' + params['iname'] + ' ' + stage)
 
