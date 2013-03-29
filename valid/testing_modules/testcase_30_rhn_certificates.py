@@ -1,7 +1,7 @@
 from valid.valid_testcase import *
 from datetime import datetime
 import re
-_seven_year_releases = re.compile('^5\.[12345678]$|^6\.[123]$')
+_seven_year_releases = re.compile('^5\.[12345678]$|^6\.[1234]$')
 
 
 def _expiration_date(params):
