@@ -32,6 +32,8 @@ failure_messages = ('fail', 'failure', 'failed')
 counted_actual_results = ('', None, 'None')
 by_region = {}
 by_itype = {}
+by_command = {}
+total = 0
 
 
 # count the data
@@ -49,6 +51,7 @@ for ami in data:
             for command in test_result:
                 if type(command) is not dict:
                     continue
+                total += 1
                 if 'actual' not in command:
                     continue
                 if command['actual'] in counted_actual_results:
@@ -70,11 +73,18 @@ for ami in data:
                         by_itype[itype][command_line] = 0
                     by_itype[itype][command_line] += 1
 
+                    # command
+                    if command_line not in by_command:
+                        by_command[command_line] = 0
+                    by_command[command_line] += 1
+
 
 # dump the stats
 stats = {
+    'by_command': by_command,
     'by_region': by_region,
-    'by_itype': by_itype
+    'by_itype': by_itype,
+    'total': total
 }
 
 print dump(stats, default_flow_style=False, Dumper=Dumper)
