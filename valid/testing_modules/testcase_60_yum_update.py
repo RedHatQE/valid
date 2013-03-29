@@ -18,5 +18,6 @@ class testcase_60_yum_update(ValidTestcase):
             self.get_return_value(connection, 'mkswap /swap', 30)
             self.ping_pong(connection, 'echo \'/swap    swap     swap    defaults     0 0\' >> /etc/fstab && echo SUCCESS', '\r\nSUCCESS\r\n')
             self.get_return_value(connection, 'swapon -a -e', 30)
+        self.get_return_value(connection, 'yum -y install kernel', 900)
         self.get_return_value(connection, 'yum -y update', 900)
         return self.log
