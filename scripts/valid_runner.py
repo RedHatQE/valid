@@ -530,9 +530,9 @@ class WatchmanThread(threading.Thread):
                                 msg = MIMEMultipart()
                                 msg.preamble = 'Validation result'
                                 if subject:
-                                    msg['Subject'] = subject
+                                    msg['Subject'] = "[" + overall_result + "] " + subject
                                 else:
-                                    msg['Subject'] = bug_summary
+                                    msg['Subject'] = "[" + overall_result + "] " + bug_summary
                                 msg['From'] = mailfrom
                                 msg['To'] = emails
                                 txt = MIMEText(bug_description + '\n')
