@@ -150,7 +150,7 @@ def get_test_stages(params):
     return result
 
 
-def add_data(data, emails=None):
+def add_data(data, emails=None, subject=None):
     """
     Add testing data
     @param data: list of data fields
@@ -158,6 +158,9 @@ def add_data(data, emails=None):
 
     @param emails: comma-separated list of emails interested in result
     @type emails: str
+
+    @param subject: email subject
+    @type subject: str
 
     @return: transaction id or None
     @rtype: str or None
@@ -246,6 +249,8 @@ def add_data(data, emails=None):
                             resultdic[transaction_id][params['ami']] = {'ninstances': ninstances, 'instances': []}
                             if emails:
                                 resultdic[transaction_id][params['ami']]['emails'] = emails
+                                if subject:
+                                    resultdic[transaction_id][params['ami']]['subject'] = subject
                         hwp_found = True
                         break
                     except:
@@ -413,7 +418,12 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     logging.debug('POST EMAILS:' + emails)
                 else:
                     emails = None
-                transaction_id = add_data(data, emails)
+                if 'subject' in post_data.keys() and emails:
+                    subject = post_data['subject'][0]
+                    logging.debug('POST SUBJECT:' + subject)
+                else:
+                    subject = None
+                transaction_id = add_data(data, emails, subject)
                 if not transaction_id:
                     raise Exception('Bad data')
                 s.send_response(200)
@@ -486,6 +496,7 @@ class WatchmanThread(threading.Thread):
                     result = []
                     data = resultdic[transaction_id]
                     emails = None
+                    subject = None
                     for ami in data.keys():
                         result_item = {'ami': data[ami]['instances'][0]['ami'],
                                        'product': data[ami]['instances'][0]['product'],
@@ -504,6 +515,8 @@ class WatchmanThread(threading.Thread):
                         result.append(result_item)
                         if 'emails' in data[ami].keys():
                             emails = data[ami]['emails']
+                        if 'subject' in data[ami].keys():
+                            subject = data[ami]['subject']
                     result_yaml = yaml.safe_dump(result)
                     with resultdic_yaml_lock:
                         resultdic_yaml[transaction_id] = result_yaml
@@ -516,7 +529,10 @@ class WatchmanThread(threading.Thread):
                                 overall_result, bug_summary, bug_description = valid_result.get_overall_result(ami)
                                 msg = MIMEMultipart()
                                 msg.preamble = 'Validation result'
-                                msg['Subject'] = bug_summary
+                                if subject:
+                                    msg['Subject'] = subject
+                                else:
+                                    msg['Subject'] = bug_summary
                                 msg['From'] = mailfrom
                                 msg['To'] = emails
                                 txt = MIMEText(bug_description + '\n')

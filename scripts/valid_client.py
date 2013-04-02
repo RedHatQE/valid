@@ -12,6 +12,8 @@ argparser.add_argument('--get',
 
 argparser.add_argument('--emails', help='report result to emails (comma-separated list, for --add only)')
 
+argparser.add_argument('--subject', help='email subject')
+
 argparser.add_argument('--cert',
                        default="/etc/valid/valid_client.crt", help='certificate file')
 argparser.add_argument('--key',
@@ -36,6 +38,8 @@ if args.add:
     data_dic = {"data": data}
     if args.emails:
         data_dic["emails"] = args.emails
+    if args.subject:
+        data_dic["subject"] = args.subject
     params = urllib.urlencode(data_dic)
     http.request("POST", "", params, {"Content-type": "text/yaml"})
 elif args.get:
