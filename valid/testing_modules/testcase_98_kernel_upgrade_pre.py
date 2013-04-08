@@ -26,7 +26,7 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
                 connection.sftp.put(pkg, '/tmp/%s' % pkgbase)
                 kernelfiles += '/tmp/%s ' % pkgbase
                 self.get_return_value(connection, 'ls -l /tmp/%s' % pkgbase)
-            self.get_return_value(connection, 'yum -y install %s' % kernelfiles, 300)
+            self.get_return_value(connection, 'rpm -i %s' % kernelfiles, 300)
         else:
             # doing upgrade from repo
             self.get_return_value(connection, 'yum -y install kernel', 300)
