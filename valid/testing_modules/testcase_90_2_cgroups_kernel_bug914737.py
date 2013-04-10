@@ -12,7 +12,9 @@ class testcase_90_2_cgroups_kernel_bug914737(ValidTestcase):
     def test(self, connection, params):
         self.get_return_value(connection, 'if [ ! -f /bin/cgset ]; then yum -y install libcgroup-tools ; fi', 240)
         self.get_return_value(connection, 'if ! mount | grep cgroup ; then service cgconfig start ; fi')
-        connection.sftp.put('/usr/share/valid/data/memory_harvester.py', '/root/memory_harvester.py')
+        connection.sftp.put('/usr/share/valid/data/memhog.c', '/root/memhog.c')
+        self.get_result(connection, 'if ! rpm -q gcc ; then yum -y install gcc; fi')
+        self.get_return_value(connection, 'gcc /root/memhog.c -o /root/memhog')
         for i in range(10):
             # Creating cpu and memory cgroups
             self.get_return_value(connection, 'cgcreate -g cpu:/Group%i' % i)
@@ -20,10 +22,13 @@ class testcase_90_2_cgroups_kernel_bug914737(ValidTestcase):
             self.get_return_value(connection, 'cgset -r memory.limit_in_bytes=%i /Group%i' % (i * 100 * 1024 * 1024, i))
             self.get_return_value(connection, 'cgset -r cpu.shares=%i /Group%i' % (16384 / (2 ** i), i))
         try:
-            self.get_result(connection, 'for i in `seq 0 9 `; do cgexec -g cpu:/Group$i -g memory:/Group$i python /root/memory_harvester.py $((i * 1000000)) & echo $i ; done')
+            self.get_result(connection, 'for i in `seq 0 9 `; do cgexec -g cpu:/Group$i -g memory:/Group$i /root/memhog $((i * 100 - 1)) & echo $i ; done')
+            time.sleep(10)
+            self.get_result(connection, 'for i in `seq 0 9 `; do cgexec -g cpu:/Group$i -g memory:/Group$i /root/memhog 2 & echo $i ; done')
+
             time.sleep(30)
             self.get_return_value(connection, 'id')
-            self.get_return_value(connection, 'killall python ||:')
+            self.get_return_value(connection, 'killall memhog ||:')
         except:
             self.log.append({'result': 'failed', 'command': 'bug reproducer succeeded'})
         return self.log
