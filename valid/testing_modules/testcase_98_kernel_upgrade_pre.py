@@ -27,9 +27,9 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
                 kernelfiles += '/tmp/%s ' % pkgbase
                 self.get_return_value(connection, 'ls -l /tmp/%s' % pkgbase)
             if len(pkgs_files) == 1:
-                self.get_return_value(connection, 'yum -y install %s' % kernelfiles, 300)
+                self.get_return_value(connection, 'yum -y install %s' % kernelfiles, 900)
             else:
-                self.get_return_value(connection, 'rpm -i %s' % kernelfiles, 300)
+                self.get_return_value(connection, 'rpm -i %s' % kernelfiles, 900)
         else:
             # doing upgrade from repo
             self.get_return_value(connection, 'yum -y install kernel', 300)
