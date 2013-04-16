@@ -19,6 +19,12 @@ class testcase_36_ebs(ValidTestcase):
     def test(self, connection, params):
         prod = params['product'].upper()
         ver = params['version'].upper()
+        device = '/dev/sdk'
+        if params['ec2name'] == 'hs1.8xlarge':
+            for dev in params['bmap']:
+                if dev['name'] == device:
+                    device = '/dev/xvdac'
+                    break
         ec2connection = params['instance']['connection']
         if 'placement' in params['instance']:
             volume = ec2connection.create_volume(10, params['instance']['placement'])
@@ -46,7 +52,7 @@ class testcase_36_ebs(ValidTestcase):
                 return self.log
         if volume.volume_state() == 'available':
             logging.debug(threading.currentThread().name + ': Ready to attach %s: %s %s' % (volume.id, volume.volume_state(), volume.attachment_state()))
-            ec2connection.attach_volume(volume.id, params['instance']['id'], '/dev/sdk')
+            ec2connection.attach_volume(volume.id, params['instance']['id'], device)
             time.sleep(5)
             volume.update()
             wait = 0
@@ -72,12 +78,12 @@ class testcase_36_ebs(ValidTestcase):
                 return self.log
 
             if (prod in ['RHEL', 'BETA']) and (ver.startswith('5.')):
-                name = '/dev/sdk'
-            if (prod in ['RHEL', 'BETA']) and (ver.startswith('6.')) and (params['virtualization'] != 'hvm'):
+                name = device
+            elif (prod in ['RHEL', 'BETA']) and (ver.startswith('6.')) and (params['virtualization'] != 'hvm'):
                 # 4-letter shift
-                name = '/dev/xvdo'
+                name = device.replace("/dev/sd", "/dev/xvd")[:-1] + chr(ord(device.replace("/dev/sd", "/dev/xvd")[-1:])+4)
             else:
-                name = '/dev/xvdk'
+                name = device.replace("/dev/sd", "/dev/xvd")
             # waiting for this volume
             for i in range(20):
                 if self.get_return_value(connection, 'ls -l %s' % name, 30, nolog=True) == 0:
@@ -110,7 +116,7 @@ class testcase_36_ebs(ValidTestcase):
                 logging.debug(threading.currentThread().name + ': Error detaching volume %s' % volume.id)
                 self.log.append({
                         'result': 'failure',
-                        'comment': 'Failed to attach EBS volume %s' % volume.id
+                        'comment': 'Failed to detach EBS volume %s' % volume.id
                         })
                 return self.log
             logging.debug(threading.currentThread().name + ': Ready to delete %s: %s %s' % (volume.id, volume.volume_state(), volume.attachment_state()))
