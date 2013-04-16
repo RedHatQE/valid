@@ -25,6 +25,11 @@
   - {ephemeral_name: ephemeral23, name: /dev/sdy}
   - {ephemeral_name: ephemeral4, name: /dev/xvdaa}
   - {ephemeral_name: ephemeral5, name: /dev/xvdab}
+  userdata: &USERDATA |
+      #! /bin/sh
+      yum -y install httpd ||:
+      touch /userdata_test
+      date >> /userdata_test
   cpu: '16'
   ec2name: hs1.8xlarge
   memory: '121000000'
