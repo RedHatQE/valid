@@ -4,7 +4,7 @@ import logging
 from valid.valid_testcase import *
 
 
-class testcase_36_ebs(ValidTestcase):
+class testcase_360_ebs(ValidTestcase):
     """
     Perform EBS test:
     - Create the volume
