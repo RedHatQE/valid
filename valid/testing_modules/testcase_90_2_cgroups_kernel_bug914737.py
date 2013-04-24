@@ -10,10 +10,16 @@ class testcase_90_2_cgroups_kernel_bug914737(ValidTestcase):
     tags = ['kernel']
 
     def test(self, connection, params):
+        prod = params['product'].upper()
+        ver = params['version'].upper()
         self.get_return_value(connection, 'if [ ! -f /bin/cgset ]; then yum -y install libcgroup-tools ; fi', 240)
         self.get_return_value(connection, 'if ! mount | grep cgroup ; then service cgconfig start ; fi')
         connection.sftp.put('/usr/share/valid/data/memhog.c', '/root/memhog.c')
-        self.get_result(connection, 'if ! rpm -q gcc ; then yum -y install gcc; fi', 300)
+        if prod == 'FEDORA' and ver == '18':
+            # ugly workaround - dependency problems :-(
+            self.get_result(connection, 'if ! rpm -q gcc ; then yum -y install glibc audit gcc; fi', 300)
+        else:
+            self.get_result(connection, 'if ! rpm -q gcc ; then yum -y install gcc; fi', 300)
         self.get_return_value(connection, 'gcc /root/memhog.c -o /root/memhog')
         for i in range(10):
             # Creating cpu and memory cgroups
