@@ -4,7 +4,7 @@ import logging
 from valid.valid_testcase import *
 
 
-class testcase_361_ebs_defered_detach(ValidTestcase):
+class testcase_361_ebs_deferred_detach(ValidTestcase):
     """
     Perform EBS test:
     - Create the volume
@@ -93,9 +93,9 @@ class testcase_361_ebs_defered_detach(ValidTestcase):
             self.get_return_value(connection, 'ls -l %s' % name, 30)
             self.get_return_value(connection, 'mkfs.ext3 %s' % name, 300)
 
-            self.get_return_value(connection, 'mkdir /mnt/defered')
-            self.get_return_value(connection, 'mount %s /mnt/defered' % name) 
-            self.get_return_value(connection, 'dd if=/dev/zero of=/mnt/defered/zzz_file bs=512 count=102400') 
+            self.get_return_value(connection, 'mkdir /mnt/deferred')
+            self.get_return_value(connection, 'mount %s /mnt/deferred' % name) 
+            self.get_return_value(connection, 'dd if=/dev/zero of=/mnt/deferred/zzz_file bs=512 count=102400') 
 
 
             logging.debug(threading.currentThread().name + ': Ready to detach %s: %s %s' % (volume.id, volume.volume_state(), volume.attachment_state()))
@@ -103,7 +103,7 @@ class testcase_361_ebs_defered_detach(ValidTestcase):
             time.sleep(20)
             volume.update()
 
-            if self.get_return_value(connection, 'umount /mnt/defered', 20) == None:
+            if self.get_return_value(connection, 'umount /mnt/deferred', 20) == None:
                 # bug#794803
                 # doing force-detach
                 ec2connection.detach_volume(volume.id, force=True)
