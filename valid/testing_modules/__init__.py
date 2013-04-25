@@ -44,4 +44,5 @@ import testcase_90_1_kernel_bug874053
 import testcase_90_2_cgroups_kernel_bug914737
 import testcase_98_dmesg_stage1
 import testcase_98_kernel_upgrade_pre
+import testcase_98_package_install_pre
 import testcase_99_reboot
