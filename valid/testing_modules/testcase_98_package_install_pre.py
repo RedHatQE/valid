@@ -30,10 +30,7 @@ class testcase_98_package_install_pre(ValidTestcase):
                 rpmfiles += '/tmp/%s ' % pkgbase
                 checklist.append('[ "' + pkgbase + '" = "$(rpm -q --queryformat %{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm $(rpm -qp --queryformat %{NAME} /tmp/' + pkgbase + '))" ]')
                 self.get_return_value(connection, 'ls -l /tmp/%s' % pkgbase)
-            if len(pkgs_files) == 1:
-                self.get_return_value(connection, 'yum -y --nogpgcheck localinstall %s' % rpmfiles, 900)
-            else:
-                self.get_return_value(connection, 'rpm -U %s' % rpmfiles, 900)
+            self.get_return_value(connection, 'yum -y --nogpgcheck localinstall %s' % rpmfiles, 900)
 
             for check in checklist:
                 self.get_return_value(connection, check)
