@@ -28,7 +28,7 @@ class testcase_98_package_install_pre(ValidTestcase):
                 pkgbase = os.path.basename(pkg)
                 connection.sftp.put(pkg, '/tmp/%s' % pkgbase)
                 rpmfiles += '/tmp/%s ' % pkgbase
-                checklist.append('[ "' + pkgbase + '" = "$(rpm -q $(rpm -qp --queryformat %{NAME} /tmp/' + pkgbase + '))"')
+                checklist.append('[ "' + pkgbase + '" = "$(rpm -q --queryformat %{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm $(rpm -qp --queryformat %{NAME} /tmp/' + pkgbase + '))" ]')
                 self.get_return_value(connection, 'ls -l /tmp/%s' % pkgbase)
             if len(pkgs_files) == 1:
                 self.get_return_value(connection, 'yum -y --nogpgcheck localinstall %s' % rpmfiles, 900)
