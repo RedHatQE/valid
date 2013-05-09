@@ -776,7 +776,7 @@ class WorkerThread(threading.Thread):
                 try:
                     con = Connection(params['instance'], user, ssh_key)
                     Expect.ping_pong(con, 'uname', 'Linux')
-                    Expect.ping_pong(con, 'su -c \'cp -af /home/' + user + '/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys\' && echo SUCCESS', '\r\nSUCCESS\r\n')
+                    Expect.ping_pong(con, 'sudo su -c \'cp -af /home/' + user + '/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys\' && echo SUCCESS', '\r\nSUCCESS\r\n')
                 except:
                     pass
 
