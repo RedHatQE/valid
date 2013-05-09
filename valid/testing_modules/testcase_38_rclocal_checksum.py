@@ -7,9 +7,9 @@ from valid.valid_testcase import *
 
 class testcase_38_rclocal_checksum(ValidTestcase):
     """
-    Grab dmesg output
+    Get checksum for /etc/rc.d/rc.local (debugging purposes)
     """
-    tags = ['kernel']
+    tags = []
     stages = ['stage1']
 
     def test(self, connection, params):
