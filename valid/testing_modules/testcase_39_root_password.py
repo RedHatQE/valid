@@ -14,5 +14,5 @@ class testcase_39_root_password(ValidTestcase):
 
     def test(self, connection, params):
         # Root password shouldn't be empty
-        self.get_resturn_value(connection, 'grep "^root::" /etc/shadow', expected_status=1)
+        self.get_return_value(connection, 'grep "^root::" /etc/shadow', expected_status=1)
         return self.log
