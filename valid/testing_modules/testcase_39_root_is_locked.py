@@ -5,7 +5,7 @@ import time
 from valid.valid_testcase import *
 
 
-class testcase_39_root_password(ValidTestcase):
+class testcase_39_root_is_locked(ValidTestcase):
     """
     Check root password
     """
@@ -13,6 +13,6 @@ class testcase_39_root_password(ValidTestcase):
     stages = ['stage1']
 
     def test(self, connection, params):
-        # Root password shouldn't be empty
-        self.get_return_value(connection, 'grep "^root::" /etc/shadow', expected_status=1)
+        # Root account should be locked
+        self.get_return_value(connection, 'grep "^root:\!\!" /etc/shadow', expected_status=0)
         return self.log
