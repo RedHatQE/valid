@@ -33,6 +33,7 @@ counted_actual_results = ('', None, 'None')
 by_region = {}
 by_itype = {}
 by_command = {}
+by_stage = {}
 total = 0
 
 
@@ -48,6 +49,11 @@ for ami in data:
             continue
         for stage in sorted(itype_result.keys()):
             test_result = itype_result[stage]
+            if itype_result[stage] in failure_messages:
+                if stage not in by_stage:
+                    by_stage[stage] = []
+                by_stage[stage].append(ami['ami'])
+                continue
             for command in test_result:
                 if type(command) is not dict:
                     continue
@@ -84,6 +90,7 @@ stats = {
     'by_command': by_command,
     'by_region': by_region,
     'by_itype': by_itype,
+    'by_stage': by_stage,
     'total': total
 }
 
