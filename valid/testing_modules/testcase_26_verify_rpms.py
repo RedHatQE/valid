@@ -30,7 +30,7 @@ class testcase_26_verify_rpms(ValidTestcase):
                 rpmv_cmp = '3'
 
         rpmv = self.get_result(connection, 'rpm -Va --nomtime --nosize --nomd5 | sort -fu | wc -l', 90)
-        rpmrel = self.get_result(connection, 'rpm -q --queryformat \'%{RELEASE}\n\' ' + release_pkg + ' | cut -d. -f1,2')
+        rpmrel = self.get_result(connection, 'rpm -q --queryformat \'%{RELEASE}\n\' ' + release_pkg + ' | cut -d. -f1,2', 30)
 
         if rpmv:
             self.get_return_value(connection, '[ %s = %s ]' % (rpmv, rpmv_cmp))

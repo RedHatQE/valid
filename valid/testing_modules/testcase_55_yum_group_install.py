@@ -9,5 +9,5 @@ class testcase_55_yum_group_install(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
-        self.get_return_value(connection, 'yum -y groupinstall \'Development tools\'', 600)
+        self.get_return_value(connection, 'yum -y groupinstall \'Development tools\'', 900)
         return self.log
