@@ -597,13 +597,7 @@ class WorkerThread(threading.Thread):
                 elif action == 'test':
                     params['result'] = {params['stages'][0]: 'failure'}
                 if action != 'terminate':
-                    # we need to change expected value in resultdic
-                    with resultdic_lock:
-                        resultdic[params['transaction_id']][params['ami']]['ninstances'] -= (len(params['stages']) - 1)
-                    self.report_results(params)
-                    if 'id' in params.keys():
-                        # Try to terminate the instance
-                        mainq.put((0, 'terminate', params.copy()))
+                    self.abort_testing(params)
                 continue
             if action == 'create':
                 # create an instance
@@ -621,6 +615,21 @@ class WorkerThread(threading.Thread):
                 # terminate instance
                 logging.debug(self.getName() + ': terminating ' + params['iname'])
                 self.do_terminate(ntry, params)
+
+    def abort_testing(self, params):
+        """
+        Something went wrong and we need to abort testing
+
+        @param params: list of testing parameters
+        @type params: list
+        """
+        # we need to change expected value in resultdic
+        with resultdic_lock:
+            resultdic[params['transaction_id']][params['ami']]['ninstances'] -= (len(params['stages']) - 1)
+        self.report_results(params)
+        if 'id' in params.keys():
+            # Try to terminate the instance
+            mainq.put((0, 'terminate', params.copy()))
 
     def report_results(self, params):
         """
@@ -735,12 +744,17 @@ class WorkerThread(threading.Thread):
             elif str(e).find('<Code>InvalidParameterValue</Code>') != -1:
                 # InvalidParameterValue is really bad
                 logging.error(self.getName() + ': got boto error during instance creation: %s' % e)
-                # Try to speed up whole testing process, it's hardly possible to recover from this error
-                ntry += args.maxtries // 2 + 1
+                # Failing testing
+                params['result'] = {"create": 'failure'}
+                self.abort_testing(params)
+                return
             elif str(e).find('<Code>Unsupported</Code>') != -1:
-                # Unsupported
-                logging.error(self.getName() + ': got Unsupported - most likely the permanent error: %s' % e)
-                ntry += args.maxtries // 2 + 1
+                # Unsupported hardware in the region
+                logging.debug(self.getName() + ': got Unsupported - most likely the permanent error: %s' % e)
+                # Skipping testing
+                params['result'] = {"create": 'skip'}
+                self.abort_testing(params)
+                return
             else:
                 logging.debug(self.getName() + ':' + traceback.format_exc())
         except socket.error, e:
