@@ -743,9 +743,23 @@ class WorkerThread(threading.Thread):
                 ntry -= 1
             elif str(e).find('<Code>InvalidParameterValue</Code>') != -1:
                 # InvalidParameterValue is really bad
-                logging.error(self.getName() + ': got boto error during instance creation: %s' % e)
+                logging.error(self.getName() + ': got error during instance creation: %s' % e)
                 # Failing testing
                 params['result'] = {"create": 'failure'}
+                self.abort_testing(params)
+                return
+            elif str(e).find('<Code>InvalidAMIID.NotFound</Code>') != -1:
+                # No such AMI in the region
+                logging.error(self.getName() + ': AMI %s not found in %s' % (params['ami'], params['region']))
+                # Failing testing
+                params['result'] = {"create": 'failure, no such ami in the region'}
+                self.abort_testing(params)
+                return
+            elif str(e).find('<Code>AuthFailure</Code>') != -1:
+                # Not authorized is permanent
+                logging.error(self.getName() + ': not authorized for AMI %s in %s' % (params['ami'], params['region']))
+                # Failing testing
+                params['result'] = {"create": 'failure, not authorized for images'}
                 self.abort_testing(params)
                 return
             elif str(e).find('<Code>Unsupported</Code>') != -1:
