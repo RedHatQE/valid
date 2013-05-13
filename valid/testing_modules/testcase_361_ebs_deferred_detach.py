@@ -91,7 +91,7 @@ class testcase_361_ebs_deferred_detach(ValidTestcase):
                     break
                 time.sleep(1)
             self.get_return_value(connection, 'ls -l %s' % name, 30)
-            self.get_return_value(connection, 'mkfs.ext3 %s' % name, 300)
+            self.get_return_value(connection, 'echo y| mkfs.ext3 %s' % name, 300)
 
             self.get_return_value(connection, 'mkdir /mnt/deferred')
             self.get_return_value(connection, 'mount %s /mnt/deferred' % name) 

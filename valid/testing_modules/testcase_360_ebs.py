@@ -94,7 +94,7 @@ class testcase_360_ebs(ValidTestcase):
                 # mkfs.vfat is faster!
                 self.get_return_value(connection, 'mkfs.vfat -I %s' % name, 60)
             else:
-                self.get_return_value(connection, 'mkfs.ext3 %s' % name, 300)
+                self.get_return_value(connection, 'echo y | mkfs.ext3 %s' % name, 300)
             logging.debug(threading.currentThread().name + ': Ready to detach %s: %s %s' % (volume.id, volume.volume_state(), volume.attachment_state()))
             ec2connection.detach_volume(volume.id)
             time.sleep(5)
