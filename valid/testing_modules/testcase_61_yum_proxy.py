@@ -27,9 +27,7 @@ class testcase_61_yum_proxy(ValidTestcase):
         self.get_return_value(
             connection,
             'yum --disablerepo=* --enablerepo=' +
-            'rhui-%s-client-config-server-%s' % (params['region'],
-                params['version'].split('.')[0]) +
-            ' --nogpgcheck update -y',
+            'rhui-%s-client-config-server-%s' % (params['region'], params['version'].split('.')[0]) + ' --nogpgcheck update -y',
             timeout=yum_timeout
         )
 
@@ -51,10 +49,9 @@ class testcase_61_yum_proxy(ValidTestcase):
             yum_conf_data = yum_conf_fp.read()
             yum_conf_fp.close()
         except IOError, e:
-            self.log.append({
-                'result': 'failure',
-                'comment': 'failed to get actual repo list %s' % e
-                })
+            self.log.append({'result': 'failure',
+                             'comment': 'failed to get actual repo list %s' % e
+                             })
             return self.log
         # read as INI
         yum_conf_fp = StringIO.StringIO(yum_conf_data)

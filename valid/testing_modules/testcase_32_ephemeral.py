@@ -39,8 +39,7 @@ class testcase_32_ephemeral(ValidTestcase):
                     else:
                         self.get_return_value(connection, 'mkfs.ext3 %s' % name, 300)
         if not has_ephemeral:
-            self.log.append({
-                    'result': 'skip',
-                    'comment': 'no ephemeral devices in block map'
-                    })
+            self.log.append({'result': 'skip',
+                             'comment': 'no ephemeral devices in block map'
+                             })
         return self.log

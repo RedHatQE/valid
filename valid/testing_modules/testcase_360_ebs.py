@@ -31,10 +31,9 @@ class testcase_360_ebs(ValidTestcase):
         elif '_placement' in params['instance']:
             volume = ec2connection.create_volume(10, params['instance']['_placement'])
         else:
-            self.log.append({
-                    'result': 'failure',
-                    'comment': 'Failed to get instance placement'
-                    })
+            self.log.append({'result': 'failure',
+                             'comment': 'Failed to get instance placement'
+                             })
             return self.log
         logging.debug(threading.currentThread().name + ': Volume %s created' % volume.id)
         time.sleep(5)
@@ -44,10 +43,9 @@ class testcase_360_ebs(ValidTestcase):
             time.sleep(1)
             wait += 1
             if wait > 300:
-                self.log.append({
-                        'result': 'failure',
-                        'comment': 'Failed to create EBS volume %s (timeout 300)' % volume.id
-                        })
+                self.log.append({'result': 'failure',
+                                 'comment': 'Failed to create EBS volume %s (timeout 300)' % volume.id
+                                 })
                 ec2connection.delete_volume(volume.id)
                 return self.log
         if volume.volume_state() == 'available':
@@ -62,26 +60,24 @@ class testcase_360_ebs(ValidTestcase):
                 time.sleep(1)
                 wait += 1
                 if wait > 300:
-                    self.log.append({
-                            'result': 'failure',
-                            'comment': 'Failed to attach EBS volume %s (timeout 300)' % volume.id
-                            })
+                    self.log.append({'result': 'failure',
+                                     'comment': 'Failed to attach EBS volume %s (timeout 300)' % volume.id
+                                     })
                     ec2connection.delete_volume(volume.id)
                     return self.log
             if volume.attachment_state() != 'attached':
                 logging.debug(threading.currentThread().name + ': Error attaching volume %s' % volume.id)
-                self.log.append({
-                        'result': 'failure',
-                        'comment': 'Failed to attach EBS volume %s' % volume.id
-                        })
+                self.log.append({'result': 'failure',
+                                 'comment': 'Failed to attach EBS volume %s' % volume.id
+                                 })
                 ec2connection.delete_volume(volume.id)
                 return self.log
 
             if (prod in ['RHEL', 'BETA']) and (ver.startswith('5.')):
                 name = device
             elif (prod in ['RHEL', 'BETA']) and (ver.startswith('6.')) and (params['virtualization'] != 'hvm'):
-                # 4-letter shift
-                name = device.replace("/dev/sd", "/dev/xvd")[:-1] + chr(ord(device.replace("/dev/sd", "/dev/xvd")[-1:])+4)
+                # 4 letter shift
+                name = device.replace("/dev/sd", "/dev/xvd")[:-1] + chr(ord(device.replace("/dev/sd", "/dev/xvd")[-1:]) + 4)
             else:
                 name = device.replace("/dev/sd", "/dev/xvd")
             # waiting for this volume
@@ -106,28 +102,24 @@ class testcase_360_ebs(ValidTestcase):
                 time.sleep(1)
                 wait += 1
                 if wait > 300:
-                    self.log.append({
-                            'result': 'failure',
-                            'comment': 'Failed to detach EBS volume %s (timeout 300)' % volume.id
-                            })
+                    self.log.append({'result': 'failure',
+                                     'comment': 'Failed to detach EBS volume %s (timeout 300)' % volume.id
+                                     })
                     ec2connection.delete_volume(volume.id)
                     return self.log
             if volume.volume_state() != 'available':
                 logging.debug(threading.currentThread().name + ': Error detaching volume %s' % volume.id)
-                self.log.append({
-                        'result': 'failure',
-                        'comment': 'Failed to detach EBS volume %s' % volume.id
-                        })
+                self.log.append({'result': 'failure',
+                                 'comment': 'Failed to detach EBS volume %s' % volume.id
+                                 })
                 return self.log
             logging.debug(threading.currentThread().name + ': Ready to delete %s: %s %s' % (volume.id, volume.volume_state(), volume.attachment_state()))
             if not ec2connection.delete_volume(volume.id):
-                self.log.append({
-                        'result': 'failure',
-                        'comment': 'Failed to remove EBS volume %s' % volume.id
-                        })
+                self.log.append({'result': 'failure',
+                                 'comment': 'Failed to remove EBS volume %s' % volume.id
+                                 })
         else:
-            self.log.append({
-                    'result': 'failure',
-                    'comment': 'Failed to create EBS volume %s' % volume.id
-                    })
+            self.log.append({'result': 'failure',
+                             'comment': 'Failed to create EBS volume %s' % volume.id
+                             })
         return self.log

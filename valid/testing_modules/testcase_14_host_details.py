@@ -16,7 +16,7 @@ class testcase_14_host_details(ValidTestcase):
         if json_str:
             try:
                 js = json.loads(json_str[0])
-                if 'billingProducts' in js.keys() and js['billingProducts'] != None:
+                if 'billingProducts' in js.keys() and not js['billingProducts'] is None:
                     billingProduct = js['billingProducts'][0]
                 else:
                     billingProduct = ''

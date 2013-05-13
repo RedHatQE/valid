@@ -30,7 +30,7 @@ def get_overall_result(ami):
                             for key in sorted(command.keys()):
                                 bug_description += "\t%s: %s\n" % (key, command[key])
                             bug_description += "<---\n"
-                elif test_result=="skip":
+                elif test_result == "skip":
                     bug_description += "%s skipped\n" % stage
                 else:
                     bug_description += "stage testing failed!\n"

@@ -191,20 +191,19 @@ def add_data(data, emails=None, subject=None):
                         hwpfd.close()
                         # filter hwps based on args
                         hwp = filter(lambda x: re.match(args.hwp_filter,
-                                    x['ec2name']), hwp)
+                                                        x['ec2name']), hwp)
                         if not len(hwp):
                             # precautions
                             logging.info('no hwp match for %s; nothing to do' %
-                                        args.hwp_filter)
+                                         args.hwp_filter)
                             continue
 
                         logging.info('using hwps: %s' %
-                            reduce(
-                                lambda x, y: x + ', %s' % str(y['ec2name']),
-                                hwp[1:],
-                                str(hwp[0]['ec2name'])
-                            )
-                        )
+                                     reduce(lambda x, y: x + ', %s' % str(y['ec2name']),
+                                            hwp[1:],
+                                            str(hwp[0]['ec2name'])
+                                            )
+                                     )
                         ninstances = 0
                         for hwp_item in hwp:
                             params_copy = params.copy()
@@ -964,7 +963,7 @@ argparser.add_argument('--server', action='store_const', const=True,
 argparser.add_argument('--settlewait', type=int,
                        default=30, help='wait for instance to settle before testing')
 argparser.add_argument('--hwp-filter', help='select hwps to instantiate',
-                      default='.*')
+                       default='.*')
 
 args = argparser.parse_args()
 maxtries = args.maxtries

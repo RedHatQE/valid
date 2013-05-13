@@ -47,8 +47,6 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
                 self.log.append({'result': 'passed', 'command': 'reboot'})
             time.sleep(30)
         else:
-            self.log.append({
-                    'result': 'skip',
-                    'comment': 'no kernel upgrade was done'
-                    })
+            self.log.append({'result': 'skip',
+                             'comment': 'no kernel upgrade was done'})
         return self.log

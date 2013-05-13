@@ -21,9 +21,8 @@ class testcase_98_dmesg_stage1(ValidTestcase):
         dmesg = fd.read()
         fd.close()
         os.unlink(tf.name)
-        self.log.append({
-                'result': 'passed',
-                'comand': 'get dmesg',
-                'dmesg': dmesg
-                })
+        self.log.append({'result': 'passed',
+                         'comand': 'get dmesg',
+                         'dmesg': dmesg
+                         })
         return self.log

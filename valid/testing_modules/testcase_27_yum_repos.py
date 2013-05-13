@@ -30,8 +30,7 @@ class testcase_27_yum_repos(ValidTestcase):
         except IOError, e:
             self.log.append({
                 'result': 'failure',
-                'comment': 'failed to get actual repo list %s' % e
-                })
+                'comment': 'failed to get actual repo list %s' % e})
             return self.log
 
         # make 'Repo-id : <id>' ini section headers: '[<id>]'
@@ -61,8 +60,7 @@ class testcase_27_yum_repos(ValidTestcase):
         except KeyError as e:
             self.log.append({
                 'result': 'skip',
-                'comment': 'unsupported region and/or product-version combination'
-                })
+                'comment': 'unsupported region and/or product-version combination'})
             return self.log
         # expand %region%
         expected_repos = {}

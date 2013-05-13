@@ -8,16 +8,19 @@ import tempfile
 import sys
 from valid import valid_result
 
+
 class Summary(object):
-    def __init__(self, contents = [], verbose=False):
+    def __init__(self, contents=[], verbose=False):
         self.contents = contents
         self.verbose = verbose
+
     def add(self, ami, status=None, bug=None):
         print "# %s: %s" % (ami, bug)
         self.contents.append({'id': str(ami), 'bug': str(bug), 'status': str(status)})
+
     def __str__(self):
         return "## total: %d records\n" % len(self.contents) + (self.verbose and
-            yaml.dump(self.contents) or "")
+                                                                yaml.dump(self.contents) or "")
 
 
 argparser = argparse.ArgumentParser(description='Report validation result to bugzilla')

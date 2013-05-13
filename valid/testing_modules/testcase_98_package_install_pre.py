@@ -36,8 +36,6 @@ class testcase_98_package_install_pre(ValidTestcase):
                 self.get_return_value(connection, check)
 
         else:
-            self.log.append({
-                    'result': 'skip',
-                    'comment': 'no package in parameters, no upgrade was done'
-                    })
+            self.log.append({'result': 'skip',
+                             'comment': 'no package in parameters, no upgrade was done'})
         return self.log

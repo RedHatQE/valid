@@ -10,6 +10,7 @@ import re
 
 RUNTIME_ERR = 2
 
+
 def na_exit(key, value):
     # to exit with a skip result containing the N/A statement
     test_result = {
@@ -22,6 +23,7 @@ def na_exit(key, value):
 
 class LoadError(Exception):
     pass
+
 
 def load_yaml(file=None, index=0):
     # load a yaml file in the format of a list of records
@@ -43,8 +45,10 @@ def load_yaml(file=None, index=0):
             raise ParamsError("can't read data; record not a dict")
     return record
 
+
 class ParamsError(Exception):
     pass
+
 
 def get_params(args):
     # merge cmdline parameters with data & hwp parameters

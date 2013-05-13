@@ -13,10 +13,9 @@ class testcase_90_1_kernel_bug874053(ValidTestcase):
 
     def test(self, connection, params):
         if len(params['bmap']) != 8:
-            self.log.append({
-                    'result': 'skip',
-                    'comment': 'Inappropriate bmap'
-                    })
+            self.log.append({'result': 'skip',
+                             'comment': 'Inappropriate bmap'
+                             })
             return self.log
         if (params['product'].upper() == 'RHEL' or params['product'].upper() == 'BETA') and params['version'].startswith('6.'):
             # Will assume EL6 device mapping

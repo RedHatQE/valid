@@ -19,18 +19,15 @@ class testcase_33_userdata(ValidTestcase):
                     userdata_tested = True
                     self.get_return_value(connection, 'rpm -q httpd')
                 if not userdata_tested:
-                    self.log.append({
-                            'result': 'skip',
-                            'comment': 'cannot test provided userdata'
-                            })
+                    self.log.append({'result': 'skip',
+                                     'comment': 'cannot test provided userdata'
+                                     })
             else:
-                self.log.append({
-                        'result': 'skip',
-                        'comment': 'no cloud-init package'
-                        })
+                self.log.append({'result': 'skip',
+                                 'comment': 'no cloud-init package'
+                                 })
         else:
-            self.log.append({
-                    'result': 'skip',
-                    'comment': 'no userdata'
-                    })
+            self.log.append({'result': 'skip',
+                             'comment': 'no userdata'
+                             })
         return self.log
