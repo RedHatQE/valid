@@ -128,17 +128,38 @@ class InstantiationError(Exception):
     pass
 
 class InstanceThread(threading.Thread):
+    start_thread_ratio = 1.66
+    stop_thread_ratio = 3.00
+
     def run(self):
         while True:
             logging.debug(self.getName() + ": task queue: %s" %yaml.dump(mainq.queue))
-            if mainq.empty():
-                # task queue empty; this being a single-shot app -> thread exits
-                break
+            # Thread / queue ratio management
+            if mainq.empty() or threading.active_count() / mainq.qsize() > self.stop_thread_ratio:
+                if not hasattr(self, "dying"):
+                    self.dying = 0
+                if self.dying >= 5:
+                    # too many retries with stop_thread_ratio reached
+                    # terminating
+                    logging.debug(self.getName() + ": too sad a queue...")
+                    break
+                self.dying += 1
+                time.sleep(random.randint(2, 12 - 2*self.dying))
+                continue
+            if threading.active_count() / mainq.qsize() < self.start_thread_ratio:
+                logging.debug(self.getName() + ": merry queue...")
+                i = InstanceThread()
+                i.start()
+            self.dying = 0
+
             try:
                 (ntry, action, params) = mainq.get()
                 mainq.task_done()
-            except:
+                logging.debug(self.getName() + ": got task: action: (%s, %s, %s)" % (ntry, action, params))
+            except Exception as e:
+                logging.debug(self.getName() + ": got %s: fetching action; reschedule" % e)
                 continue
+
             if ntry > maxtries:
                 logging.error(self.getName() + ": %s: %s failed after %d tries" %
                              (action, params, ntry))
@@ -226,9 +247,9 @@ class InstanceThread(threading.Thread):
             instance.add_tag("Name", "%s_dummy_%s" % (ami['ami'], randString()))
             ami['dummy'] = instance.id
         except boto.exception.EC2ResponseError as e:
-            logging.debug("got %s" % e)
+            logging.debug(self.getName() + ": got %s" % e)
             if "<Code>InstanceLimitExceeded</Code>" in str(e):
-                logging.info("Instance limit reached in %s" % region_name)
+                logging.info(self.getName() + ": Instance limit reached in %s" % region_name)
                 task = (ntry + 1, 'instantiate', params.copy())
             elif "<Code>InvalidParameterValue</Code>" in str(e):
                 raise InstantiationError(
@@ -241,7 +262,7 @@ class InstanceThread(threading.Thread):
                     (args.config.name, region_name)
                 )
             else:
-                logging.info("got %s" % e)
+                logging.info(self.getName() + ": got %s" % e)
                 task = (ntry * 1.66 + 1, 'instantiate', params.copy())
         else:
             # it worked!
@@ -280,14 +301,14 @@ class InstanceThread(threading.Thread):
                 instance_ids=ami['dummy']
             )[0].instances[0].__dict__
         except Exception as e:
-            logging.warning("got %s fetching dummy instance for ami: %s" %
+            logging.warning(self.getName() + ": got %s fetching dummy instance for ami: %s" %
                            (e, ami))
             return
         while count < maxwait / 5 :
             count += 1
             logging.info(self.getName() + ": connecting dummy %s (%d)" %
                         (instance, maxwait / 5 - count))
-            logging.debug("  key name: %s, key file: %s" % (key_name, key_file))
+            logging.debug(self.getName() + ":   key name: %s, key file: %s" % (key_name, key_file))
 
             con = None
             for user in ['ec2-user', 'cloud-user', 'root']:
@@ -297,7 +318,7 @@ class InstanceThread(threading.Thread):
                     #if ami['product'].upper().startswith('RHEL'):
                     #    Expect.expect_retval(con, "yum update rh-amazon-rhui-client", timeout=600) 
                 except Exception as e:
-                    logging.debug("trying user %s: %s" % (user, e))
+                    logging.debug(self.getName() + ": trying user %s: %s" % (user, e))
             if con is not None:
                 break
             time.sleep(5)
@@ -343,12 +364,12 @@ class InstanceThread(threading.Thread):
                 instance_ids=[instance]
             )[0].instances[0]
 
-            logging.info("stopping %s" % ami['dummy'])
+            logging.info(self.getName() + ": stopping %s" % ami['dummy'])
     
             results = region_connection.get_all_instances(instance_ids=[ami['dummy']])
             if not results:
                 # inconsistent data??
-                logging.warning("couldn't find dummy in EC2: %s" % ami)
+                logging.warning(self.getName() + ": couldn't find dummy in EC2: %s" % ami)
                 return
 
             instance = results[0].instances[0]
@@ -360,21 +381,21 @@ class InstanceThread(threading.Thread):
                 count += 1
                 time.sleep(5)
             if instance.update() != 'stopped':
-                logging.warning("could not stop instance: %s" %
+                logging.warning(self.getName() + ": could not stop instance: %s" %
                                ami['dummy'])
                 return
 
             # snapshot the instance ami
-            logging.info("creating snapshot of %s" % ami['ami'])
+            logging.info(self.getName() + ": creating snapshot of %s" % ami['ami'])
             ami['snapshot'] = instance.create_image(
                 "ami-snapshot---%s---%s" % (ami['ami'], randString(8)),
                 description="a snapshot ami"
             )
             self.update_data_file_record(ami)
-            logging.info("snapshot %(ami)s: %(dummy)s -> %(snapshot)s taken" % ami)
+            logging.info(self.getName() + ": snapshot %(ami)s: %(dummy)s -> %(snapshot)s taken" % ami)
 
         except None as e:
-            logging.warning("got %s taking snapshot: %s" %
+            logging.warning(self.getName() + ": got %s taking snapshot: %s" %
                            (e, ami))
             return
         task = (0, 'check_snapshot', ami.copy())
@@ -396,7 +417,7 @@ class InstanceThread(threading.Thread):
             results = region_connection.get_all_images(image_ids=[ami['snapshot']])
             if not results: 
                 # inconsistent data??
-                logging.warning("ami snapshot field present in %s but not found in EC2" % ami)
+                logging.warning(self.getName() + ": ami snapshot field present in %s but not found in EC2" % ami)
                 return
 
             snapshot = results[0]
@@ -408,10 +429,10 @@ class InstanceThread(threading.Thread):
                 return
                 
             if snapshot.update(validate=True) != 'available':
-                logging.warning("couldn't check snapshot of %s was available in time" % ami)
+                logging.warning(self.getName() + ": couldn't check snapshot of %s was available in time" % ami)
 
         except None as e:
-            logging.warning("got %s checking snapshot: %s" %
+            logging.warning(self.getName() + ": got %s checking snapshot: %s" %
                            (e, ami))
             return
 
@@ -457,7 +478,7 @@ class InstanceThread(threading.Thread):
                 aws_secret_access_key=ec2_secret_key
             )
 
-            logging.info("copying %s" % ami_copy_name)
+            logging.info(self.getName() + ": copying %s" % ami_copy_name)
             ami_copy = region_connection.copy_image(
                 src_region,
                 ami['snapshot'],
@@ -476,7 +497,7 @@ class InstanceThread(threading.Thread):
             mainq.put((0, 'check_copy', ami.copy()))
 
         except None as e:
-            logging.warning("got %s creating copy %s" % (e, ami_copy_name))
+            logging.warning(self.getName() + ": got %s creating copy %s" % (e, ami_copy_name))
 
     def check_copy(self, ntry, ami):
         try:
@@ -491,12 +512,12 @@ class InstanceThread(threading.Thread):
                 aws_secret_access_key=ec2_secret_key
             )
 
-            logging.info("checking %s" % ami['ami'])
+            logging.info(self.getName() + ": checking %s" % ami['ami'])
             
             results = region_connection.get_all_images(image_ids=[ami['ami']])
             if not results:
                 # inconsistent data??
-                logging.warning("got ami copy: %s but not found in EC2" % ami)
+                logging.warning(self.getName() + ": got ami copy: %s but not found in EC2" % ami)
                 return
 
             copy = results[0]
@@ -508,21 +529,21 @@ class InstanceThread(threading.Thread):
                 return
 
             if copy.update(validate=True) != 'available':
-                logging.warning("couldn't copy %s in time" % ami_copy_id)
+                logging.warning(self.getName() + ": couldn't copy %s in time" % ami_copy_id)
                 return
 
             self.append_data_file_record(ami)
-            logging.info("done copying %s" % ami['ami'])
+            logging.info(self.getName() + ": done copying %s" % ami['ami'])
 
         except None as e:
-            logging.warning("got %s copying %s" % (e, ami_copy_name))
+            logging.warning(self.getName() + ": got %s copying %s" % (e, ami_copy_name))
         
              
     def terminate_dummy(self, ntry, ami): 
         # terminate the dummy instance
         try:
             if not 'dummy' in ami:
-                logging.info("terminate dummy not needed for %s" % ami)
+                logging.info(self.getName() + ": terminate dummy not needed for %s" % ami)
                 return
             region = boto.ec2.get_region(
                 ami['region'][0],
@@ -536,11 +557,11 @@ class InstanceThread(threading.Thread):
             results = region_connection.get_all_instances(instance_ids=[ami['dummy']])
 
             if not results:
-                logging.warning("got non-existing dummy id: %s" % ami['dummy']) 
+                logging.warning(self.getName() + ": got non-existing dummy id: %s" % ami['dummy']) 
                 return
 
             instance = results[0].instances[0]
-            logging.info("terminating %s" % ami['dummy'])
+            logging.info(self.getName() + ": terminating %s" % ami['dummy'])
             instance.terminate()
             count = 0
             while instance.update() != 'terminated' and count < maxwait / 5:
@@ -550,14 +571,14 @@ class InstanceThread(threading.Thread):
                 count += 1
                 time.sleep(5)
             if instance.update() != 'terminated':
-                logging.warning("could not terminate instance: %s" %
+                logging.warning(self.getName() + ": could not terminate instance: %s" %
                                ami['dummy'])
                 return
             del(ami['dummy'])
             self.update_data_file_record(ami)
             
         except Exception as e:
-            logging.warning("got %s terminating %s" % (e, ami['dummy']))
+            logging.warning(self.getName() + ": got %s terminating %s" % (e, ami['dummy']))
 
     def remove_snapshot(self, ntry, ami):
         try:
@@ -572,12 +593,12 @@ class InstanceThread(threading.Thread):
                 aws_secret_access_key=ec2_secret_key
             )
 
-            logging.info("removing snapshot %s" % ami['snapshot'])
+            logging.info(self.getName() + ": removing snapshot %s" % ami['snapshot'])
             
             results = region_connection.get_all_images(image_ids=[ami['snapshot']])
             if not results:
                 # inconsistent data??
-                logging.warning("got snapshot: %s but not found in EC2; removing from data" % ami['snapshot'])
+                logging.warning(self.getName() + ": got snapshot: %s but not found in EC2; removing from data" % ami['snapshot'])
                 del(ami['snapshot'])
                 self.update_data_file_record(ami)
                 return
@@ -588,7 +609,7 @@ class InstanceThread(threading.Thread):
             self.update_data_file_record(ami)
 
         except None as e:
-            logging.warning("got %s removing snapshot ami for %s" % (e, ami))
+            logging.warning(self.getName() + ": got %s removing snapshot ami for %s" % (e, ami))
         
     def remove_copy_ami(self, ntry, ami):
         try:
@@ -603,12 +624,13 @@ class InstanceThread(threading.Thread):
                 aws_secret_access_key=ec2_secret_key
             )
 
-            logging.info("removing copy %s" % ami['ami'])
+            logging.info(self.getName() + ": removing copy %s" % ami['ami'])
             
             results = region_connection.get_all_images(image_ids=[ami['ami']])
             if not results:
                 # inconsistent data??
-                logging.warning("got copy %s but not found in EC2" % ami['ami'])
+                logging.warning(self.getName() + ": got copy %s but not found in EC2; removing" % ami['ami'])
+                self.remove_data_file_record(ami)
                 return
 
             copy = results[0]
@@ -617,89 +639,97 @@ class InstanceThread(threading.Thread):
             self.remove_data_file_record(ami)
 
         except None as e:
-            logging.warning("got %s removing copy ami %s" % (e, ami))
+            logging.warning(self.getName() + ": got %s removing copy ami %s" % (e, ami))
 
 
 
     def append_data_file_record(self, record):
-        with data_lock:
-            with open(args.data.name) as fd:
-                data = yaml.load(fd)
+        with open(args.data.name, "r+") as fd, data_lock:
+            data = yaml.load(fd)
             if type(data) is not list:
                 raise TypeError("Can't process data file: %s, not a list of items" % args.data.name)
 
-            logging.debug("appending record: %s" % record)
+            logging.debug(self.getName() + ": appending record: %s" % record)
             data.append(record)        
 
-            with open(args.data.name, 'w+') as fd:
-                # dump data
-                try:
-                    yaml.dump(data, fd)
-                except Exception as e:
-                    logging.error(self.getName() + ":Couldn't update %s: %s" %
-                                 (fd.name, e))
-                else:
-                    logging.debug(self.getName() +": written %s" % fd.name)
+            # dump data
+            logging.debug(self.getName() + ": dumping: %s" % data)
+            try:
+                fd.seek(0)
+                yaml.dump(data, fd)
+                fd.truncate()
+            except Exception as e:
+                logging.error(self.getName() + ":Couldn't update %s: %s" %
+                             (fd.name, e))
+            else:
+                logging.debug(self.getName() +": written %s" % fd.name)
 
 
     def update_data_file_record(self, record):
-        with data_lock:
-            with open(args.data.name) as fd:
-                data = yaml.load(fd)
+        with open(args.data.name, "r+") as fd, data_lock:
+            data = yaml.load(fd)
             if type(data) is not list:
                 raise TypeError("Can't process data file: %s, not a list of items" % args.data.name)
 
             for i in range(len(data)):
                 entry = data[i]
+                logging.debug(self.getName() + ": data[%d] == %s" % (i, entry))
                 if type(entry) is not dict:
-                    logging.debug("skip non-dict record: %s" % entry)
+                    logging.debug(self.getName() + ": skip non-dict record: %s" % entry)
                     continue 
                 if 'ami' not in entry:
-                    logging.debug("skip non-ami record: %s" % entry)
+                    logging.debug(self.getName() + ": skip non-ami record: %s" % entry)
                     continue
                 if entry['ami'] == record['ami']:
-                    logging.debug("updating %s -> %s" % (entry, record))
+                    logging.debug(self.getName() + ": updating %s -> %s" % (entry, record))
                     data[i] = record
     
-            with open(args.data.name, 'w+') as fd:
-                # dump data
-                logging.debug("dumping: %s" % data)
-                try:
-                    yaml.dump(data, fd)
-                except Exception as e:
-                    logging.error(self.getName() + ":Couldn't update %s: %s" %
-                                 (fd.name, e))
-                else:
-                    logging.debug(self.getName() +": written %s" % fd.name)
+            # dump data
+            logging.debug(self.getName() + ": dumping: %s" % data)
+            try:
+                fd.seek(0)
+                yaml.dump(data, fd)
+                fd.truncate()
+            except Exception as e:
+                logging.error(self.getName() + ":Couldn't update %s: %s" %
+                             (fd.name, e))
+            else:
+                logging.debug(self.getName() +": written %s" % fd.name)
 
     def remove_data_file_record(self, record):
-        with data_lock:
-            with open(args.data.name) as fd:
-                data = yaml.load(fd)
+        with data_lock, open(args.data.name, "r+") as fd:
+            data = yaml.load(fd)
             if type(data) is not list:
                 raise TypeError("Can't process data file: %s, not a list of items" % args.data.name)
 
             for i in range(len(data)):
                 entry = data[i]
+                logging.debug(self.getName() + ": data[%d] == %s" % (i, entry))
                 if type(entry) is not dict:
-                    logging.debug("skip non-dict record: %s" % entry)
+                    logging.debug(self.getName() + ": skip non-dict record: %s" % entry)
                     continue 
                 if 'ami' not in entry:
-                    logging.debug("skip non-ami record: %s" % entry)
+                    logging.debug(self.getName() + ": skip non-ami record: %s" % entry)
                     continue
                 if entry == record:
-                    logging.debug("deleting record: %s" % record)
+                    logging.debug(self.getName() + ": deleting record: %s" % record)
                     del(data[i])
+                    # fixme; multiple entries won't get deleted this way
+                    # but it prevents index out of range errors to terminate the loop here
+                    break
                 
-            with open(args.data.name, 'w+') as fd:
-                # dump data
-                try:
-                    yaml.dump(data, fd)
-                except Exception as e:
-                    logging.error(self.getName() + ":Couldn't update %s: %s" %
-                                 (fd.name, e))
-                else:
-                    logging.debug(self.getName() +": written %s" % fd.name)
+            # dump data
+            logging.debug(self.getName() + ": tell: %d" % fd.tell())
+            logging.debug(self.getName() + ": dumping: %s" % data)
+            try:
+                fd.seek(0)
+                yaml.dump(data, fd)
+                fd.truncate()
+            except None as e:
+                logging.error(self.getName() + ":Couldn't update %s: %s" %
+                             (fd.name, e))
+            else:
+                logging.debug(self.getName() +": written %s" % fd.name)
 
 
 def copy_amis(data, ssh_config, transitive=False):
