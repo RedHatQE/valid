@@ -26,17 +26,14 @@ class testcase_90_2_cgroups_kernel_bug914737(ValidTestcase):
         else:
             self.get_result(connection, 'if ! rpm -q gcc ; then yum -y install gcc; fi', 300)
         self.get_return_value(connection, 'gcc /root/memhog_with_forks.c -o /root/memhog_with_forks')
-        for i in range(1000):
-            # Creating cpu and memory cgroups
-            self.get_return_value(connection, 'cgcreate -g cpu:/Group%i' % i)
-            self.get_return_value(connection, 'cgcreate -g memory:/Group%i' % i)
-            self.get_return_value(connection, 'cgset -r memory.limit_in_bytes=%i /Group%i' % (memory, i))
-            self.get_return_value(connection, 'cgset -r cpu.shares=%i /Group%i' % (i, i))
+        # Creating cpu and memory cgroups
+        self.get_return_value(connection, 'for i in `seq 0 1000 `; do cgcreate -g cpu:/Group$i ; cgcreate -g memory:/Group$i ; done')
+        self.get_return_value(connection, 'for i in `seq 0 1000 `; do cgset -r memory.limit_in_bytes=' + str(memory) + ' /Group$i ; cgset -r cpu.shares=$i /Group$i ; done')
         try:
             self.get_result(connection, 'for i in `seq 0 1000 `; do cgexec -g cpu:/Group$i -g memory:/Group$i /root/memhog_with_forks %i & echo $i ; done' % memory // 1000000)
             time.sleep(30)
-            self.get_return_value(connection, 'id')
-            self.get_return_value(connection, 'killall memhog ||:')
+            self.get_return_value(connection, 'id', 30)
+            self.get_return_value(connection, 'killall memhog ||:', 30)
         except:
             self.log.append({'result': 'failed', 'command': 'bug reproducer succeeded'})
         return self.log
