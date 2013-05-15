@@ -914,6 +914,9 @@ class WorkerThread(threading.Thread):
         @param params: list of testing parameters
         @type params: list
         """
+        if 'keepalive' in params and params['keepalive'] is not None:
+            logging.info(self.getName() + ': will not terminate %s (keepalive requested)' % params['iname'])
+            return True
         try:
             logging.debug(self.getName() + ': trying to terminata instance  ' + params['iname'] + ', ntry ' + str(ntry))
             connection = params['instance']['connection']

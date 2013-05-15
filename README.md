@@ -50,6 +50,7 @@ Optional fields:
 * disable_tests: disable specified tests
 * enable_tests: enable specified tests only (overrides disable_stages)
 * repeat: repeat testing with the same instance N times
+* keepalive: do not terminate the instance after testing (true/false)
 
 Data file is being updated by hwp data!
 
