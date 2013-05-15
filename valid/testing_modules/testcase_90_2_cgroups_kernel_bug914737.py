@@ -30,10 +30,10 @@ class testcase_90_2_cgroups_kernel_bug914737(ValidTestcase):
         self.get_return_value(connection, 'for i in `seq 0 1000 `; do cgcreate -g cpu:/Group$i ; cgcreate -g memory:/Group$i ; done')
         self.get_return_value(connection, 'for i in `seq 0 1000 `; do cgset -r memory.limit_in_bytes=' + str(memory) + ' /Group$i ; cgset -r cpu.shares=$i /Group$i ; done')
         try:
-            self.get_result(connection, 'for i in `seq 0 1000 `; do cgexec -g cpu:/Group$i -g memory:/Group$i /root/memhog_with_forks %i & echo $i ; done' % memory // 1000000)
+            self.get_result(connection, 'for i in `seq 0 1000 `; do cgexec -g cpu:/Group$i -g memory:/Group$i /root/memhog_with_forks %i & echo $i ; done' % (memory // 1000000), 60)
             time.sleep(30)
             self.get_return_value(connection, 'id', 30)
-            self.get_return_value(connection, 'killall memhog ||:', 30)
+            self.get_return_value(connection, 'killall memhog_with_forks ||:', 30)
         except:
             self.log.append({'result': 'failed', 'command': 'bug reproducer succeeded'})
         return self.log
