@@ -11,10 +11,8 @@ abrt-addon-python
 abrt-cli
 abrt-libs
 abrt-plugin-logger
-abrt-plugin-mailx
 abrt-plugin-rhtsupport
 abrt-plugin-sosreport
-acl
 acpid
 aic94xx-firmware
 alsa-lib
@@ -51,7 +49,6 @@ c-ares
 ca-certificates
 cairo
 cas
-cdparanoia-libs
 certmonger
 checkpolicy
 chkconfig
@@ -75,7 +72,6 @@ crda
 cronie
 cronie-anacron
 crontabs
-cups
 cups-libs
 curl
 cvs
@@ -128,10 +124,6 @@ fipscheck
 fipscheck-lib
 fontconfig
 fontpackages-filesystem
-foomatic
-foomatic-db
-foomatic-db-filesystem
-foomatic-db-ppds
 fprintd
 fprintd-pam
 freetype
@@ -143,8 +135,6 @@ gd
 gdb
 gdbm
 gettext
-ghostscript
-ghostscript-fonts
 giflib
 glib2
 glibc
@@ -162,9 +152,6 @@ grep
 groff
 grub
 grubby
-gstreamer
-gstreamer-plugins-base
-gstreamer-tools
 gtk2
 gzip
 hesiod
@@ -176,7 +163,6 @@ info
 initscripts
 iotop
 ipa-client
-ipa-python
 iproute
 iptables
 iptables-ipv6
@@ -185,7 +171,6 @@ iputils
 ipw2100-firmware
 ipw2200-firmware
 irqbalance
-iso-codes
 ivtv-firmware
 iw
 iwl1000-firmware
@@ -218,7 +203,6 @@ krb5-workstation
 ksh
 latencytop
 latrace
-lcms-libs
 less
 libICE
 libSM
@@ -231,7 +215,6 @@ libXcursor
 libXdamage
 libXext
 libXfixes
-libXfont
 libXft
 libXi
 libXinerama
@@ -242,8 +225,6 @@ libXrandr
 libXrender
 libXt
 libXtst
-libXv
-libXxf86vm
 libacl
 libaio
 libart_lgpl
@@ -260,7 +241,6 @@ libdrm
 libedit
 libertas-usb8388-firmware
 libffi
-libfontenc
 libfprint
 libgcc
 libgcj
@@ -277,20 +257,16 @@ libidn
 libini_config
 libjpeg
 libldb
-libmng
 libnetfilter_conntrack
 libnfnetlink
 libnih
 libnl
 libogg
-liboil
-libpath_utils
 libpcap
 libpng
 libproxy
 libproxy-bin
 libproxy-python
-libref_array
 libselinux
 libselinux-utils
 libsemanage
@@ -317,12 +293,10 @@ libusb1
 libuser
 libutempter
 libuuid
-libvisual
 libvorbis
 libxcb
 libxml2
 libxml2-python
-libxslt
 lm_sensors-libs
 logrotate
 logwatch
@@ -349,9 +323,6 @@ man-pages-overrides
 man-pages-pl
 man-pages-ru
 mdadm
-mesa-dri-drivers
-mesa-libGL
-mesa-libGLU
 mgetty
 microcode_ctl
 mingetty
@@ -380,8 +351,10 @@ newt
 newt-python
 nfs4-acl-tools
 nmap
+nscd
 nspr
 nss
+nss-pam-ldapd
 nss-softokn
 nss-softokn-freebl
 nss-sysinit
@@ -396,7 +369,6 @@ numactl
 numpy
 oddjob
 oddjob-mkhomedir
-openjpeg-libs
 openldap
 openldap-clients
 openssh
@@ -408,6 +380,7 @@ oprofile
 pakchois
 pam
 pam_krb5
+pam_ldap
 pam_passwdqc
 pam_pkcs11
 pango
@@ -425,7 +398,6 @@ perl
 perl-Archive-Extract
 perl-Archive-Tar
 perl-BSD-Resource
-perl-CGI
 perl-CPAN
 perl-CPANPLUS
 perl-Compress-Raw-Zlib
@@ -479,7 +451,6 @@ perl-libwww-perl
 perl-libxml-perl
 perl-parent
 perl-version
-phonon-backend-gstreamer
 pinentry
 pinfo
 pixman
@@ -489,11 +460,8 @@ plymouth-core-libs
 plymouth-scripts
 policycoreutils
 polkit
-poppler
-poppler-data
-poppler-utils
 popt
-portreserve
+postfix
 postgresql
 postgresql-jdbc
 postgresql-libs
@@ -503,7 +471,6 @@ postgresql-server
 powertop
 ppl
 prelink
-procmail
 procps
 psacct
 psmisc
@@ -521,14 +488,10 @@ python-ethtool
 python-gudev
 python-iniparse
 python-iwlib
-python-kerberos
 python-ldap
 python-libs
-python-lxml
 python-matplotlib
-python-netaddr
 python-nose
-python-nss
 python-paramiko
 python-pycurl
 python-setuptools
@@ -539,10 +502,6 @@ ql2200-firmware
 ql23xx-firmware
 ql2400-firmware
 ql2500-firmware
-qt
-qt-sqlite
-qt-x11
-qt3
 quota
 rdate
 readahead
@@ -550,8 +509,6 @@ readline
 redhat-indexhtml
 redhat-logos
 redhat-lsb
-redhat-lsb-graphics
-redhat-lsb-printing
 redhat-release-server
 rfkill
 rh-amazon-rhui-client
@@ -578,7 +535,6 @@ sed
 seekwatcher
 selinux-policy
 selinux-policy-targeted
-sendmail
 setserial
 setup
 shadow-utils
@@ -624,7 +580,6 @@ unixODBC
 unzip
 upstart
 urlview
-urw-fonts
 usbutils
 usermode
 ustr
@@ -641,11 +596,9 @@ wireless-tools
 words
 xdg-utils
 xinetd
-xml-common
 xmlrpc-c
 xmlrpc-c-client
 xorg-x11-drv-ati-firmware
-xorg-x11-font-utils
 xterm
 xz
 xz-libs
