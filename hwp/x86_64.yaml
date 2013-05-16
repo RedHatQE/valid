@@ -9,14 +9,16 @@
       touch /userdata_test
       date >> /userdata_test
 - arch: 'x86_64'
-  cpu: '2'
-  memory: '7500000'
-  ec2name: m1.large
+  cpu: '1'
+  memory: '1700000'
+  ec2name: m1.small
   virtualization: 'paravirtual'
   userdata: *USERDATA
   bmap: &BMAP
   - {delete_on_termination: true, name: /dev/sda1, size: '15'}
   - {ephemeral_name: ephemeral0, name: /dev/sdf}
+
+- {arch: 'x86_64', cpu: '2', memory: '7500000' , ec2name: m1.large, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
 - {arch: 'x86_64', cpu: '4', memory: '15000000', ec2name: m1.xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
 - {arch: 'x86_64', cpu: '2', memory: '17100000', ec2name: m2.xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
 - {arch: 'x86_64', cpu: '4', memory: '34200000', ec2name: m2.2xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
