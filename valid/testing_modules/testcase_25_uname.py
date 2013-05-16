@@ -23,8 +23,8 @@ class testcase_25_uname(ValidTestcase):
                 uname_r = self.get_result(connection, 'uname -r | sed \'s,\.el5xen,.el5,\'')
                 kernel_ver = self.get_result(connection, 'rpm -q --last kernel-xen | sed -e \'s,^kernel-xen-,,\' -e \'s,[[:space:]].*$,,\' | head -1', 30)
             else:
-                uname_r = self.get_result(connection, 'uname -r')
-                kernel_ver = self.get_result(connection, 'rpm -q --last kernel | sed -e \'s,^kernel-,,\' -e \'s,[[:space:]].*$,,\' | head -1', 30)
+                uname_r = self.get_result(connection, 'uname -r | sed -e \'s,\.i686$,,\'  -e \'s,\.x86_64$,,\'')
+                kernel_ver = self.get_result(connection, 'rpm -q --last kernel | sed -e \'s,^kernel-,,\' -e \'s,[[:space:]].*$,,\' | head -1 | sed -e \'s,\.i686$,,\'  -e \'s,\.x86_64$,,\'', 30)
         elif prod == 'FEDORA':
             if ver == '18' and params['arch'] == 'i386':
                 uname_r = self.get_result(connection, 'uname -r | sed \'s,\.PAE,,\'')
