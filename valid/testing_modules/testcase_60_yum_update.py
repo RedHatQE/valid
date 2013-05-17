@@ -18,6 +18,6 @@ class testcase_60_yum_update(ValidTestcase):
             self.get_return_value(connection, 'mkswap /swap', 30)
             self.ping_pong(connection, 'echo \'/swap    swap     swap    defaults     0 0\' >> /etc/fstab && echo SUCCESS', '\r\nSUCCESS\r\n')
             self.get_return_value(connection, 'swapon -a -e', 30)
-        self.get_result(connection, 'yum -y install kernel 2>&1 | grep -i err', 900)
-        self.get_result(connection, 'yum -y update 2>&1 | grep -i err', 900)
+        self.get_result(connection, 'yum -y install kernel 2>&1 | grep -i err; test ${PIPESTATUS[0]}', 900)
+        self.get_result(connection, 'yum -y update 2>&1 | grep -i err; test ${PIPESTATUS[0]}', 900)
         return self.log
