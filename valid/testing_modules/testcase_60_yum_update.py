@@ -18,12 +18,6 @@ class testcase_60_yum_update(ValidTestcase):
             self.get_return_value(connection, 'mkswap /swap', 30)
             self.ping_pong(connection, 'echo \'/swap    swap     swap    defaults     0 0\' >> /etc/fstab && echo SUCCESS', '\r\nSUCCESS\r\n')
             self.get_return_value(connection, 'swapon -a -e', 30)
-        self.get_return_value(connection, 'yum -y install kernel', 900)
-        # yum -y update || yum -y update because we've seen this in 5.7:
-        #    zlib.x86_64 0:1.2.3-7.el5                                
-        #    Complete!
-        #    [root@ip-10-12-133-111 ~]# echo $?      
-        #    1
-        #    [root@ip-10-12-133-111 ~]# echo $?      
-        self.get_return_value(connection, 'yum -y update || yum -y update', 900)
+        self.get_result(connection, 'yum -y install kernel 2>&1 | grep -i err', 900)
+        self.get_result(connection, 'yum -y update 2>&1 | grep -i err', 900)
         return self.log
