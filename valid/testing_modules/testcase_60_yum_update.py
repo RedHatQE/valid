@@ -18,6 +18,11 @@ class testcase_60_yum_update(ValidTestcase):
             self.get_return_value(connection, 'mkswap /swap', 30)
             self.ping_pong(connection, 'echo \'/swap    swap     swap    defaults     0 0\' >> /etc/fstab && echo SUCCESS', '\r\nSUCCESS\r\n')
             self.get_return_value(connection, 'swapon -a -e', 30)
+
+        # workaround for https://bugzilla.redhat.com/show_bug.cgi?id=912568
+        # https://access.redhat.com/site/solutions/175393
+        self.get_return_value(connection, 'rpm -q matahari-net && yum -y remove matahari-net ||:', 90)
+
         self.get_result(connection, 'yum -y install kernel 2>&1 | grep -i err; test ${PIPESTATUS[0]}', 900)
         self.get_result(connection, 'yum -y update 2>&1 | grep -i err; test ${PIPESTATUS[0]}', 900)
         return self.log

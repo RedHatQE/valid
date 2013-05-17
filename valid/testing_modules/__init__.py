@@ -38,6 +38,7 @@ import testcase_361_ebs_deferred_detach
 import testcase_37_sshd_bug923996
 import testcase_38_rclocal_checksum
 import testcase_39_root_is_locked
+import testcase_40_selinux_context
 import testcase_50_yum_package_install
 import testcase_55_yum_group_install
 import testcase_60_yum_update
