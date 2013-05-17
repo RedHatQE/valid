@@ -23,6 +23,6 @@ class testcase_60_yum_update(ValidTestcase):
         # https://access.redhat.com/site/solutions/175393
         self.get_return_value(connection, 'rpm -q matahari-net && yum -y remove matahari-net ||:', 90)
 
-        self.get_result(connection, 'yum -y install kernel 2>&1 | grep -i err; test ${PIPESTATUS[0]}', 900)
-        self.get_result(connection, 'yum -y update 2>&1 | grep -i err; test ${PIPESTATUS[0]}', 900)
+        self.get_result(connection, 'yum -y install kernel 2>&1 | grep -i err; test ${PIPESTATUS[0]} -eq 0', 900)
+        self.get_result(connection, 'yum -y update 2>&1 | grep -i err; test ${PIPESTATUS[0]} -eq 0', 900)
         return self.log
