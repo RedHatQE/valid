@@ -154,7 +154,6 @@ gmp
 gnupg2
 gnutls
 gpg-pubkey
-gpg-pubkey
 gpgme
 gpm-libs
 grep
