@@ -19,5 +19,11 @@ class testcase_60_yum_update(ValidTestcase):
             self.ping_pong(connection, 'echo \'/swap    swap     swap    defaults     0 0\' >> /etc/fstab && echo SUCCESS', '\r\nSUCCESS\r\n')
             self.get_return_value(connection, 'swapon -a -e', 30)
         self.get_return_value(connection, 'yum -y install kernel', 900)
-        self.get_return_value(connection, 'yum -y update', 900)
+        # yum -y update yum because we've seen this in 5.7:
+        #    zlib.x86_64 0:1.2.3-7.el5                                
+        #    Complete!
+        #    [root@ip-10-12-133-111 ~]# echo $?      
+        #    1
+        #    [root@ip-10-12-133-111 ~]# echo $?      
+        self.get_return_value(connection, 'yum -y update yum ; yum -y update', 900)
         return self.log
