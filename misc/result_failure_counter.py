@@ -39,6 +39,7 @@ counted_actual_results = ('', None, 'None')
 by_region = {}
 by_itype = {}
 by_command = {}
+by_testcase = {}
 by_stage = {}
 total = 0
 
@@ -63,21 +64,32 @@ for ami in data:
                 if not ami['ami'] in by_stage[stage]:
                     by_stage[stage][ami['ami']] = 0
                 by_stage[stage][ami['ami']] += 1
+
             for command in test_result:
-                if type(command) is not dict or \
-                    'command' not in command or \
-                    'result' not in command:
+                if type(command) is not dict:
+                    continue
+                if 'result' not in command:
+                    continue
+
+                result = command['result']
+                # count results by no command
+                if result not in failure_messages:
+                    continue
+                if stage not in by_testcase:
+                    by_testcase[stage] = 0
+                by_testcase[stage] += 1
+
+                if 'command' not in command:
                     continue
                 total += 1
                 command_line = command['command']
-                result = command['result']
                 if 'actual' in command:
                     actual = command['actual']
                 else:
                     actual = "__NOT_IN_COUNTED_ACUTAL_RESULTS__"
 
-                # check result to decide whether to count or not
-                if result not in failure_messages and actual not in counted_actual_results:
+                # check actual result to decide whether to count or not
+                if actual not in counted_actual_results:
                     continue
 
                 # region
@@ -120,6 +132,7 @@ stats = {
     'by_region': by_region,
     'by_itype': by_itype,
     'by_stage': by_stage,
+    'by_testcase': by_testcase,
     'total': total,
     'console errors': console_errors,
     'empty consoles': empty_consoles
