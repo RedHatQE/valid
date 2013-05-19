@@ -64,34 +64,42 @@ for ami in data:
                     by_stage[stage][ami['ami']] = 0
                 by_stage[stage][ami['ami']] += 1
             for command in test_result:
-                if type(command) is not dict:
+                if type(command) is not dict or \
+                    'command' not in command or \
+                    'result' not in command:
                     continue
                 total += 1
-                if 'actual' not in command:
+                command_line = command['command']
+                result = command['result']
+                if 'actual' in command:
+                    actual = command['actual']
+                else:
+                    actual = "__NOT_IN_COUNTED_ACUTAL_RESULTS__"
+
+                # check result to decide whether to count or not
+                if result not in failure_messages and actual not in counted_actual_results:
                     continue
-                if command['actual'] in counted_actual_results:
-                    command_line = command['command']
 
-                    # region
-                    # init counters if no previous records
-                    if region not in by_region:
-                        by_region[region] = {}
-                    if command_line not in by_region[region]:
-                        by_region[region][command_line] = 0
-                    # increase the number of failures
-                    by_region[region][command_line] += 1
+                # region
+                # init counters if no previous records
+                if region not in by_region:
+                    by_region[region] = {}
+                if command_line not in by_region[region]:
+                    by_region[region][command_line] = 0
+                # increase the number of failures
+                by_region[region][command_line] += 1
 
-                    # itype
-                    if itype not in by_itype:
-                        by_itype[itype] = {}
-                    if command_line not in by_itype[itype]:
-                        by_itype[itype][command_line] = 0
-                    by_itype[itype][command_line] += 1
+                # itype
+                if itype not in by_itype:
+                    by_itype[itype] = {}
+                if command_line not in by_itype[itype]:
+                    by_itype[itype][command_line] = 0
+                by_itype[itype][command_line] += 1
 
-                    # command
-                    if command_line not in by_command:
-                        by_command[command_line] = 0
-                    by_command[command_line] += 1
+                # command
+                if command_line not in by_command:
+                    by_command[command_line] = 0
+                by_command[command_line] += 1
     # console
     if args.match_console:
         errors = re.compile(args.match_console, re.IGNORECASE | re.DOTALL)
