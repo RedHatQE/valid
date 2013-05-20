@@ -44,6 +44,7 @@ import testcase_50_yum_package_install
 import testcase_55_yum_group_install
 import testcase_60_yum_update
 import testcase_61_yum_proxy
+import testcase_80_no_avc_denials
 import testcase_90_1_kernel_bug874053
 import testcase_90_2_cgroups_kernel_bug914737
 import testcase_97_collect_packagelist
