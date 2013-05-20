@@ -41,7 +41,7 @@ class testcase_25_uname(ValidTestcase):
         if uname_r and uname_o and kernel_ver:
             self.get_return_value(connection, '[ %s = %s ]' % (kernel_ver, uname_r))
             self.get_return_value(connection, '[ %s = \'GNU/Linux\' ]' % uname_o)
-            if prod in ['RHEL', 'BETA'] and (ver.startswith('5.') or ver.startswith('6.')):
+            if prod in ['RHEL', 'BETA'] and (ver.startswith('5.') or ver.startswith('6.')) and not (ver in ['5.5', '5.6']):
                 # No /etc/sysconfig/kernel checks for fedora
                 self.get_return_value(connection, 'grep UPDATEDEFAULT=yes /etc/sysconfig/kernel')
                 self.get_return_value(connection, 'grep DEFAULTKERNEL=kernel /etc/sysconfig/kernel')
