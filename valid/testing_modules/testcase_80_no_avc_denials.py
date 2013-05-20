@@ -13,6 +13,6 @@ class testcase_80_no_avc_denials(ValidTestcase):
         prod = params['product'].upper()
         ver = params['version']
 
-        self.get_return_value(connection, 'grep -i avc /var/log/messages /var/log/audit/audit.log', expected_status=1)
+        self.get_return_value(connection, 'grep \'avc:[[:space:]]*denied\' /var/log/messages /var/log/audit/audit.log', expected_status=1)
 
         return self.log
