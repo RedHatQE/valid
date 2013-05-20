@@ -147,7 +147,6 @@ gmp
 gnupg2
 gnutls
 gpg-pubkey
-gpg-pubkey
 gpgme
 gpm-libs
 grep
@@ -165,6 +164,7 @@ hal-libs
 hdparm
 hesiod
 hicolor-icon-theme
+httpd
 httpd-tools
 hunspell
 hunspell-en
