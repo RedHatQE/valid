@@ -29,11 +29,8 @@ class testcase_26_verify_rpms(ValidTestcase):
             elif ver[:3] in ['5.8', '5.9']:
                 rpmv_cmp = '3'
 
-        rpmv = self.get_result(connection, 'rpm -Va --nomtime --nosize --nomd5 | sort -fu | wc -l', 90)
-        rpmrel = self.get_result(connection, 'rpm -q --queryformat \'%{RELEASE}\n\' ' + release_pkg + ' | cut -d. -f1,2', 30)
+        self.get_return_value(connection, '[ $(rpm -Va --nomtime --nosize --nomd5 | sort -fu | wc -l) = ' + rpmv_cmp + ' ]', 180)
+        self.get_return_value(connection, '[ $(rpm -q --queryformat \'%{RELEASE}\n\' ' + release_pkg + ' | cut -d. -f1,2) = ' + ver + ' ]', 30)
 
-        if rpmv:
-            self.get_return_value(connection, '[ %s = %s ]' % (rpmv, rpmv_cmp))
-            self.get_return_value(connection, '[ %s = %s ]' % (rpmrel, ver))
-            packagers = self.get_result(connection, 'rpm -qa --queryformat \'%{PACKAGER}\n\' | sort -u | grep -v \'Red Hat, Inc.\'', 30)
+        packagers = self.get_result(connection, 'rpm -qa --queryformat \'%{PACKAGER}\n\' | sort -u | grep -v \'Red Hat, Inc.\'', 60)
         return self.log
