@@ -77,10 +77,12 @@ for ami in data:
                     continue
                 if stage not in by_testcase:
                     by_testcase[stage] = 0
-                by_testcase[stage] += 1
 
                 if 'command' not in command:
-                    continue
+                    # avoid double counting when commands present
+                   by_testcase[stage] += 1
+                   continue
+
                 total += 1
                 command_line = command['command']
                 if 'actual' in command:
