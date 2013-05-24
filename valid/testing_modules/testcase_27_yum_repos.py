@@ -36,6 +36,9 @@ class testcase_27_yum_repos(ValidTestcase):
         # make 'Repo-id : <id>' ini section headers: '[<id>]'
         pattern = re.compile('repo-id\s*:\s*([^\n]*)', re.DOTALL | re.IGNORECASE)
         repos_details = pattern.sub('[\\1]', repos_details)
+        #getting rid of ":"
+        pattern1 = re.compile('(.*)enabled:(.*)')
+        repos_details = pattern1.sub(r'\1enabled\2',repos_details)
         # extract particular repos as sections from the structure
         # please note that ConfigParser makes all strings lower case by
         # default
