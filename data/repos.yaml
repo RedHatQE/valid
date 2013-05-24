@@ -17,35 +17,9 @@ HAS_RHEL_SOURCE_BETA: &HAS_RHEL_SOURCE_BETA
 
 RHEL_5ANY: &RHEL_5ANY
     <<: *HAS_RHEL_DEBUGINFO
-    rhui-ap-ne-rhel-server: {repo-status: disabled}
-    rhui-ap-ne-rhel-server-1y: {repo-status: disabled}
-    rhui-ap-ne-rhel-server-1y-source: {repo-status: disabled}
-    rhui-ap-ne-rhel-server-source: {repo-status: disabled}
-    rhui-ap-northeast-client-config-server-5: {repo-status: disabled}
-    rhui-ap-se-rhel-server: {repo-status: disabled}
-    rhui-ap-se-rhel-server-1y: {repo-status: disabled}
-    rhui-ap-se-rhel-server-1y-source: {repo-status: disabled}
-    rhui-ap-se-rhel-server-source: {repo-status: disabled}
-    rhui-ap-southeast-client-config-server-5: {repo-status: disabled}
-    rhui-eu-west-client-config-server-5: {repo-status: disabled}
-    rhui-eu-west-rhel-server: {repo-status: disabled}
-    rhui-eu-west-rhel-server-1y: {repo-status: disabled}
-    rhui-eu-west-rhel-server-1y-source: {repo-status: disabled}
-    rhui-eu-west-rhel-server-source: {repo-status: disabled}
-    rhui-us-east-client-config-server-5: {repo-status: enabled}
-    rhui-us-east-rhel-server: {repo-status: enabled}
-    rhui-us-east-rhel-server-1y: {repo-status: disabled}
-    rhui-us-east-rhel-server-1y-source: {repo-status: disabled}
-    rhui-us-east-rhel-server-source: {repo-status: disabled}
-    rhui-us-west-2-client-config-server-5: {repo-status: disabled}
-    rhui-us-west-2-rhel-server: {repo-status: disabled}
-    rhui-us-west-2-rhel-server-source: {repo-status: disabled}
-    rhui-us-west-client-config-server-5: {repo-status: disabled}
-    rhui-us-west-rhel-server: {repo-status: disabled}
-    rhui-us-west-rhel-server-1y: {repo-status: disabled}
-    rhui-us-west-rhel-server-1y-source: {repo-status: disabled}
-    rhui-us-west-rhel-server-source: {repo-status: disabled}
-
+    rhui-%region%-client-config-server-5: {repo-status: enabled}
+    rhui-%region%-rhel-server: {repo-status: enabled}
+    rhui-%region%-rhel-server-source: {repo-status: disabled}
 BETA_5ANY: &BETA_5ANY
     <<: *RHEL_5ANY
 
@@ -66,7 +40,7 @@ RHEL_6ANY: &RHEL_6ANY
     rhui-%region%-rhel-server-releases-optional: {repo-status: enabled}
     rhui-%region%-rhel-server-releases-optional-source: {repo-status: disabled}
     rhui-%region%-rhel-server-releases-source: {repo-status: disabled}
-
+    rhel-source-beta: {repo-status: disabled}
 BETA_6ANY: &BETA_6ANY
     <<: *RHEL_6ANY
     <<: *HAS_RHEL_SOURCE_BETA
@@ -80,14 +54,19 @@ BETA_6ANY: &BETA_6ANY
 ANY_REGION: &ANY_REGION
     RHEL_5.5:
         <<: *RHEL_5ANY
+        rhel-debuginfo-beta: {repo-status: disabled}
     BETA_5.5:
         <<: *BETA_5ANY
     RHEL_5.6:
         <<: *RHEL_5ANY
+        rhel-source: {repo-status: disabled}
+        rhel-debuginfo-beta: {repo-status: disabled}
     BETA_5.6:
         <<: *BETA_5ANY
     RHEL_5.7:
         <<: *RHEL_5ANY
+        rhel-source: {repo-status: disabled}
+        rhel-debuginfo-beta: {repo-status: disabled}
     BETA_5.7:
         <<: *BETA_5ANY
     RHEL_5.8:
@@ -112,7 +91,6 @@ ANY_REGION: &ANY_REGION
         <<: *BETA_6ANY
     RHEL_6.4:
         # in 6.4 source beta (RC) comes with redhat-release-server
-        rhel-source-beta: {repo-status: disabled}
         <<: *RHEL_6ANY
     BETA_6.4:
         <<: *BETA_6ANY
