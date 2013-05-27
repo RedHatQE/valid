@@ -14,6 +14,6 @@ class testcase_40_selinux_context(ValidTestcase):
 
     def test(self, connection, params):
         # Check selinux context for /etc/{passwd,group}
-        self.get_return_value(connection, 'ls -lZ /etc/passwd | grep "system_u:object_r:etc_t"')
-        self.get_return_value(connection, 'ls -lZ /etc/group | grep "system_u:object_r:etc_t"')
+        self.get_return_value(connection, 'ls -lZ /etc/passwd | egrep "system_u:object_r:(etc_t|passwd_file_t)"')
+        self.get_return_value(connection, 'ls -lZ /etc/group | egrep "system_u:object_r:(etc_t|passwd_file_t)"')
         return self.log
