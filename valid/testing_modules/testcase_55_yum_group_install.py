@@ -11,5 +11,5 @@ class testcase_55_yum_group_install(ValidTestcase):
     def test(self, connection, params):
         self.get_return_value(connection, 'yum -y groupinstall \'Development tools\'', 900)
         # Checking whether something was installed
-        self.get_return_value(connection, 'rpm -q libstdc++-devel')
+        self.get_return_value(connection, 'rpm -q glibc-devel')
         return self.log
