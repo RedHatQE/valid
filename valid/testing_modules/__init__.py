@@ -1,5 +1,4 @@
 import testcase_01_bash_history
-import testcase_02_ipv6
 import testcase_03_chkconfig
 import testcase_04_cloud_firstboot
 import testcase_05_grub
@@ -40,6 +39,7 @@ import testcase_38_rclocal_checksum
 import testcase_39_root_is_locked
 import testcase_40_selinux_context
 import testcase_41_rh_amazon_rhui_client
+import testcase_42_ipv6
 import testcase_50_yum_package_install
 import testcase_55_yum_group_install
 import testcase_60_yum_update
