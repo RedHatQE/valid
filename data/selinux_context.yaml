@@ -1,0 +1,70 @@
+#list of allowed SElinux context discrepancies
+
+RHEL_5ANY: &RHEL_5ANY
+    /net: [autofs_t,mnt_t]
+    /misc: [autofs_t,mnt_t]
+    /dev/.*: [udev_tbl_t, device_t]
+    /dev/shm: [tmpfs_t,device_t]
+    /valid_setup_script_executed: [etc_runtime_t,default_t]
+    /etc/yum.repos.d/.*: [etc_runtime_t,etc_t]
+    /etc/yum/pluginconf.d/rhui-lb.conf: [etc_runtime_t,etc_t]
+    /etc/inittab: [etc_runtime_t,etc_t]
+    /etc/sysconfig/rh-cloud-firstboot: [etc_runtime_t,etc_t]
+    /etc/modprobe.conf: [etc_runtime_t,modules_conf_t]
+
+BETA_5ANY: &BETA_5ANY
+    <<: *RHEL_5ANY
+
+RHEL_6ANY: &RHEL_6ANY
+    /etc/sysconfig/rh-cloud-firstboot: [etc_runtime_t,etc_t]
+    /var/cache/yum.*: [file_t,rpm_var_cache_t]
+
+BETA_6ANY: &BETA_6ANY
+    <<: *RHEL_6ANY
+
+RHEL_5.5:
+    <<: *RHEL_5ANY
+BETA_5.5:
+    <<: *BETA_5ANY
+RHEL_5.6:
+    <<: *RHEL_5ANY
+BETA_5.6:
+    <<: *BETA_5ANY
+RHEL_5.7:
+    <<: *RHEL_5ANY
+BETA_5.7:
+    <<: *BETA_5ANY
+RHEL_5.8:
+    <<: *RHEL_5ANY
+BETA_5.8:
+    <<: *BETA_5ANY
+RHEL_5.9:
+    <<: *RHEL_5ANY
+BETA_5.9:
+    <<: *BETA_5ANY
+RHEL_6.0:
+    <<: *RHEL_6ANY
+    /root/.ssh: [ssh_home_t,home_ssh_t]
+    /root/.ssh/authorized_keys: [ssh_home_t,home_ssh_t]
+
+BETA_6.0:
+    <<: *BETA_6ANY
+    /root/.ssh: [ssh_home_t,home_ssh_t]
+    /root/.ssh/authorized_keys: [ssh_home_t,home_ssh_t]
+
+RHEL_6.1:
+    <<: *RHEL_6ANY
+BETA_6.1:
+    <<: *BETA_6ANY
+RHEL_6.2:
+    <<: *RHEL_6ANY
+BETA_6.2:
+    <<: *BETA_6ANY
+RHEL_6.3:
+    <<: *RHEL_6ANY
+BETA_6.3:
+    <<: *BETA_6ANY
+RHEL_6.4:
+    <<: *RHEL_6ANY
+BETA_6.4:
+    <<: *BETA_6ANY

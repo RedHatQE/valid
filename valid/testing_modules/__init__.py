@@ -1,4 +1,5 @@
 import testcase_01_bash_history
+import testcase_02_selinux_context
 import testcase_03_chkconfig
 import testcase_04_cloud_firstboot
 import testcase_05_grub
