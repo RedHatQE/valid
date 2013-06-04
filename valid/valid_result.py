@@ -21,8 +21,8 @@ def get_overall_result(ami):
                             is_failed = "failed"
                             if overall_result == "succeeded":
                                 overall_result = "failed"
-                            if command["result"] in ["skip", "skipped"]:
-                                is_failed = "skipped"
+                        if command["result"] in ["skip", "skipped"]:
+                            is_failed = "skipped"
                     bug_description += "test %s %s\n" % (stage, is_failed)
                     if is_failed != "succeeded":
                         for command in test_result:
