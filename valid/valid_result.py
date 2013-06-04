@@ -23,13 +23,16 @@ def get_overall_result(ami):
                                 overall_result = "failed"
                         if command["result"] in ["skip", "skipped"]:
                             is_failed = "skipped"
+                        if command["result"] in ["warn", "warning"]:
+                            is_failed = "warning"
                     bug_description += "test %s %s\n" % (stage, is_failed)
                     if is_failed != "succeeded":
                         for command in test_result:
-                            bug_description += "--->\n"
-                            for key in sorted(command.keys()):
-                                bug_description += "\t%s: %s\n" % (key, command[key])
-                            bug_description += "<---\n"
+                            if is_failed != "warning" or command["result"] in ["warn", "warning"]:
+                                bug_description += "--->\n"
+                                for key in sorted(command.keys()):
+                                    bug_description += "\t%s: %s\n" % (key, command[key])
+                                bug_description += "<---\n"
                 elif test_result == "skip":
                     bug_description += "%s skipped\n" % stage
                 else:
