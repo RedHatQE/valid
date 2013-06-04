@@ -268,30 +268,6 @@ def add_data(data, emails=None, subject=None):
             return None
 
 
-def remote_command(connection, command, timeout=5):
-    """
-    Execute a remote command via connection
-
-    @param connection: Connection to the host
-    @type connection: L{Connection}
-
-    @param command: command to execute
-    @type command: str
-
-    @param timeout: timeout for performing expect operation
-    @type  timeout: int
-
-    @return: return value or None
-    @rtype: int or None
-
-    @raises ExpectFailed
-    """
-    status = connection.recv_exit_status(command + ' >/dev/null 2>&1', timeout)
-    if status != 0:
-        raise ExpectFailed('Command ' + command + ' failed with ' + str(status) + ' status.')
-    return status
-
-
 class ServerThread(threading.Thread):
     """
     Thread for handling HTTPS requests
@@ -306,7 +282,7 @@ class ServerThread(threading.Thread):
         @param port: bind port
         @type port: int
         """
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="ValidServerThread")
         self.hostname = hostname
         self.port = port
 
@@ -444,6 +420,11 @@ class WatchmanThread(threading.Thread):
     - Create WorkerThreads when we have long queue
     - report result for a transaction when it's ready
     """
+    def __init__(self):
+        """
+        Create WatchmanThread object
+        """
+        threading.Thread.__init__(self, name="ValidWatchmanThread")
 
     def run(self):
         """
@@ -556,6 +537,7 @@ class WorkerThread(threading.Thread):
         Create WorkerThread object
         """
         threading.Thread.__init__(self)
+        self.name = self.name.replace("Thread", "ValidWorkerThread")
 
     def run(self):
         """
@@ -638,13 +620,13 @@ class WorkerThread(threading.Thread):
         @type params: list
         """
         console_output = ''
-        try:
-            from pprint import pprint
-            connection = params['instance']['connection']
-            console_output = connection.get_console_output(params['id']).output
-            logging.debug(self.getName() + ': got console output for %s: %s' % (params['iname'], console_output))
-        except Exception, e:
-            logging.error(self.getName() + ': report_results: Failed to get console output %s' % e)
+        if len(params['stages']) == 1:
+            try:
+                connection = params['instance']['connection']
+                console_output = connection.get_console_output(params['id']).output
+                logging.debug(self.getName() + ': got console output for %s: %s' % (params['iname'], console_output))
+            except Exception, e:
+                logging.error(self.getName() + ': report_results: Failed to get console output %s' % e)
         with resultdic_lock:
             report_value = {'instance_type': params['ec2name'],
                             'ami': params['ami'],
@@ -798,17 +780,18 @@ class WorkerThread(threading.Thread):
             (ssh_key_name, ssh_key) = yamlconfig['ssh'][params['region']]
             logging.debug(self.getName() + ': ssh-key ' + ssh_key)
 
-            for user in ['ec2-user', 'cloud-user']:
+            for user in ['ec2-user']:
                 # If we're able to login with one of these users allow root ssh immediately
                 try:
-                    con = Connection(params['instance'], user, ssh_key)
+                    con = self.get_connection(params['instance'], user, ssh_key)
                     Expect.ping_pong(con, 'uname', 'Linux')
                     Expect.ping_pong(con, 'sudo su -c \'cp -af /home/' + user + '/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys\' && echo SUCCESS', '\r\nSUCCESS\r\n')
+                    self.close_connection(params['instance'], user, ssh_key)
                 except:
                     pass
 
-            con = Connection(params['instance'], 'root', ssh_key)
-            remote_command(con, '[ `uname` = \'Linux\' ]')
+            con = self.get_connection(params['instance'], 'root', ssh_key)
+
             logging.debug(self.getName() + ': sleeping for ' + str(settlewait) + ' sec. to make sure instance has been settled.')
             time.sleep(settlewait)
 
@@ -830,9 +813,8 @@ class WorkerThread(threading.Thread):
                 remote_script_path = '/tmp/' + os.path.basename(script)
                 con.sftp.put(script, remote_script_path)
                 con.sftp.chmod(remote_script_path, 0700)
-                remote_command(con, remote_script_path)
+                self.remote_command(con, remote_script_path)
             os.unlink(tf.name)
-            con.disconnect()
             mainq.put((0, 'test', params.copy()))
         except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
             logging.debug(self.getName() + ': got \'predictable\' error during instance setup, %s, ntry: %i' % (e, ntry))
@@ -862,8 +844,7 @@ class WorkerThread(threading.Thread):
             (ssh_key_name, ssh_key) = yamlconfig['ssh'][params['region']]
             logging.debug(self.getName() + ': ssh-key ' + ssh_key)
 
-            con = Connection(params['instance'], 'root', ssh_key)
-            Expect.ping_pong(con, 'uname', 'Linux')
+            con = self.get_connection(params['instance'], 'root', ssh_key)
 
             logging.info(self.getName() + ': doing testing for ' + params['iname'] + ' ' + stage)
 
@@ -889,7 +870,6 @@ class WorkerThread(threading.Thread):
                 mainq.put((0, 'terminate', params_new))
             logging.debug(self.getName() + ': done testing for ' + params['iname'] + ', result: ' + str(result))
             params['result'] = {params['stages'][0]: result}
-            con.disconnect()
             self.report_results(params)
         except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
             # Looks like we've failed to connect to the instance
@@ -922,12 +902,82 @@ class WorkerThread(threading.Thread):
             connection = params['instance']['connection']
             res = connection.terminate_instances([params['id']])
             logging.info(self.getName() + ': terminated ' + params['iname'])
-            connection.close()
+            (ssh_key_name, ssh_key) = yamlconfig['ssh'][params['region']]
+            self.close_connection(params['instance'], "root", ssh_key)
             return res
         except Exception, e:
             logging.error(self.getName() + ': got error during instance termination, %s %s' % (type(e), e))
             logging.debug(self.getName() + ':' + traceback.format_exc())
             mainq.put((ntry + 1, 'terminate', params.copy()))
+
+    @staticmethod
+    def remote_command(connection, command, timeout=5):
+        """
+        Execute a remote command via connection
+
+        @param connection: Connection to the host
+        @type connection: L{Connection}
+
+        @param command: command to execute
+        @type command: str
+
+        @param timeout: timeout for performing expect operation
+        @type  timeout: int
+
+        @return: return value or None
+        @rtype: int or None
+
+        @raises ExpectFailed
+        """
+        status = connection.recv_exit_status(command + ' >/dev/null 2>&1', timeout)
+        if status != 0:
+            raise ExpectFailed('Command ' + command + ' failed with ' + str(status) + ' status.')
+        return status
+
+    def get_connection(self, instance, user, ssh_key):
+        if 'public_dns_name' in instance:
+            key = instance['public_dns_name']
+        elif 'private_ip_address' in instance:
+            key = instance['private_ip_address']
+        key += ":" + user + ":" + ssh_key
+        logging.debug(self.getName() + ': searching for %s in connection cache' % key)
+        con = None
+        with connection_cache_lock:
+            if key in connection_cache:
+                con = connection_cache[key]
+                logging.debug(self.getName() + ': found %s in connection cache' % key)
+        if con is not None:
+            try:
+                Expect.ping_pong(con, 'uname', 'Linux')
+            except:
+                # connection looks dead
+                logging.debug(self.getName() + ': eliminating dead connection to %s' % key)
+                con.disconnect()
+                with connection_cache_lock:
+                    connection_cache.pop(key)
+                    con = None
+        if con is None:
+            logging.debug(self.getName() + ': creating connection to %s' % key)
+            con = Connection(instance, user, ssh_key)
+            with connection_cache_lock:
+                connection_cache[key] = con
+        return con
+
+    def close_connection(self, instance, user, ssh_key):
+        if 'public_dns_name' in instance:
+            key = instance['public_dns_name']
+        elif 'private_ip_address' in instance:
+           key = instance['private_ip_address']
+        key += ":" + user + ":" + ssh_key
+        con = None
+        with connection_cache_lock:
+            if key in connection_cache:
+                logging.debug(self.getName() + ': closing connection to %s' % key)
+                con = connection_cache[key]
+                connection_cache.pop(key)
+        if con is not None:
+            con.disconnect()
+
 
 argparser = argparse.ArgumentParser(description='Run cloud image validation')
 argparser.add_argument('--data', help='data file for validation')
@@ -1105,6 +1155,10 @@ resultdic_lock = threading.Lock()
 resultdic_yaml = {}
 resultdic_yaml_lock = threading.Lock()
 
+# connection cache
+connection_cache = {}
+connection_cache_lock = threading.Lock()
+
 # number of running threads
 numthreads = 0
 numthreads_lock = threading.Lock()
@@ -1144,7 +1198,7 @@ try:
         # Waiting for all threads to finish
         threads_exist = False
         for thread in threading.enumerate():
-            if thread is not threading.currentThread():
+            if thread is not threading.currentThread() and thread.name.startswith("Valid"):
                 threads_exist = True
                 thread.join(2)
 except KeyboardInterrupt:
