@@ -69,7 +69,7 @@ for ami in result:
         summary.add(ami['ami'], status='fail')
         print bug_description
     else:
-        BZ_Object = bzid.createbug(product=args.bugzilla_product, component=args.bugzilla_component, version="RHEL" + ami["version"], rep_platform=ami["arch"], summary=bug_summary, op_sys="Linux")
+        BZ_Object = bzid.createbug(product=args.bugzilla_product, component=args.bugzilla_component, version="RHEL" + ami["version"], rep_platform=ami["arch"], summary=bug_summary, op_sys="Linux", keywords=["TestOnly"])
         if not BZ_Object:
             print "Failed to create bug in bugzilla!"
             sys.exit(1)
