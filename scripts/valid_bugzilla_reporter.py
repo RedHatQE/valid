@@ -64,11 +64,9 @@ for ami in result:
     ami_fd.write(yaml.safe_dump(ami))
     ami_fd.seek(0)
     overall_result, bug_summary, bug_description = valid_result.get_overall_result(ami)
+    bugnr = None
 
-    if args.test:
-        summary.add(ami['ami'], status='fail')
-        print bug_description
-    else:
+    if not args.test:
         BZ_Object = bzid.createbug(product=args.bugzilla_product, component=args.bugzilla_component, version="RHEL" + ami["version"], rep_platform=ami["arch"], summary=bug_summary, op_sys="Linux", keywords=["TestOnly"])
         if not BZ_Object:
             print "Failed to create bug in bugzilla!"
@@ -79,13 +77,12 @@ for ami in result:
         res = bzid.attachfile(bugid, ami_fd, attach_name, filename=attach_name, contenttype="text/yaml", ispatch=False)
         bug = bzid.getbug(bugid)
         if bug:
+            bugnr = bug.id
             bug.addcomment(bug_description)
-            if overall_result != "succeeded":
-                bug.setstatus("ON_QA")
-                ami_result = 'fail'
-                summary.add(ami['ami'], bug=bug.id, status='fail')
-            else:
-                bug.setstatus("VERIFIED")
-                summary.add(ami['ami'], bug=bug.id, status='pass')
+            bug.setstatus("VERIFIED" if overall_result == "succeeded" else "ON_QA")
+    else:
+        print bug_description
+
+    summary.add(ami['ami'], bug=bugnr, status='pass' if overall_result == "succeeded" else 'fail')
     ami_fd.close()
 print summary
