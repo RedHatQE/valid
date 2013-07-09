@@ -780,7 +780,7 @@ class WorkerThread(threading.Thread):
             (ssh_key_name, ssh_key) = yamlconfig['ssh'][params['region']]
             logging.debug(self.getName() + ': ssh-key ' + ssh_key)
 
-            for user in ['ec2-user']:
+            for user in ['ec2-user', 'fedora']:
                 # If we're able to login with one of these users allow root ssh immediately
                 try:
                     con = self.get_connection(params['instance'], user, ssh_key)

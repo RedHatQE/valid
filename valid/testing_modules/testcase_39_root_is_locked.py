@@ -14,5 +14,5 @@ class testcase_39_root_is_locked(ValidTestcase):
 
     def test(self, connection, params):
         # Root account should be locked
-        self.get_return_value(connection, 'egrep "^root:(\!\!|\*|x):" /etc/shadow')
+        self.get_return_value(connection, 'egrep "^root:(\!\!|\*|x|locked):" /etc/shadow')
         return self.log
