@@ -9,7 +9,7 @@ class testcase_98_package_install_pre(ValidTestcase):
     Do package upgrate with specified package set
     """
 
-    tags = []
+    tags = ['preinstall_package']
     stages = ['stage0']
 
     def test(self, connection, params):

@@ -9,7 +9,7 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
     Do kernel upgrate (with specified package set or from repo) before testing
     """
 
-    tags = ['kernel']
+    tags = ['kernel', 'preinstall_kernel']
     stages = ['stage0']
 
     def test(self, connection, params):
