@@ -15,7 +15,7 @@ class testcase_361_ebs_deferred_detach(ValidTestcase):
     - Remove volume
     """
     stages = ['stage1']
-    tags = ['default', 'kernel']
+    tags = ['kernel']
 
     def test(self, connection, params):
         prod = params['product'].upper()
