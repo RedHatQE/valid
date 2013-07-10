@@ -6,7 +6,7 @@ class testcase_31_subscription_management(ValidTestcase):
     Subscription manager shoud be disabled
     """
     stages = ['stage1']
-    applicable = {'product': '(?i)RHEL|BETA', 'version': '(?!^5\.[12345678]$|^6\.[1234]$)'}
+    applicable = {'product': '(?i)RHEL|BETA', 'version': '(?!^5\.[123456789]$|^6\.[1234]$)'}
     tags = ['default']
 
     def test(self, connection, params):
