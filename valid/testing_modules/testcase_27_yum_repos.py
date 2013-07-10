@@ -11,6 +11,7 @@ class testcase_27_yum_repos(ValidTestcase):
     """
     stages = ['stage1']
     applicable = {'product': '(?i)RHEL|BETA'}
+    not_applicable = {"product": "(?i)RHEL|BETA", "version": "6.0"}
     tags = ['default']
 
     def test(self, connection, params):

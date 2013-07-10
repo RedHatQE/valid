@@ -8,6 +8,7 @@ class testcase_60_yum_update(ValidTestcase):
 
     stages = ['stage1']
     tags = ['default']
+    not_applicable = {"product": "(?i)RHEL|BETA", "version": "6.0"}
 
     def test(self, connection, params):
         prod = params['product'].upper()
