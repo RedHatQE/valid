@@ -19,7 +19,7 @@ class testcase_32_ephemeral(ValidTestcase):
                     if name.startswith('/dev/xvd'):
                         # no xvd* for RHEL5
                         continue
-                elif (prod in ['RHEL', 'BETA']) and (ver.startswith('6.')):
+                elif (prod in ['RHEL', 'BETA']) and (ver.startswith('6.') and ver != '6.0'):
                     if name.startswith('/dev/sd'):
                         name = '/dev/xvd' + name[7:]
                     if params['virtualization'] != 'hvm' and len(name) == 9 and ord(name[8]) < ord('w'):
