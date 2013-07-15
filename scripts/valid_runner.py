@@ -105,13 +105,15 @@ def get_test_stages(params):
                     if hasattr(testcase, 'not_applicable'):
                         logging.debug('Checking not_applicable list for ' + test_name)
                         not_applicable = testcase.not_applicable
+                        applicable_flag = False
                         for key in not_applicable.keys():
                             logging.debug('not_applicable key %s %s ... ' % (key, not_applicable[key]))
                             r = re.compile(not_applicable[key])
-                            if r.match(params[key]):
+                            if r.match(params[key]) is None:
+                                applicable_flag = True
+                                logging.debug('not_applicable check failed for ' + test_name + ' %s = %s' % (key, params[key]))
+                            else:
                                 logging.debug('got not_applicable for ' + test_name + ' %s = %s' % (key, params[key]))
-                                applicable_flag = False
-                                break
                     if hasattr(testcase, 'applicable'):
                         logging.debug('Checking applicable list for ' + test_name)
                         applicable = testcase.applicable
