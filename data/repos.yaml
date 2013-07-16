@@ -91,7 +91,13 @@ ANY_REGION: &ANY_REGION
         <<: *BETA_6ANY
     RHEL_6.4:
         # in 6.4 source beta (RC) comes with redhat-release-server
-        <<: *RHEL_6ANY
+        <<: *HAS_RHEL_SOURCE
+        rhui-REGION-client-config-server-6: {repo-status: enabled}
+        rhui-REGION-rhel-server-releases: {repo-status: enabled}
+        rhui-REGION-rhel-server-releases-optional: {repo-status: enabled}
+        rhui-REGION-rhel-server-releases-optional-source: {repo-status: disabled}
+        rhui-REGION-rhel-server-releases-source: {repo-status: disabled}
+        rhel-source-beta: {repo-status: disabled}
     BETA_6.4:
         <<: *BETA_6ANY
 
