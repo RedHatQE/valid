@@ -1007,9 +1007,9 @@ argparser.add_argument('--maxwait', type=int,
                        default=900, help='maximum wait time for instance creation')
 
 argparser.add_argument('--minthreads', type=int,
-                       default=10, help='minimum number of worker threads')
+                       default=8, help='minimum number of worker threads')
 argparser.add_argument('--maxthreads', type=int,
-                       default=100, help='maximum number of worker threads')
+                       default=32, help='maximum number of worker threads')
 
 argparser.add_argument('--results-dir',
                        default=False, help='put resulting yaml files to specified location')
