@@ -77,6 +77,17 @@ ANY_REGION: &ANY_REGION
         <<: *RHEL_59_AND_NEWER
     BETA_5.9:
         <<: *BETA_59_AND_NEWER
+    BETA_5.10:
+        <<: *HAS_RHEL_DEBUGINFO
+        rhui-REGION-rhel-server-supplementary: {repo-status: enabled}
+        rhui-REGION-rhel-server-releases-debug-beta: {repo-status: enabled}
+        rhui-REGION-rhel-server-releases-beta: {repo-status: enabled}
+        rhui-REGION-client-config-server-5-beta: {repo-status: enabled}
+        rhui-REGION-rhel-server-source: {repo-status: disabled}
+        rhui-REGION-client-config-server-5: {repo-status: enabled}
+        rhui-REGION-rhel-server-source-supplementary: {repo-status: disabled}
+        rhui-REGION-rhel-server: {repo-status: enabled}
+        rhui-REGION-rhel-server-releases-source-beta: {repo-status: disabled}
     RHEL_6.1:
         <<: *RHEL_6ANY
     BETA_6.1:
