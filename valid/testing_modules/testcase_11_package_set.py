@@ -25,8 +25,8 @@ class testcase_11_package_set(ValidTestcase):
                     path = basepath + params['version']
             else:
                 basepath += 'rhel_'
-                if (len(params['version']) > 2) and os.path.exists(basepath + params['version'][0] + params['version'][2]):
-                    path = basepath + params['version'][0] + params['version'][2]
+                if (len(params['version']) > 2) and os.path.exists(basepath + params['version'][0] + params['version'][2:]):
+                    path = basepath + params['version'][0] + params['version'][2:]
                 elif (len(params['version']) > 0) and os.path.exists(basepath + params['version'][0]):
                     path = basepath + params['version'][0]
             if path == '':
