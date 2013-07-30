@@ -23,7 +23,11 @@ class testcase_60_yum_update(ValidTestcase):
         # workaround for https://bugzilla.redhat.com/show_bug.cgi?id=912568
         # https://access.redhat.com/site/solutions/175393
         self.get_return_value(connection, 'rpm -q matahari-net && yum -y remove matahari-net ||:', 90)
-
-        self.get_return_value(connection, 'yum -y install kernel', 900)
+        if prod in ['RHEL', 'BETA'] and ver.startswith('5.'):
+            self.get_return_value(connection, 'yum -y install kernel-xen', 900)
+        elif prod == 'FEDORA' and params['arch'] == 'i386':
+            self.get_return_value(connection, 'yum -y install kernel-PAE', 900)
+        else:
+            self.get_return_value(connection, 'yum -y install kernel', 900)
         self.get_return_value(connection, 'yum -y update', 1200)
         return self.log
