@@ -27,7 +27,7 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
                 kernelfiles += '/tmp/%s ' % pkgbase
                 self.get_return_value(connection, 'ls -l /tmp/%s' % pkgbase)
             if len(pkgs_files) == 1:
-                self.get_return_value(connection, 'yum -y install %s' % kernelfiles, 900)
+                self.get_return_value(connection, 'yum -y update %s' % kernelfiles, 900)
                 kernel_updated = self.get_return_value(connection, '[ $(rpm -qa kernel | wc -l) -gt 1 ]', nolog=True)
             else:
                 kernel_updated = self.get_return_value(connection, 'rpm -U %s' % kernelfiles, 900)
@@ -39,9 +39,6 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
             if prod == 'FEDORA' and ver == '18':
                 # we have a bug in kernel upgrade
                 self.get_result(connection, 'cat /boot/grub/grub.conf | sed -e \'s|hd0,0|hd0|\' -e \'s|default=1|default=0|\' > /boot/grub/menu.lst && echo SUCCESS')
-            else:
-                # removing old kernel - no way to boot it on EC2 anyway :-)
-                self.get_return_value(connection, 'rpm -e kernel-`uname -r`', 30)
             try:
                 self.get_return_value(connection, 'reboot', nolog=True)
             except (paramiko.SSHException, EOFError), e:
