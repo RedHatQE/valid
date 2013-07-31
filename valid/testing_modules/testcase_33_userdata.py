@@ -16,9 +16,9 @@ class testcase_33_userdata(ValidTestcase):
                 if params['userdata'].find('touch /userdata_test') != -1:
                     userdata_tested = True
                     self.get_return_value(connection, 'ls -l /userdata_test')
-                if params['userdata'].find('yum -y install httpd') != -1:
+                if params['userdata'].find('yum -y install xdelta') != -1:
                     userdata_tested = True
-                    self.get_return_value(connection, 'rpm -q httpd')
+                    self.get_return_value(connection, 'rpm -q xdelta')
                 if not userdata_tested:
                     self.log.append({'result': 'skip',
                                      'comment': 'cannot test provided userdata'

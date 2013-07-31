@@ -26,8 +26,8 @@
   - {ephemeral_name: ephemeral4, name: /dev/xvdaa}
   - {ephemeral_name: ephemeral5, name: /dev/xvdab}
   userdata: &USERDATA |
-      #! /bin/sh
-      yum -y install httpd ||:
+      #! /bin/sh -ex
+      yum -y install xdelta
       touch /userdata_test
       date >> /userdata_test
   cpu: '16'

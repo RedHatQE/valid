@@ -2,8 +2,8 @@
   bmap:
   - {delete_on_termination: true, name: /dev/sda1, size: '15'}
   userdata: &USERDATA |
-      #! /bin/sh
-      yum -y install httpd ||:
+      #! /bin/sh -ex
+      yum -y install xdelta
       touch /userdata_test
       date >> /userdata_test
   cpu: '32'

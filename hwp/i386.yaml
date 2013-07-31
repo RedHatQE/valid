@@ -4,8 +4,8 @@
   ec2name: t1.micro
   virtualization: 'paravirtual'
   userdata: &USERDATA |
-      #! /bin/sh
-      yum -y install httpd ||:
+      #! /bin/sh -ex
+      yum -y install xdelta
       touch /userdata_test
       date >> /userdata_test
 - arch: 'i386'
