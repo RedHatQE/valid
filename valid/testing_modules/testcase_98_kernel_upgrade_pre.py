@@ -28,12 +28,13 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
                 self.get_return_value(connection, 'ls -l /tmp/%s' % pkgbase)
             if len(pkgs_files) == 1:
                 self.get_return_value(connection, 'yum -y install %s' % kernelfiles, 900)
+                kernel_updated = self.get_return_value(connection, '[ $(rpm -qa kernel | wc -l) -gt 1 ]', nolog=True)
             else:
-                self.get_return_value(connection, 'rpm -i %s' % kernelfiles, 900)
+                kernel_updated = self.get_return_value(connection, 'rpm -U %s' % kernelfiles, 900)
         else:
             # doing upgrade from repo
             self.get_return_value(connection, 'yum -y install kernel', 300)
-        kernel_updated = self.get_return_value(connection, '[ $(rpm -qa kernel | wc -l) -gt 1 ]', nolog=True)
+            kernel_updated = self.get_return_value(connection, '[ $(rpm -qa kernel | wc -l) -gt 1 ]', nolog=True)
         if kernel_updated == 0:
             if prod == 'FEDORA' and ver == '18':
                 # we have a bug in kernel upgrade
