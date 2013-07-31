@@ -14,14 +14,14 @@ class testcase_31_subscription_management(ValidTestcase):
         self.ping_pong(
             connection,
             'yum --disablerepo=\'*\' -v repolist',
-            expectation='Not loading \'subscription-manager\' plugin',
+            expectation='Not loading "subscription-manager" plugin',
             timeout=30
         )
         # check subscription-manager plugin can be enabled
         self.ping_pong(
             connection,
             'yum --enableplugin=subscription-manager --disablerepo=\'*\' -v repolist',
-            expectation='Loading \'subscription-manager\' plugin',
+            expectation='Loading "subscription-manager" plugin',
             timeout=30
         )
         # check system isn't subscribbed
