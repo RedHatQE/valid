@@ -16,9 +16,6 @@ acpid
 aic94xx-firmware
 alsa-lib
 alsa-utils
-apr
-apr-util
-apr-util-ldap
 at
 atk
 atlas
@@ -164,8 +161,6 @@ hal-libs
 hdparm
 hesiod
 hicolor-icon-theme
-httpd
-httpd-tools
 hunspell
 hunspell-en
 hwdata
@@ -622,6 +617,7 @@ wget
 which
 wireless-tools
 words
+xdelta
 xdg-utils
 xml-common
 xmlrpc-c
