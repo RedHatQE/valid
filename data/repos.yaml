@@ -77,6 +77,8 @@ ANY_REGION: &ANY_REGION
         <<: *RHEL_59_AND_NEWER
     BETA_5.9:
         <<: *BETA_59_AND_NEWER
+    RHEL_5.10:
+        <<: *RHEL_5ANY
     BETA_5.10:
         <<: *HAS_RHEL_DEBUGINFO
         rhui-REGION-rhel-server-supplementary: {repo-status: enabled}

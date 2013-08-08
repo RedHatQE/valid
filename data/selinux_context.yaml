@@ -42,6 +42,8 @@ RHEL_5.9:
     <<: *RHEL_5ANY
 BETA_5.9:
     <<: *BETA_5ANY
+RHEL_5.10:
+    <<: *RHEL_5ANY
 BETA_5.10:
     <<: *BETA_5ANY
 RHEL_6.0:
