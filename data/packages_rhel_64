@@ -337,7 +337,6 @@ make
 man
 man-pages
 man-pages-overrides
-mcelog
 mdadm
 mesa-dri-drivers
 mesa-dri-filesystem
@@ -617,7 +616,6 @@ wget
 which
 wireless-tools
 words
-xdelta
 xdg-utils
 xml-common
 xmlrpc-c
