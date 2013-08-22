@@ -36,6 +36,9 @@ class testcase_11_package_set(ValidTestcase):
             package_set_requred = set(fd.read().split('\n')[:-1])
             fd.close()
             package_set_got = set(packages[0].split(','))
+            if params['userdata'].find('yum -y install xdelta') != -1:
+                # package was installed by cloud-init
+                package_set_got.discard('xdelta')
             difference = package_set_requred.difference(package_set_got)
             difference_new = package_set_got.difference(package_set_requred)
             self.log.append({'result': 'passed', 'comment': 'Newly introduced packages: ' + str(sorted(list(difference_new)))})

@@ -15,6 +15,9 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
     def test(self, connection, params):
         prod = params['product'].upper()
         ver = params['version']
+        if (prod in ['RHEL', 'BETA']) and (ver.startswith('6.')):
+            # remove bfa-firmware - conflicts with new RHEL6 kernel
+            self.get_return_value(connection, 'rpm -q bfa-firmware && rpm -e bfa-firmware ||:', 60)
         if 'kernelpkg' in params:
             kernelfiles = ''
             if type(params['kernelpkg']) == str:
