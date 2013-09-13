@@ -28,7 +28,7 @@ class testcase_14_host_details(ValidTestcase):
                         self.get_return_value(connection, '[ \'%s\' = \'%s\' ]' % (billingProduct, 'bp-6fa54006'))
                     elif params['itype'] == 'access':
                         self.get_return_value(connection, '[ \'%s\' = \'%s\' ]' % (billingProduct, 'bp-63a5400a'))
-            except KeyErrori as e:
+            except KeyError as e:
                 self.log.append({'result': 'failure', 'comment': 'failed to check instance details, ' + e.message})
         else:
             self.log.append({'result': 'failure', 'comment': 'failed to get instance details'})
