@@ -98,7 +98,7 @@ class testcase_361_ebs_deferred_detach(ValidTestcase):
             time.sleep(20)
             volume.update()
 
-            if self.get_return_value(connection, 'umount /mnt/deferred', 20) is None:
+            if self.ping_pong(connection, 'umount /mnt/deferred && echo SUCCESS', '\r\nSUCCESS\r\n', 20) is None:
                 # bug#794803
                 # doing force-detach
                 ec2connection.detach_volume(volume.id, force=True)

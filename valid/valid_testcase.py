@@ -20,6 +20,7 @@ class ValidTestcase(object):
             result["actual"] = e.message
             logging.debug(threading.currentThread().name + ": ping_pong failed: '%s'" % e.message)
         self.log.append(result)
+        return result["result"]
 
     def match(self, connection, command, regexp, grouplist=[1], timeout=10):
         try:
