@@ -937,13 +937,18 @@ class WorkerThread(threading.Thread):
             raise ExpectFailed('Command ' + command + ' failed with ' + str(status) + ' status.')
         return status
 
-    def get_connection(self, instance, user, ssh_key):
+    @staticmethod
+    def _get_instance_key(instance, user, ssh_key):
         key = ''
         if 'public_dns_name' in instance:
             key = instance['public_dns_name']
         if key == '' and 'private_ip_address' in instance:
             key = instance['private_ip_address']
         key += ":" + user + ":" + ssh_key
+        return key
+
+    def get_connection(self, instance, user, ssh_key):
+        key = self._get_instance_key(instance, user, ssh_key)
         logging.debug(self.getName() + ': searching for %s in connection cache' % key)
         con = None
         with connection_cache_lock:
@@ -968,11 +973,7 @@ class WorkerThread(threading.Thread):
         return con
 
     def close_connection(self, instance, user, ssh_key):
-        if 'public_dns_name' in instance:
-            key = instance['public_dns_name']
-        elif 'private_ip_address' in instance:
-           key = instance['private_ip_address']
-        key += ":" + user + ":" + ssh_key
+        key = self._get_instance_key(instance, user, ssh_key)
         con = None
         with connection_cache_lock:
             if key in connection_cache:
