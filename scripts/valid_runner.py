@@ -938,9 +938,10 @@ class WorkerThread(threading.Thread):
         return status
 
     def get_connection(self, instance, user, ssh_key):
+        key = ''
         if 'public_dns_name' in instance:
             key = instance['public_dns_name']
-        elif 'private_ip_address' in instance:
+        if key == '' and 'private_ip_address' in instance:
             key = instance['private_ip_address']
         key += ":" + user + ":" + ssh_key
         logging.debug(self.getName() + ': searching for %s in connection cache' % key)
