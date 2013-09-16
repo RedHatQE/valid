@@ -793,6 +793,7 @@ class WorkerThread(threading.Thread):
                     pass
 
             con = self.get_connection(params['instance'], 'root', ssh_key)
+            Expect.ping_pong(con, 'uname', 'Linux')
 
             logging.debug(self.getName() + ': sleeping for ' + str(settlewait) + ' sec. to make sure instance has been settled.')
             time.sleep(settlewait)
