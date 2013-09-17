@@ -25,10 +25,18 @@ class testcase_31_subscription_management(ValidTestcase):
             timeout=30
         )
         # check system isn't subscribbed
-        self.ping_pong(
-            connection,
-            'subscription-manager list',
-            expectation='No installed products to list',
-            timeout=90
-        )
+        if params['version'].startswith('5.'):
+            self.ping_pong(
+                connection,
+                'subscription-manager list',
+                expectation='No installed products to list',
+                timeout=90
+            )
+        else:
+            self.ping_pong(
+                connection,
+                'subscription-manager list',
+                expectation='Installed Product Status',
+                timeout=90
+
         return self.log
