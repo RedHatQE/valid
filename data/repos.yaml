@@ -119,7 +119,19 @@ ANY_REGION: &ANY_REGION
     BETA_6.4:
         <<: *BETA_6ANY
     BETA_6.5:
-        <<: *BETA_6ANY
+        <<: *HAS_RHEL_SOURCE
+          rhel-source: {repo-status: disabled}
+          rhel-source-beta: {repo-status: disabled}
+          rhui-REGION-client-config-server-6: {repo-status: enabled}
+          rhui-REGION-client-config-server-6-beta: {repo-status: enabled}
+          rhui-REGION-rhel-server-releases: {repo-status: enabled}
+          rhui-REGION-rhel-server-releases-beta: {repo-status: enabled}
+          rhui-REGION-rhel-server-releases-optional: {repo-status: enabled}
+          rhui-REGION-rhel-server-releases-optional-beta: {repo-status: enabled}
+          rhui-REGION-rhel-server-releases-optional-source: {repo-status: disabled}
+          rhui-REGION-rhel-server-releases-optional-source-beta: {repo-status: disabled}
+          rhui-REGION-rhel-server-releases-source: {repo-status: disabled}
+          rhui-REGION-rhel-server-releases-source-beta: {repo-status: disabled}
 
 # particular regions follow
 ap-northeast-1:
