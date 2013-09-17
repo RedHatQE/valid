@@ -118,6 +118,8 @@ ANY_REGION: &ANY_REGION
         rhel-source-beta: {repo-status: disabled}
     BETA_6.4:
         <<: *BETA_6ANY
+    BETA_6.5:
+        <<: *BETA_6ANY
 
 # particular regions follow
 ap-northeast-1:
