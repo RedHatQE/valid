@@ -38,5 +38,5 @@ class testcase_31_subscription_management(ValidTestcase):
                 'subscription-manager list',
                 expectation='Installed Product Status',
                 timeout=90
-
+            )
         return self.log
