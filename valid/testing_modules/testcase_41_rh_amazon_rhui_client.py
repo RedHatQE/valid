@@ -8,6 +8,7 @@ class testcase_41_rh_amazon_rhui_client(ValidTestcase):
     """
     tags = ['default']
     stages = ['stage1']
+    not_applicable = {'product': '(?i)FEDORA'}
 
     def test(self, connection, params):
         prod = params['product'].upper()

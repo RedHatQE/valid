@@ -7,7 +7,12 @@ class testcase_42_ipv6(ValidTestcase):
     """
     stages = ['stage1']
     tags = ['default']
+    not_applicable = {'product': '(?i)FEDORA'}
 
     def test(self, connection, params):
-        self.get_return_value(connection, 'grep NETWORKING_IPV6=no /etc/sysconfig/network')
+        if prod in ['RHEL', 'BETA']:
+            self.get_return_value(connection, 'grep NETWORKING_IPV6=no /etc/sysconfig/network')
+        else:
+            self.get_return_value(connection, 'grep NETWORKING_IPV6=yes /etc/sysconfig/network')
+
         return self.log
