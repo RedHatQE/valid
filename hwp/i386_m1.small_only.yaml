@@ -1,6 +1,6 @@
 - arch: 'i386'
   cpu: '1'
-  memory: '600000'
+  memory: '1700000'
   ec2name: m1.small
   virtualization: 'paravirtual'
   bmap: &BMAP
