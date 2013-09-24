@@ -84,6 +84,7 @@ ANY_REGION: &ANY_REGION
         rhui-REGION-rhel-server: {repo-status: enabled}
         rhui-REGION-client-config-server-5: {repo-status: enabled}
         rhui-REGION-rhel-server-source: {repo-status: disabled}
+        rhui-REGION-rhel-server-debug-supplementary: {repo-status: disabled}
     BETA_5.10:
         <<: *HAS_RHEL_DEBUGINFO
         rhui-REGION-rhel-server-supplementary: {repo-status: enabled}
