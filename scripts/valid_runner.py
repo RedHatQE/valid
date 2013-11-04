@@ -1,7 +1,6 @@
 #! /usr/bin/python -tt
 
-import Queue
-import threading
+import multiprocessing
 import boto
 import time
 import logging
@@ -167,114 +166,114 @@ def add_data(data, emails=None, subject=None):
     @return: transaction id or None
     @rtype: str or None
     """
-    with resultdic_lock:
-        transaction_id = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
-        logging.info('Adding validation transaction ' + transaction_id)
-        resultdic[transaction_id] = {}
-        count = 0
-        for params in data:
-            mandatory_fields = ['product', 'arch', 'region', 'version', 'ami']
-            minimal_set = set(mandatory_fields)
-            exact_set = set(params.keys())
-            if minimal_set.issubset(exact_set):
-                # we have all required keys
-                for field in mandatory_fields:
-                    if type(params[field]) != str:
-                        params[field] = str(params[field])
-                if params['ami'] in resultdic[transaction_id].keys():
-                    logging.error('Ami %s was already added for transaction %s!' % (params['ami'], transaction_id))
-                    continue
-                logging.debug('Got valid data line ' + str(params))
-                hwp_found = False
-                for hwpdir in ['hwp', '/usr/share/valid/hwp']:
-                    try:
-                        hwpfd = open(hwpdir + '/' + params['arch'] + '.yaml', 'r')
-                        hwp = yaml.load(hwpfd)
-                        hwpfd.close()
-                        # filter hwps based on args
-                        hwp = filter(lambda x: re.match(args.hwp_filter,
-                                                        x['ec2name']), hwp)
-                        if not len(hwp):
-                            # precautions
-                            logging.info('no hwp match for %s; nothing to do' %
-                                         args.hwp_filter)
-                            continue
+    transaction_id = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
+    logging.info('Adding validation transaction ' + transaction_id)
+    transaction_dict = {}
+    count = 0
+    for params in data:
+        mandatory_fields = ['product', 'arch', 'region', 'version', 'ami']
+        minimal_set = set(mandatory_fields)
+        exact_set = set(params.keys())
+        if minimal_set.issubset(exact_set):
+            # we have all required keys
+            for field in mandatory_fields:
+                if type(params[field]) != str:
+                    params[field] = str(params[field])
+            if params['ami'] in transaction_dict.keys():
+                logging.error('Ami %s was already added for transaction %s!' % (params['ami'], transaction_id))
+                continue
+            logging.debug('Got valid data line ' + str(params))
+            hwp_found = False
+            for hwpdir in ['hwp', '/usr/share/valid/hwp']:
+                try:
+                    hwpfd = open(hwpdir + '/' + params['arch'] + '.yaml', 'r')
+                    hwp = yaml.load(hwpfd)
+                    hwpfd.close()
+                    # filter hwps based on args
+                    hwp = filter(lambda x: re.match(args.hwp_filter,
+                                                    x['ec2name']), hwp)
+                    if not len(hwp):
+                        # precautions
+                        logging.info('no hwp match for %s; nothing to do' %
+                                     args.hwp_filter)
+                        continue
 
-                        logging.info('using hwps: %s' %
-                                     reduce(lambda x, y: x + ', %s' % str(y['ec2name']),
-                                            hwp[1:],
-                                            str(hwp[0]['ec2name'])
-                                            )
-                                     )
-                        ninstances = 0
-                        for hwp_item in hwp:
-                            params_copy = params.copy()
-                            params_copy.update(hwp_item)
-                            if not 'bmap' in params_copy.keys():
-                                params_copy['bmap'] = [{'name': '/dev/sda1', 'size': '15', 'delete_on_termination': True}]
-                            if not 'userdata' in params_copy.keys():
-                                params_copy['userdata'] = None
-                            if not 'itype' in params_copy.keys():
-                                params_copy['itype'] = 'hourly'
+                    logging.info('using hwps: %s' %
+                                 reduce(lambda x, y: x + ', %s' % str(y['ec2name']),
+                                        hwp[1:],
+                                        str(hwp[0]['ec2name'])
+                                        )
+                                 )
+                    ninstances = 0
+                    for hwp_item in hwp:
+                        params_copy = params.copy()
+                        params_copy.update(hwp_item)
+                        if not 'bmap' in params_copy.keys():
+                            params_copy['bmap'] = [{'name': '/dev/sda1', 'size': '15', 'delete_on_termination': True}]
+                        if not 'userdata' in params_copy.keys():
+                            params_copy['userdata'] = None
+                        if not 'itype' in params_copy.keys():
+                            params_copy['itype'] = 'hourly'
 
-                            if not 'enable_stages' in params_copy:
-                                params_copy['enable_stages'] = enable_stages
-                            if not 'disable_stages' in params_copy:
-                                params_copy['disable_stages'] = disable_stages
-                            if not 'enable_tags' in params_copy:
-                                params_copy['enable_tags'] = enable_tags
-                            if not 'disable_tags' in params_copy:
-                                params_copy['disable_tags'] = disable_tags
-                            if not 'enable_tests' in params_copy:
-                                params_copy['enable_tests'] = enable_tests
-                            if not 'disable_tests' in params_copy:
-                                params_copy['disable_tests'] = disable_tests
+                        if not 'enable_stages' in params_copy:
+                            params_copy['enable_stages'] = enable_stages
+                        if not 'disable_stages' in params_copy:
+                            params_copy['disable_stages'] = disable_stages
+                        if not 'enable_tags' in params_copy:
+                            params_copy['enable_tags'] = enable_tags
+                        if not 'disable_tags' in params_copy:
+                            params_copy['disable_tags'] = disable_tags
+                        if not 'enable_tests' in params_copy:
+                            params_copy['enable_tests'] = enable_tests
+                        if not 'disable_tests' in params_copy:
+                            params_copy['disable_tests'] = disable_tests
 
-                            if not 'repeat' in params_copy:
-                                params_copy['repeat'] = repeat
+                        if not 'repeat' in params_copy:
+                            params_copy['repeat'] = repeat
 
-                            if not 'name' in params_copy:
-                                params_copy['name'] = params_copy['ami'] + ' validation'
+                        if not 'name' in params_copy:
+                            params_copy['name'] = params_copy['ami'] + ' validation'
 
-                            params_copy['transaction_id'] = transaction_id
-                            params_copy['iname'] = 'Instance' + str(count) + '_' + transaction_id
-                            params_copy['stages'] = get_test_stages(params_copy)
-                            ninstances += len(params_copy['stages'])
-                            if params_copy['stages'] != []:
-                                logging.info('Adding ' + params_copy['iname'] + ': ' + hwp_item['ec2name'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
-                                mainq.put((0, 'create', params_copy))
-                                count += 1
-                            else:
-                                logging.info('No tests for ' + params_copy['iname'] + ': ' + hwp_item['ec2name'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
-                        if ninstances > 0:
-                            resultdic[transaction_id][params['ami']] = {'ninstances': ninstances, 'instances': []}
-                            if emails:
-                                resultdic[transaction_id][params['ami']]['emails'] = emails
-                                if subject:
-                                    resultdic[transaction_id][params['ami']]['subject'] = subject
-                        hwp_found = True
-                        break
-                    except:
-                        logging.debug(':' + traceback.format_exc())
-                if not hwp_found:
-                    logging.error('HWP for ' + params['arch'] + ' is not found, skipping dataline for ' + params['ami'])
-            else:
-                # we something is missing
-                logging.error('Got invalid data line: ' + str(params))
-        if count > 0:
-            logging.info('Validation transaction ' + transaction_id + ' added')
-            return transaction_id
+                        params_copy['transaction_id'] = transaction_id
+                        params_copy['iname'] = 'Instance' + str(count) + '_' + transaction_id
+                        params_copy['stages'] = get_test_stages(params_copy)
+                        ninstances += len(params_copy['stages'])
+                        if params_copy['stages'] != []:
+                            logging.info('Adding ' + params_copy['iname'] + ': ' + hwp_item['ec2name'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
+                            mainq.put((0, 'create', params_copy))
+                            count += 1
+                        else:
+                            logging.info('No tests for ' + params_copy['iname'] + ': ' + hwp_item['ec2name'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
+                    if ninstances > 0:
+                        transaction_dict[params['ami']] = {'ninstances': ninstances, 'instances': []}
+                        if emails:
+                            transaction_dict[params['ami']]['emails'] = emails
+                            if subject:
+                                transaction_dict[params['ami']]['subject'] = subject
+                    hwp_found = True
+                    break
+                except:
+                    logging.debug(':' + traceback.format_exc())
+            if not hwp_found:
+                logging.error('HWP for ' + params['arch'] + ' is not found, skipping dataline for ' + params['ami'])
         else:
-            resultdic.pop(transaction_id)
-            logging.info('No data added')
-            return None
+            # we something is missing
+            logging.error('Got invalid data line: ' + str(params))
+    if count > 0:
+        resultdic[transaction_id] = transaction_dict
+        logging.info('Validation transaction ' + transaction_id + ' added')
+        return transaction_id
+    else:
+        resultdic.pop(transaction_id)
+        logging.info('No data added')
+        return None
 
 
-class ServerThread(threading.Thread):
+class ServerThread(multiprocessing.Process):
     """
     Thread for handling HTTPS requests
     """
-    def __init__(self, hostname='0.0.0.0', port=8080):
+    def __init__(self, resultdic, resultdic_yaml, hostname='0.0.0.0', port=8080):
         """
         Create ServerThread object
 
@@ -284,16 +283,16 @@ class ServerThread(threading.Thread):
         @param port: bind port
         @type port: int
         """
-        threading.Thread.__init__(self, name="ValidServerThread")
         self.hostname = hostname
         self.port = port
+        multiprocessing.Process.__init__(self, name='ServerProcess',target=self.runner, args=(resultdic, resultdic_yaml))
 
-    def run(self):
+    def runner(self, resultdic, resultdic_yaml):
         """
         Run Thread
         """
-        server_class = BaseHTTPServer.HTTPServer
-        httpd = server_class((self.hostname, self.port), HTTPHandler)
+        server_class = ValidHTTPServer
+        httpd = server_class((self.hostname, self.port), HTTPHandler, resultdic, resultdic_yaml)
         httpd.socket = ssl.wrap_socket(httpd.socket,
                                        certfile=yamlconfig['server_ssl_cert'],
                                        keyfile=yamlconfig['server_ssl_key'],
@@ -301,6 +300,13 @@ class ServerThread(threading.Thread):
                                        cert_reqs=ssl.CERT_REQUIRED,
                                        ca_certs=yamlconfig['server_ssl_ca'])
         httpd.serve_forever()
+
+
+class ValidHTTPServer(BaseHTTPServer.HTTPServer):
+    def __init__(self, server_address, RequestHandlerClass, resultdic, resultdic_yaml):
+        BaseHTTPServer.HTTPServer.__init__(self, server_address, RequestHandlerClass)
+        self.resultdic = resultdic
+        self.resultdic_yaml = resultdic_yaml
 
 
 class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -336,37 +342,33 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 for q_item in mainq.queue:
                     s.wfile.write('<p>%s</p>' % str(q_item))
                 s.wfile.write('<h1>Ongoing testing</h1>')
-                with resultdic_lock:
-                    for transaction_id in resultdic.keys():
-                        s.wfile.write('<h2>Transaction <a href=/result?transaction_id=%s>%s</a></h2>' % (transaction_id, transaction_id))
-                        for ami in resultdic[transaction_id].keys():
-                            s.wfile.write('<h3>Ami %s </h3>' % ami)
-                            s.wfile.write('<p>%s</p>' % str(resultdic[transaction_id][ami]))
+                for transaction_id in s.server.resultdic.keys():
+                    s.wfile.write('<h2>Transaction <a href=/result?transaction_id=%s>%s</a></h2>' % (transaction_id, transaction_id))
+                    for ami in s.server.resultdic[transaction_id].keys():
+                        s.wfile.write('<h3>Ami %s </h3>' % ami)
+                        s.wfile.write('<p>%s</p>' % str(s.server.resultdic[transaction_id][ami]))
                 s.wfile.write('<h1>Finished testing</h1>')
-                with resultdic_yaml_lock:
-                    for transaction_id in resultdic_yaml.keys():
-                        s.wfile.write('<h2>Transaction <a href=/result?transaction_id=%s>%s</a></h2>' % (transaction_id, transaction_id))
+                for transaction_id in s.server.resultdic_yaml.keys():
+                    s.wfile.write('<h2>Transaction <a href=/result?transaction_id=%s>%s</a></h2>' % (transaction_id, transaction_id))
                 s.wfile.write('</body></html>')
             elif path == '/result':
                 # transaction result in yaml
                 if not 'transaction_id' in query.keys():
                     raise Exception('transaction_id parameter is not set')
                 transaction_id = query['transaction_id'][0]
-                with resultdic_yaml_lock:
-                    if transaction_id in resultdic_yaml.keys():
+                if transaction_id in s.server.resultdic_yaml.keys():
+                    s.send_response(200)
+                    s.send_header('Content-type', 'text/yaml')
+                    s.end_headers()
+                    s.wfile.write(s.server.resultdic_yaml[transaction_id])
+                else:
+                    if transaction_id in s.server.resultdic.keys():
                         s.send_response(200)
                         s.send_header('Content-type', 'text/yaml')
                         s.end_headers()
-                        s.wfile.write(resultdic_yaml[transaction_id])
+                        s.wfile.write(yaml.safe_dump({'result': 'In progress'}))
                     else:
-                        with resultdic_lock:
-                            if transaction_id in resultdic.keys():
-                                s.send_response(200)
-                                s.send_header('Content-type', 'text/yaml')
-                                s.end_headers()
-                                s.wfile.write(yaml.safe_dump({'result': 'In progress'}))
-                            else:
-                                raise Exception('No such transaction')
+                        raise Exception('No such transaction')
             else:
                 s.send_response(404)
                 s.send_header('Content-type', 'text/html')
@@ -416,190 +418,173 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 s.wfile.write(e.message)
 
 
-class WatchmanThread(threading.Thread):
+class WatchmanProcess(multiprocessing.Process):
     """
     Special Thread to watch over other Threads:
-    - Create WorkerThreads when we have long queue
+    - Create WorkerProcesses when we have long queue
     - report result for a transaction when it's ready
     """
-    def __init__(self):
+    def __init__(self, resultdic, resultdic_lock, resultdic_yaml, connection_cache):
         """
-        Create WatchmanThread object
+        Create WatchmanProcess object
         """
-        threading.Thread.__init__(self, name="ValidWatchmanThread")
+        multiprocessing.Process.__init__(self, name='WatchmanProcess',target=self.runner, args=(resultdic, resultdic_lock, resultdic_yaml, connection_cache))
 
-    def run(self):
+    def runner(self, resultdic, resultdic_lock, resultdic_yaml, connection_cache):
         """
         Run Thread
         """
         while True:
-            with numthreads_lock:
-                logging.debug('WatchmanThread: heartbeat numthreads: %i' % numthreads)
+            logging.debug('WatchmanProcess: heartbeat numthreads: %i' % numthreads.value)
             time.sleep(random.randint(2, 10))
-            self.report_results()
-            self.add_worker_threads()
-            with resultdic_lock:
-                if resultdic == {} and not httpserver:
-                    break
+            self.report_results(resultdic, resultdic_lock, resultdic_yaml)
+            self.add_worker_threads(resultdic, resultdic_lock, connection_cache)
+            if resultdic.keys() == [] and not httpserver:
+                break
 
-    def add_worker_threads(self):
+    def add_worker_threads(self, resultdic, resultdic_lock, connection_cache):
         """
         Create additional worker threads when something has to be done
         """
-        global numthreads
-        global numthreads_lock
-        with numthreads_lock:
-            threads_to_create = min(maxthreads - numthreads, mainq.qsize())
+        threads_to_create = min(maxthreads - numthreads.value, mainq.qsize())
         if threads_to_create > 0:
-            logging.debug('WatchmanThread: shoulkd create %i additional worker threads' % threads_to_create)
+            logging.debug('WatchmanProcess: should create %i additional worker threads' % threads_to_create)
             for i in range(threads_to_create):
-                wthread = WorkerThread()
-                with numthreads_lock:
-                    numthreads += 1
+                wthread = WorkerProcess(resultdic, resultdic_lock, connection_cache)
+                numthreads.value += 1
                 wthread.start()
 
-    def report_results(self):
+    def report_results(self, resultdic, resultdic_lock, resultdic_yaml):
         """
         Looking if we can report some transactions
         """
-        with resultdic_lock:
-            """ Dictionary is now locked """
-            for transaction_id in resultdic.keys():
-                """ Checking all transactions """
-                report_ready = True
-                for ami in resultdic[transaction_id].keys():
-                    """ Checking all amis: they should be finished """
-                    if resultdic[transaction_id][ami]['ninstances'] != len(resultdic[transaction_id][ami]['instances']):
-                        """ Still have some jobs running ..."""
-                        logging.debug('WatchmanThread: ' + transaction_id + ': ' + ami + ':  waiting for ' + str(resultdic[transaction_id][ami]['ninstances']) + ' results, got ' + str(len(resultdic[transaction_id][ami]['instances'])))
-                        report_ready = False
-                if report_ready:
-                    resfile = resdir + '/' + transaction_id + '.yaml'
-                    result = []
-                    data = resultdic[transaction_id]
-                    emails = None
-                    subject = None
-                    for ami in data.keys():
-                        result_item = {'ami': data[ami]['instances'][0]['ami'],
-                                       'product': data[ami]['instances'][0]['product'],
-                                       'version': data[ami]['instances'][0]['version'],
-                                       'arch': data[ami]['instances'][0]['arch'],
-                                       'region': data[ami]['instances'][0]['region'],
-                                       'console_output': {},
-                                       'result': {}}
-                        for instance in data[ami]['instances']:
-                            if not instance['instance_type'] in result_item['result'].keys():
-                                result_item['result'][instance['instance_type']] = instance['result'].copy()
+        for transaction_id in resultdic.keys():
+            """ Checking all transactions """
+            transaction_dict = resultdic[transaction_id].copy()
+            report_ready = True
+            for ami in transaction_dict.keys():
+                """ Checking all amis: they should be finished """
+                if transaction_dict[ami]['ninstances'] != len(transaction_dict[ami]['instances']):
+                    """ Still have some jobs running ..."""
+                    logging.debug('WatchmanProcess: ' + transaction_id + ': ' + ami + ':  waiting for ' + str(transaction_dict[ami]['ninstances']) + ' results, got ' + str(len(transaction_dict[ami]['instances'])))
+                    report_ready = False
+            if report_ready:
+                resfile = resdir + '/' + transaction_id + '.yaml'
+                result = []
+                data = transaction_dict
+                emails = None
+                subject = None
+                for ami in data.keys():
+                    result_item = {'ami': data[ami]['instances'][0]['ami'],
+                                   'product': data[ami]['instances'][0]['product'],
+                                   'version': data[ami]['instances'][0]['version'],
+                                   'arch': data[ami]['instances'][0]['arch'],
+                                   'region': data[ami]['instances'][0]['region'],
+                                   'console_output': {},
+                                   'result': {}}
+                    for instance in data[ami]['instances']:
+                        if not instance['instance_type'] in result_item['result'].keys():
+                            result_item['result'][instance['instance_type']] = instance['result'].copy()
+                        else:
+                            result_item['result'][instance['instance_type']].update(instance['result'])
+                        # we're interested in latest console output only, overwriting
+                        result_item['console_output'][instance['instance_type']] = instance['console_output']
+                    result.append(result_item)
+                    if 'emails' in data[ami].keys():
+                        emails = data[ami]['emails']
+                    if 'subject' in data[ami].keys():
+                        subject = data[ami]['subject']
+                result_yaml = yaml.safe_dump(result)
+                resultdic_yaml[transaction_id] = result_yaml
+                try:
+                    result_fd = open(resfile, 'w')
+                    result_fd.write(result_yaml)
+                    result_fd.close()
+                    if emails:
+                        for ami in result:
+                            overall_result, bug_summary, bug_description = valid_result.get_overall_result(ami)
+                            msg = MIMEMultipart()
+                            msg.preamble = 'Validation result'
+                            if subject:
+                                msg['Subject'] = "[" + overall_result + "] " + subject
                             else:
-                                result_item['result'][instance['instance_type']].update(instance['result'])
-                            # we're interested in latest console output only, overwriting
-                            result_item['console_output'][instance['instance_type']] = instance['console_output']
-                        result.append(result_item)
-                        if 'emails' in data[ami].keys():
-                            emails = data[ami]['emails']
-                        if 'subject' in data[ami].keys():
-                            subject = data[ami]['subject']
-                    result_yaml = yaml.safe_dump(result)
-                    with resultdic_yaml_lock:
-                        resultdic_yaml[transaction_id] = result_yaml
-                    try:
-                        result_fd = open(resfile, 'w')
-                        result_fd.write(result_yaml)
-                        result_fd.close()
-                        if emails:
-                            for ami in result:
-                                overall_result, bug_summary, bug_description = valid_result.get_overall_result(ami)
-                                msg = MIMEMultipart()
-                                msg.preamble = 'Validation result'
-                                if subject:
-                                    msg['Subject'] = "[" + overall_result + "] " + subject
-                                else:
-                                    msg['Subject'] = "[" + overall_result + "] " + bug_summary
-                                msg['From'] = mailfrom
-                                msg['To'] = emails
-                                txt = MIMEText(bug_description + '\n')
-                                msg.attach(txt)
-                                txt = MIMEText(yaml.safe_dump(ami), 'yaml')
-                                msg.attach(txt)
-                                s = smtplib.SMTP('localhost')
-                                s.sendmail(mailfrom, emails.split(','), msg.as_string())
-                                s.quit()
-                    except Exception, e:
-                        logging.error('WatchmanThread: saving result failed, %s' % e)
-                    logging.info('Transaction ' + transaction_id + ' finished. Result: ' + resfile)
-                    resultdic.pop(transaction_id)
+                                msg['Subject'] = "[" + overall_result + "] " + bug_summary
+                            msg['From'] = mailfrom
+                            msg['To'] = emails
+                            txt = MIMEText(bug_description + '\n')
+                            msg.attach(txt)
+                            txt = MIMEText(yaml.safe_dump(ami), 'yaml')
+                            msg.attach(txt)
+                            s = smtplib.SMTP('localhost')
+                            s.sendmail(mailfrom, emails.split(','), msg.as_string())
+                            s.quit()
+                except Exception, e:
+                    logging.error('WatchmanProcess: saving result failed, %s' % e)
+                logging.info('Transaction ' + transaction_id + ' finished. Result: ' + resfile)
+                resultdic.pop(transaction_id)
 
 
-class WorkerThread(threading.Thread):
+class WorkerProcess(multiprocessing.Process):
     """
     Worker Thread to do actual testing
     """
-    def __init__(self):
+    def __init__(self, resultdic, resultdic_lock, connection_cache):
         """
-        Create WorkerThread object
+        Create WorkerProcess object
         """
-        threading.Thread.__init__(self)
-        self.name = self.name.replace("Thread", "ValidWorkerThread")
+        multiprocessing.Process.__init__(self, name='WorkerProcess_%s' % random.randint(1,16384), target=self.runner, args=(resultdic, resultdic_lock, connection_cache))
 
-    def run(self):
+    def runner(self, resultdic, resultdic_lock, connection_cache):
         """
         Run thread:
         - Get tasks from mainq (create/setup/test/terminate)
         - Check for maxtries
         """
-        global numthreads
-        global numthreads_lock
         while True:
-            with numthreads_lock:
-                logging.debug(self.getName() + ': heartbeat numthreads: %i' % numthreads)
-            with resultdic_lock:
-                if resultdic == {} and not httpserver:
-                    with numthreads_lock:
-                        logging.debug(self.getName() + ': not in server mode and nothing to do, suiciding')
-                        numthreads -= 1
-                        break
-                    break
+            logging.debug(self.name + ': heartbeat numthreads: %i' % numthreads.value)
+            if resultdic.keys() == [] and not httpserver:
+                logging.debug(self.name + ': not in server mode and nothing to do, suiciding')
+                numthreads.value -= 1
+                break
             if mainq.empty():
-                with numthreads_lock:
-                    if numthreads > minthreads:
-                        logging.debug(self.getName() + ': too many worker threads and nothing to do, suiciding')
-                        numthreads -= 1
-                        break
+                if numthreads.value > minthreads:
+                    logging.debug(self.name + ': too many worker threads and nothing to do, suiciding')
+                    numthreads.value -= 1
+                    break
                 time.sleep(random.randint(2, 10))
                 continue
             try:
                 (ntry, action, params) = mainq.get()
-                mainq.task_done()
             except:
                 continue
             if ntry > maxtries:
                 # Maxtries reached: something is wrong, reporting 'failure' and terminating the instance
-                logging.error(self.getName() + ': ' + action + ':' + str(params) + ' failed after ' + str(maxtries) + ' tries')
+                logging.error(self.name + ': ' + action + ':' + str(params) + ' failed after ' + str(maxtries) + ' tries')
                 if action in ['create', 'setup']:
                     params['result'] = {action: 'failure'}
                 elif action == 'test':
                     params['result'] = {params['stages'][0]: 'failure'}
                 if action != 'terminate':
-                    self.abort_testing(params)
+                    self.abort_testing(params, resultdic, resultdic_lock)
                 continue
             if action == 'create':
                 # create an instance
-                logging.debug(self.getName() + ': picking up ' + params['iname'])
-                self.do_create(ntry, params)
+                logging.debug(self.name + ': picking up ' + params['iname'])
+                self.do_create(ntry, params, resultdic, resultdic_lock)
             elif action == 'setup':
                 # setup instance for testing
-                logging.debug(self.getName() + ': doing setup for ' + params['iname'])
-                res = self.do_setup(ntry, params)
+                logging.debug(self.name + ': doing setup for ' + params['iname'])
+                res = self.do_setup(ntry, params, connection_cache)
             elif action == 'test':
                 # do some testing
-                logging.debug(self.getName() + ': doing testing for ' + params['iname'])
-                res = self.do_testing(ntry, params)
+                logging.debug(self.name + ': doing testing for ' + params['iname'])
+                res = self.do_testing(ntry, params, resultdic, resultdic_lock, connection_cache)
             elif action == 'terminate':
                 # terminate instance
-                logging.debug(self.getName() + ': terminating ' + params['iname'])
-                self.do_terminate(ntry, params)
+                logging.debug(self.name + ': terminating ' + params['iname'])
+                self.do_terminate(ntry, params, connection_cache)
 
-    def abort_testing(self, params):
+    def abort_testing(self, params, resultdic, resultdic_lock):
         """
         Something went wrong and we need to abort testing
 
@@ -608,13 +593,15 @@ class WorkerThread(threading.Thread):
         """
         # we need to change expected value in resultdic
         with resultdic_lock:
-            resultdic[params['transaction_id']][params['ami']]['ninstances'] -= (len(params['stages']) - 1)
-        self.report_results(params)
+            d = resultdic[params['transaction_id']]
+            d[params['ami']]['ninstances'] -= (len(params['stages']) - 1)
+            resultdic[params['transaction_id']] = d
+        self.report_results(params, resultdic, resultdic_lock)
         if 'id' in params.keys():
             # Try to terminate the instance
             mainq.put((0, 'terminate', params.copy()))
 
-    def report_results(self, params):
+    def report_results(self, params, resultdic, resultdic_lock):
         """
         Report results
 
@@ -624,23 +611,29 @@ class WorkerThread(threading.Thread):
         console_output = ''
         if len(params['stages']) == 1:
             try:
+                #getting console output after last stage
                 connection = params['instance']['connection']
                 console_output = connection.get_console_output(params['id']).output
-                logging.debug(self.getName() + ': got console output for %s: %s' % (params['iname'], console_output))
+                logging.debug(self.name + ': got console output for %s: %s' % (params['iname'], console_output))
             except Exception, e:
-                logging.error(self.getName() + ': report_results: Failed to get console output %s' % e)
+                logging.error(self.name + ': report_results: Failed to get console output %s' % e)
+        report_value = {'instance_type': params['ec2name'],
+                        'ami': params['ami'],
+                        'region': params['region'],
+                        'arch': params['arch'],
+                        'version': params['version'],
+                        'product': params['product'],
+                        'console_output': console_output,
+                        'result': params['result']}
+        logging.debug(self.name + ': reporting result: %s' % (report_value, ))
+        logging.debug(self.name + ': resultdic before report: %s' % (resultdic.items(), ))
         with resultdic_lock:
-            report_value = {'instance_type': params['ec2name'],
-                            'ami': params['ami'],
-                            'region': params['region'],
-                            'arch': params['arch'],
-                            'version': params['version'],
-                            'product': params['product'],
-                            'console_output': console_output,
-                            'result': params['result']}
-            resultdic[params['transaction_id']][params['ami']]['instances'].append(report_value)
+            d = resultdic[params['transaction_id']]
+            d[params['ami']]['instances'].append(report_value)
+            resultdic[params['transaction_id']] = d
+        logging.debug(self.name + ': resultdic after report: %s' % (resultdic.items(), ))
 
-    def do_create(self, ntry, params):
+    def do_create(self, ntry, params, resultdic, resultdic_lock):
         """
         Create stage of testing
 
@@ -651,13 +644,13 @@ class WorkerThread(threading.Thread):
         @type params: list
         """
         result = None
-        logging.debug(self.getName() + ': trying to create instance  ' + params['iname'] + ', ntry ' + str(ntry))
+        logging.debug(self.name + ': trying to create instance  ' + params['iname'] + ', ntry ' + str(ntry))
         ntry += 1
         try:
             bmap = BlockDeviceMapping()
             for device in params['bmap']:
                 if not 'name' in device.keys():
-                    logging.debug(self.getName() + ': bad device ' + str(device))
+                    logging.debug(self.name + ': bad device ' + str(device))
                     continue
                 d = BlockDeviceType()
                 if 'size' in device.keys():
@@ -698,7 +691,7 @@ class WorkerThread(threading.Thread):
                 # Instance appeared - scheduling 'setup' stage
                 myinstance.add_tag('Name', params['name'])
                 result = myinstance.__dict__
-                logging.info(self.getName() + ': created instance ' + params['iname'] + ', ' + result['id'] + ':' + result['public_dns_name'])
+                logging.info(self.name + ': created instance ' + params['iname'] + ', ' + result['id'] + ':' + result['public_dns_name'])
                 # packing creation results into params
                 params['id'] = result['id']
                 params['instance'] = result.copy()
@@ -719,55 +712,55 @@ class WorkerThread(threading.Thread):
 
         except boto.exception.EC2ResponseError, e:
             # Boto errors should be handled according to their error Message - there are some well-known ones
-            logging.debug(self.getName() + ': got boto error during instance creation: %s' % e)
+            logging.debug(self.name + ': got boto error during instance creation: %s' % e)
             if str(e).find('<Code>InstanceLimitExceeded</Code>') != -1:
                 # InstanceLimit is temporary problem
-                logging.debug(self.getName() + ': got InstanceLimitExceeded - not increasing ntry')
+                logging.debug(self.name + ': got InstanceLimitExceeded - not increasing ntry')
                 ntry -= 1
             elif str(e).find('<Code>InvalidParameterValue</Code>') != -1:
                 # InvalidParameterValue is really bad
-                logging.error(self.getName() + ': got error during instance creation: %s' % e)
+                logging.error(self.name + ': got error during instance creation: %s' % e)
                 # Failing testing
                 params['result'] = {"create": 'failure'}
-                self.abort_testing(params)
+                self.abort_testing(params, resultdic, resultdic_lock)
                 return
             elif str(e).find('<Code>InvalidAMIID.NotFound</Code>') != -1:
                 # No such AMI in the region
-                logging.error(self.getName() + ': AMI %s not found in %s' % (params['ami'], params['region']))
+                logging.error(self.name + ': AMI %s not found in %s' % (params['ami'], params['region']))
                 # Failing testing
                 params['result'] = {"create": 'failure, no such ami in the region'}
-                self.abort_testing(params)
+                self.abort_testing(params, resultdic, resultdic_lock)
                 return
             elif str(e).find('<Code>AuthFailure</Code>') != -1:
                 # Not authorized is permanent
-                logging.error(self.getName() + ': not authorized for AMI %s in %s' % (params['ami'], params['region']))
+                logging.error(self.name + ': not authorized for AMI %s in %s' % (params['ami'], params['region']))
                 # Failing testing
                 params['result'] = {"create": 'failure, not authorized for images'}
-                self.abort_testing(params)
+                self.abort_testing(params, resultdic, resultdic_lock)
                 return
             elif str(e).find('<Code>Unsupported</Code>') != -1:
                 # Unsupported hardware in the region
-                logging.debug(self.getName() + ': got Unsupported - most likely the permanent error: %s' % e)
+                logging.debug(self.name + ': got Unsupported - most likely the permanent error: %s' % e)
                 # Skipping testing
                 params['result'] = {"create": 'skip'}
-                self.abort_testing(params)
+                self.abort_testing(params, resultdic, resultdic_lock)
                 return
             else:
-                logging.debug(self.getName() + ':' + traceback.format_exc())
+                logging.debug(self.name + ':' + traceback.format_exc())
         except socket.error, e:
             # Network errors are usual, reschedult silently
-            logging.debug(self.getName() + ': got socket error during instance creation: %s' % e)
-            logging.debug(self.getName() + ':' + traceback.format_exc())
+            logging.debug(self.name + ': got socket error during instance creation: %s' % e)
+            logging.debug(self.name + ':' + traceback.format_exc())
         except Exception, e:
             # Unexpected error happened
-            logging.error(self.getName() + ': got error during instance creation: %s %s' % (type(e), e))
-            logging.debug(self.getName() + ':' + traceback.format_exc())
-        logging.debug(self.getName() + ': something went wrong with ' + params['iname'] + ' during creation, ntry: ' + str(ntry) + ', rescheduling')
+            logging.error(self.name + ': got error during instance creation: %s %s' % (type(e), e))
+            logging.debug(self.name + ':' + traceback.format_exc())
+        logging.debug(self.name + ': something went wrong with ' + params['iname'] + ' during creation, ntry: ' + str(ntry) + ', rescheduling')
         # reschedule creation
         time.sleep(10)
         mainq.put((ntry, 'create', params.copy()))
 
-    def do_setup(self, ntry, params):
+    def do_setup(self, ntry, params, connection_cache):
         """
         Setup stage of testing
 
@@ -778,37 +771,37 @@ class WorkerThread(threading.Thread):
         @type params: list
         """
         try:
-            logging.debug(self.getName() + ': trying to do setup for ' + ', ntry ' + str(ntry))
+            logging.debug(self.name + ': trying to do setup for ' + ', ntry ' + str(ntry))
             (ssh_key_name, ssh_key) = yamlconfig['ssh'][params['region']]
-            logging.debug(self.getName() + ': ssh-key ' + ssh_key)
+            logging.debug(self.name + ': ssh-key ' + ssh_key)
 
             for user in ['ec2-user', 'fedora']:
                 # If we're able to login with one of these users allow root ssh immediately
                 try:
-                    con = self.get_connection(params['instance'], user, ssh_key)
+                    con = self.get_connection(params['instance'], user, ssh_key, connection_cache)
                     Expect.ping_pong(con, 'uname', 'Linux')
                     Expect.ping_pong(con, 'sudo su -c \'cp -af /home/' + user + '/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys\' && echo SUCCESS', '\r\nSUCCESS\r\n')
-                    self.close_connection(params['instance'], user, ssh_key)
+                    self.close_connection(params['instance'], user, ssh_key, connection_cache)
                 except:
                     pass
 
-            con = self.get_connection(params['instance'], 'root', ssh_key)
+            con = self.get_connection(params['instance'], 'root', ssh_key, connection_cache)
             Expect.ping_pong(con, 'uname', 'Linux')
 
-            logging.debug(self.getName() + ': sleeping for ' + str(settlewait) + ' sec. to make sure instance has been settled.')
+            logging.debug(self.name + ': sleeping for ' + str(settlewait) + ' sec. to make sure instance has been settled.')
             time.sleep(settlewait)
 
             setup_scripts = []
             if 'setup' in yamlconfig:
                 # upload and execute a setup script as root in /tmp/
-                logging.debug(self.getName() + ': executing global setup script: %s' % yamlconfig['setup'])
+                logging.debug(self.name + ': executing global setup script: %s' % yamlconfig['setup'])
                 local_script_path = os.path.expandvars(os.path.expanduser(yamlconfig['setup']))
                 setup_scripts.append(local_script_path)
             tf = tempfile.NamedTemporaryFile(delete=False)
             if 'setup' in params.keys() and params['setup']:
                 if type(params['setup']) is list:
                     params['setup'] = '\n'.join(map(lambda x: str(x), params['setup']))
-                logging.debug(self.getName() + ': executing ami-specific setup script: %s' % params['setup'])
+                logging.debug(self.name + ': executing ami-specific setup script: %s' % params['setup'])
                 tf.write(params['setup'])
                 setup_scripts.append(tf.name)
             tf.close()
@@ -820,17 +813,17 @@ class WorkerThread(threading.Thread):
             os.unlink(tf.name)
             mainq.put((0, 'test', params.copy()))
         except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
-            logging.debug(self.getName() + ': got \'predictable\' error during instance setup, %s, ntry: %i' % (e, ntry))
-            logging.debug(self.getName() + ':' + traceback.format_exc())
+            logging.debug(self.name + ': got \'predictable\' error during instance setup, %s, ntry: %i' % (e, ntry))
+            logging.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
             mainq.put((ntry + 1, 'setup', params.copy()))
         except Exception, e:
-            logging.error(self.getName() + ': got error during instance setup, %s %s, ntry: %i' % (type(e), e, ntry))
-            logging.debug(self.getName() + ':' + traceback.format_exc())
+            logging.error(self.name + ': got error during instance setup, %s %s, ntry: %i' % (type(e), e, ntry))
+            logging.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
             mainq.put((ntry + 1, 'setup', params.copy()))
 
-    def do_testing(self, ntry, params):
+    def do_testing(self, ntry, params, resultdic, resultdic_lock, connection_cache):
         """
         Testing stage of testing
 
@@ -842,28 +835,28 @@ class WorkerThread(threading.Thread):
         """
         try:
             stage = params['stages'][0]
-            logging.debug(self.getName() + ': trying to do testing for ' + params['iname'] + ' ' + stage + ', ntry ' + str(ntry))
+            logging.debug(self.name + ': trying to do testing for ' + params['iname'] + ' ' + stage + ', ntry ' + str(ntry))
 
             (ssh_key_name, ssh_key) = yamlconfig['ssh'][params['region']]
-            logging.debug(self.getName() + ': ssh-key ' + ssh_key)
+            logging.debug(self.name + ': ssh-key ' + ssh_key)
 
-            con = self.get_connection(params['instance'], 'root', ssh_key)
+            con = self.get_connection(params['instance'], 'root', ssh_key, connection_cache)
 
-            logging.info(self.getName() + ': doing testing for ' + params['iname'] + ' ' + stage)
+            logging.info(self.name + ': doing testing for ' + params['iname'] + ' ' + stage)
 
             try:
                 test_name = stage.split(':')[1]
                 testcase = getattr(sys.modules['valid.testing_modules.' + test_name], test_name)()
-                logging.debug(self.getName() + ': doing test ' + test_name + ' for ' + params['iname'] + ' ' + stage)
+                logging.debug(self.name + ': doing test ' + test_name + ' for ' + params['iname'] + ' ' + stage)
                 test_result = testcase.test(con, params)
-                logging.debug(self.getName() + ': ' + params['iname'] + ': test ' + test_name + ' finised with ' + str(test_result))
+                logging.debug(self.name + ': ' + params['iname'] + ': test ' + test_name + ' finised with ' + str(test_result))
                 result = test_result
             except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError, boto.exception.EC2ResponseError), e:
-                logging.error(self.getName() + ': bad test, %s %s' % (stage, e))
-                logging.debug(self.getName() + ':' + traceback.format_exc())
+                logging.error(self.name + ': bad test, %s %s' % (stage, e))
+                logging.debug(self.name + ':' + traceback.format_exc())
                 result = 'Failure'
 
-            logging.info(self.getName() + ': done testing for ' + params['iname'] + ' ' + stage)
+            logging.info(self.name + ': done testing for ' + params['iname'] + ' ' + stage)
 
             params_new = params.copy()
             if len(params['stages']) > 1:
@@ -871,23 +864,23 @@ class WorkerThread(threading.Thread):
                 mainq.put((0, 'test', params_new))
             else:
                 mainq.put((0, 'terminate', params_new))
-            logging.debug(self.getName() + ': done testing for ' + params['iname'] + ', result: ' + str(result))
+            logging.debug(self.name + ': done testing for ' + params['iname'] + ', result: ' + str(result))
             params['result'] = {params['stages'][0]: result}
-            self.report_results(params)
+            self.report_results(params, resultdic, resultdic_lock)
         except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as e:
             # Looks like we've failed to connect to the instance
-            logging.debug(self.getName() + ': got \'predictable\' error during instance testing, %s, ntry: %i' % (e, ntry))
-            logging.debug(self.getName() + ':' + traceback.format_exc())
+            logging.debug(self.name + ': got \'predictable\' error during instance testing, %s, ntry: %i' % (e, ntry))
+            logging.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
             mainq.put((ntry + 1, 'test', params.copy()))
         except Exception, e:
             # Got unexpected error
-            logging.error(self.getName() + ': got error during instance testing, %s %s, ntry: %i' % (type(e), e, ntry))
-            logging.debug(self.getName() + ':' + traceback.format_exc())
+            logging.error(self.name + ': got error during instance testing, %s %s, ntry: %i' % (type(e), e, ntry))
+            logging.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
             mainq.put((ntry + 1, 'test', params.copy()))
 
-    def do_terminate(self, ntry, params):
+    def do_terminate(self, ntry, params, connection_cache):
         """
         Terminate stage of testing
 
@@ -898,19 +891,19 @@ class WorkerThread(threading.Thread):
         @type params: list
         """
         if 'keepalive' in params and params['keepalive'] is not None:
-            logging.info(self.getName() + ': will not terminate %s (keepalive requested)' % params['iname'])
+            logging.info(self.name + ': will not terminate %s (keepalive requested)' % params['iname'])
             return True
         try:
-            logging.debug(self.getName() + ': trying to terminata instance  ' + params['iname'] + ', ntry ' + str(ntry))
+            logging.debug(self.name + ': trying to terminata instance  ' + params['iname'] + ', ntry ' + str(ntry))
             connection = params['instance']['connection']
             res = connection.terminate_instances([params['id']])
-            logging.info(self.getName() + ': terminated ' + params['iname'])
+            logging.info(self.name + ': terminated ' + params['iname'])
             (ssh_key_name, ssh_key) = yamlconfig['ssh'][params['region']]
-            self.close_connection(params['instance'], "root", ssh_key)
+            self.close_connection(params['instance'], "root", ssh_key, connection_cache)
             return res
         except Exception, e:
-            logging.error(self.getName() + ': got error during instance termination, %s %s' % (type(e), e))
-            logging.debug(self.getName() + ':' + traceback.format_exc())
+            logging.error(self.name + ': got error during instance termination, %s %s' % (type(e), e))
+            logging.debug(self.name + ':' + traceback.format_exc())
             mainq.put((ntry + 1, 'terminate', params.copy()))
 
     @staticmethod
@@ -947,39 +940,35 @@ class WorkerThread(threading.Thread):
         key += ":" + user + ":" + ssh_key
         return key
 
-    def get_connection(self, instance, user, ssh_key):
+    def get_connection(self, instance, user, ssh_key, connection_cache):
         key = self._get_instance_key(instance, user, ssh_key)
-        logging.debug(self.getName() + ': searching for %s in connection cache' % key)
+        logging.debug(self.name + ': searching for %s in connection cache' % key)
         con = None
-        with connection_cache_lock:
-            if key in connection_cache:
-                con = connection_cache[key]
-                logging.debug(self.getName() + ': found %s in connection cache' % key)
+        if key in connection_cache:
+            con = connection_cache[key]
+            logging.debug(self.name + ': found %s in connection cache' % key)
         if con is not None:
             try:
                 Expect.ping_pong(con, 'uname', 'Linux')
             except:
                 # connection looks dead
-                logging.debug(self.getName() + ': eliminating dead connection to %s' % key)
+                logging.debug(self.name + ': eliminating dead connection to %s' % key)
                 con.disconnect()
-                with connection_cache_lock:
-                    connection_cache.pop(key)
-                    con = None
+                connection_cache.pop(key)
+                con = None
         if con is None:
-            logging.debug(self.getName() + ': creating connection to %s' % key)
+            logging.debug(self.name + ': creating connection to %s' % key)
             con = Connection(instance, user, ssh_key)
-            with connection_cache_lock:
-                connection_cache[key] = con
+            connection_cache[key] = con
         return con
 
-    def close_connection(self, instance, user, ssh_key):
+    def close_connection(self, instance, user, ssh_key, connection_cache):
         key = self._get_instance_key(instance, user, ssh_key)
         con = None
-        with connection_cache_lock:
-            if key in connection_cache:
-                logging.debug(self.getName() + ': closing connection to %s' % key)
-                con = connection_cache[key]
-                connection_cache.pop(key)
+        if key in connection_cache:
+            logging.debug(self.name + ': closing connection to %s' % key)
+            con = connection_cache[key]
+            connection_cache.pop(key)
         if con is not None:
             con.disconnect()
 
@@ -1149,24 +1138,24 @@ if httpserver:
 
 logging.getLogger('boto').setLevel(logging.CRITICAL)
 
+# Shared state
+manager = multiprocessing.Manager()
 # main queue for worker threads
-mainq = Queue.Queue()
+mainq = manager.Queue()
 
 # resulting dictionary
-resultdic = {}
-resultdic_lock = threading.Lock()
+resultdic_lock =  multiprocessing.Lock()
+resultdic = manager.dict()
 
 # resulting dictionary
-resultdic_yaml = {}
-resultdic_yaml_lock = threading.Lock()
+resultdic_yaml = manager.dict()
 
 # connection cache
-connection_cache = {}
-connection_cache_lock = threading.Lock()
+connection_cache = manager.dict()
 
 # number of running threads
-numthreads = 0
-numthreads_lock = threading.Lock()
+numthreads = multiprocessing.Value('i', lock=True)
+numthreads.value = 0
 
 if args.data:
     # Data file was supplied
@@ -1184,34 +1173,31 @@ elif not httpserver:
 
 for i in range(minthreads):
     # Creating minimum amount of worker threads
-    wthread = WorkerThread()
-    with numthreads_lock:
-        numthreads += 1
+    wthread = WorkerProcess(resultdic, resultdic_lock, connection_cache)
+    numthreads.value += 1
     wthread.start()
 
-w = WatchmanThread()
+w = WatchmanProcess(resultdic, resultdic_lock, resultdic_yaml, connection_cache)
 w.start()
 
 if httpserver:
     # Starting ServerThread
-    s = ServerThread()
+    s = ServerThread(resultdic, resultdic_yaml)
     s.start()
 
 try:
-    threads_exist = True
-    while threads_exist:
-        # Waiting for all threads to finish
-        threads_exist = False
-        for thread in threading.enumerate():
-            if thread is not threading.currentThread() and thread.name.startswith("Valid"):
-                threads_exist = True
-                thread.join(2)
+    processes_alive = True
+    while processes_alive:
+        processes_alive = False
+        processes = multiprocessing.active_children()
+        logging.debug("Active children: %s" % processes)
+        for process in processes:
+            if not process.name.startswith("SyncManager"):
+                processes_alive = True
+        time.sleep(5)
 except KeyboardInterrupt:
     print 'Got CTRL-C, exiting'
-    for thread in threading.enumerate():
-        if thread is not threading.currentThread() and thread.isAlive():
-            try:
-                thread._Thread__stop()
-            except:
-                print(str(thread.getName()) + ' could not be terminated')
+    for process in multiprocessing.active_children():
+        process.terminate()
     sys.exit(1)
+manager.shutdown()
