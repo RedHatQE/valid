@@ -424,13 +424,13 @@ class WatchmanProcess(multiprocessing.Process):
     - Create WorkerProcesses when we have long queue
     - report result for a transaction when it's ready
     """
-    def __init__(self, resultdic, resultdic_lock, resultdic_yaml, connection_cache):
+    def __init__(self, resultdic, resultdic_lock, resultdic_yaml):
         """
         Create WatchmanProcess object
         """
-        multiprocessing.Process.__init__(self, name='WatchmanProcess',target=self.runner, args=(resultdic, resultdic_lock, resultdic_yaml, connection_cache))
+        multiprocessing.Process.__init__(self, name='WatchmanProcess',target=self.runner, args=(resultdic, resultdic_lock, resultdic_yaml))
 
-    def runner(self, resultdic, resultdic_lock, resultdic_yaml, connection_cache):
+    def runner(self, resultdic, resultdic_lock, resultdic_yaml):
         """
         Run Thread
         """
@@ -438,11 +438,11 @@ class WatchmanProcess(multiprocessing.Process):
             logging.debug('WatchmanProcess: heartbeat numthreads: %i' % numthreads.value)
             time.sleep(random.randint(2, 10))
             self.report_results(resultdic, resultdic_lock, resultdic_yaml)
-            self.add_worker_threads(resultdic, resultdic_lock, connection_cache)
+            self.add_worker_threads(resultdic, resultdic_lock)
             if resultdic.keys() == [] and not httpserver:
                 break
 
-    def add_worker_threads(self, resultdic, resultdic_lock, connection_cache):
+    def add_worker_threads(self, resultdic, resultdic_lock):
         """
         Create additional worker threads when something has to be done
         """
@@ -450,7 +450,7 @@ class WatchmanProcess(multiprocessing.Process):
         if threads_to_create > 0:
             logging.debug('WatchmanProcess: should create %i additional worker threads' % threads_to_create)
             for i in range(threads_to_create):
-                wthread = WorkerProcess(resultdic, resultdic_lock, connection_cache)
+                wthread = WorkerProcess(resultdic, resultdic_lock)
                 numthreads.value += 1
                 wthread.start()
 
@@ -528,13 +528,14 @@ class WorkerProcess(multiprocessing.Process):
     """
     Worker Thread to do actual testing
     """
-    def __init__(self, resultdic, resultdic_lock, connection_cache):
+    def __init__(self, resultdic, resultdic_lock):
         """
         Create WorkerProcess object
         """
-        multiprocessing.Process.__init__(self, name='WorkerProcess_%s' % random.randint(1,16384), target=self.runner, args=(resultdic, resultdic_lock, connection_cache))
+        multiprocessing.Process.__init__(self, name='WorkerProcess_%s' % random.randint(1,16384), target=self.runner, args=(resultdic, resultdic_lock))
+        self.connection_cache = {}
 
-    def runner(self, resultdic, resultdic_lock, connection_cache):
+    def runner(self, resultdic, resultdic_lock):
         """
         Run thread:
         - Get tasks from mainq (create/setup/test/terminate)
@@ -574,15 +575,15 @@ class WorkerProcess(multiprocessing.Process):
             elif action == 'setup':
                 # setup instance for testing
                 logging.debug(self.name + ': doing setup for ' + params['iname'])
-                res = self.do_setup(ntry, params, connection_cache)
+                res = self.do_setup(ntry, params)
             elif action == 'test':
                 # do some testing
                 logging.debug(self.name + ': doing testing for ' + params['iname'])
-                res = self.do_testing(ntry, params, resultdic, resultdic_lock, connection_cache)
+                res = self.do_testing(ntry, params, resultdic, resultdic_lock)
             elif action == 'terminate':
                 # terminate instance
                 logging.debug(self.name + ': terminating ' + params['iname'])
-                self.do_terminate(ntry, params, connection_cache)
+                self.do_terminate(ntry, params)
 
     def abort_testing(self, params, resultdic, resultdic_lock):
         """
@@ -760,7 +761,7 @@ class WorkerProcess(multiprocessing.Process):
         time.sleep(10)
         mainq.put((ntry, 'create', params.copy()))
 
-    def do_setup(self, ntry, params, connection_cache):
+    def do_setup(self, ntry, params):
         """
         Setup stage of testing
 
@@ -771,21 +772,21 @@ class WorkerProcess(multiprocessing.Process):
         @type params: list
         """
         try:
-            logging.debug(self.name + ': trying to do setup for ' + ', ntry ' + str(ntry))
+            logging.debug(self.name + ': trying to do setup for ' + params['iname'] + ', ntry ' + str(ntry))
             (ssh_key_name, ssh_key) = yamlconfig['ssh'][params['region']]
             logging.debug(self.name + ': ssh-key ' + ssh_key)
 
             for user in ['ec2-user', 'fedora']:
                 # If we're able to login with one of these users allow root ssh immediately
                 try:
-                    con = self.get_connection(params['instance'], user, ssh_key, connection_cache)
+                    con = self.get_connection(params['instance'], user, ssh_key)
                     Expect.ping_pong(con, 'uname', 'Linux')
                     Expect.ping_pong(con, 'sudo su -c \'cp -af /home/' + user + '/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys\' && echo SUCCESS', '\r\nSUCCESS\r\n')
-                    self.close_connection(params['instance'], user, ssh_key, connection_cache)
+                    self.close_connection(params['instance'], user, ssh_key)
                 except:
                     pass
 
-            con = self.get_connection(params['instance'], 'root', ssh_key, connection_cache)
+            con = self.get_connection(params['instance'], 'root', ssh_key)
             Expect.ping_pong(con, 'uname', 'Linux')
 
             logging.debug(self.name + ': sleeping for ' + str(settlewait) + ' sec. to make sure instance has been settled.')
@@ -823,7 +824,7 @@ class WorkerProcess(multiprocessing.Process):
             time.sleep(10)
             mainq.put((ntry + 1, 'setup', params.copy()))
 
-    def do_testing(self, ntry, params, resultdic, resultdic_lock, connection_cache):
+    def do_testing(self, ntry, params, resultdic, resultdic_lock):
         """
         Testing stage of testing
 
@@ -840,7 +841,7 @@ class WorkerProcess(multiprocessing.Process):
             (ssh_key_name, ssh_key) = yamlconfig['ssh'][params['region']]
             logging.debug(self.name + ': ssh-key ' + ssh_key)
 
-            con = self.get_connection(params['instance'], 'root', ssh_key, connection_cache)
+            con = self.get_connection(params['instance'], 'root', ssh_key)
 
             logging.info(self.name + ': doing testing for ' + params['iname'] + ' ' + stage)
 
@@ -880,7 +881,7 @@ class WorkerProcess(multiprocessing.Process):
             time.sleep(10)
             mainq.put((ntry + 1, 'test', params.copy()))
 
-    def do_terminate(self, ntry, params, connection_cache):
+    def do_terminate(self, ntry, params):
         """
         Terminate stage of testing
 
@@ -899,7 +900,7 @@ class WorkerProcess(multiprocessing.Process):
             res = connection.terminate_instances([params['id']])
             logging.info(self.name + ': terminated ' + params['iname'])
             (ssh_key_name, ssh_key) = yamlconfig['ssh'][params['region']]
-            self.close_connection(params['instance'], "root", ssh_key, connection_cache)
+            self.close_connection(params['instance'], "root", ssh_key)
             return res
         except Exception, e:
             logging.error(self.name + ': got error during instance termination, %s %s' % (type(e), e))
@@ -940,13 +941,14 @@ class WorkerProcess(multiprocessing.Process):
         key += ":" + user + ":" + ssh_key
         return key
 
-    def get_connection(self, instance, user, ssh_key, connection_cache):
+    def get_connection(self, instance, user, ssh_key):
+        logging.debug(self.name + ': connection cache is: %s' % self.connection_cache)
         key = self._get_instance_key(instance, user, ssh_key)
         logging.debug(self.name + ': searching for %s in connection cache' % key)
         con = None
-        if key in connection_cache:
-            con = connection_cache[key]
-            logging.debug(self.name + ': found %s in connection cache' % key)
+        if key in self.connection_cache:
+            con = self.connection_cache[key]
+            logging.debug(self.name + ': found %s in connection cache (%s)' % (key, con))
         if con is not None:
             try:
                 Expect.ping_pong(con, 'uname', 'Linux')
@@ -954,21 +956,22 @@ class WorkerProcess(multiprocessing.Process):
                 # connection looks dead
                 logging.debug(self.name + ': eliminating dead connection to %s' % key)
                 con.disconnect()
-                connection_cache.pop(key)
+                self.connection_cache.pop(key)
                 con = None
         if con is None:
             logging.debug(self.name + ': creating connection to %s' % key)
             con = Connection(instance, user, ssh_key)
-            connection_cache[key] = con
+            logging.debug(self.name + ': created connection to %s (%s)' % (key, con))
+            self.connection_cache[key] = con
         return con
 
-    def close_connection(self, instance, user, ssh_key, connection_cache):
+    def close_connection(self, instance, user, ssh_key):
         key = self._get_instance_key(instance, user, ssh_key)
         con = None
-        if key in connection_cache:
+        if key in self.connection_cache:
             logging.debug(self.name + ': closing connection to %s' % key)
-            con = connection_cache[key]
-            connection_cache.pop(key)
+            con = self.connection_cache[key]
+            self.connection_cache.pop(key)
         if con is not None:
             con.disconnect()
 
@@ -1150,9 +1153,6 @@ resultdic = manager.dict()
 # resulting dictionary
 resultdic_yaml = manager.dict()
 
-# connection cache
-connection_cache = manager.dict()
-
 # number of running threads
 numthreads = multiprocessing.Value('i', lock=True)
 numthreads.value = 0
@@ -1173,11 +1173,11 @@ elif not httpserver:
 
 for i in range(minthreads):
     # Creating minimum amount of worker threads
-    wthread = WorkerProcess(resultdic, resultdic_lock, connection_cache)
+    wthread = WorkerProcess(resultdic, resultdic_lock)
     numthreads.value += 1
     wthread.start()
 
-w = WatchmanProcess(resultdic, resultdic_lock, resultdic_yaml, connection_cache)
+w = WatchmanProcess(resultdic, resultdic_lock, resultdic_yaml)
 w.start()
 
 if httpserver:
