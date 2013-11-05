@@ -10,7 +10,7 @@
       date >> /userdata_test
 - arch: 'x86_64'
   cpu: '1'
-  memory: '1695000'
+  memory: '1690000'
   ec2name: m1.small
   virtualization: 'paravirtual'
   userdata: *USERDATA
