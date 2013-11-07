@@ -76,3 +76,5 @@ BETA_6.5:
     <<: *BETA_6ANY
 RHEL_6.5:
     <<: *RHEL_6ANY
+FEDORA_20:
+    /var/cache/yum.*: [file_t,rpm_var_cache_t]
