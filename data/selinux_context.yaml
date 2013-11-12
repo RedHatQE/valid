@@ -74,3 +74,5 @@ BETA_6.4:
     <<: *BETA_6ANY
 BETA_6.5:
     <<: *BETA_6ANY
+RHEL_6.5:
+    <<: *RHEL_6ANY
