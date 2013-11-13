@@ -14,9 +14,11 @@ class testcase_26_verify_rpms(ValidTestcase):
         if ver.startswith('6.'):
             release_pkg = 'redhat-release-server'
             rpmv_cmp = '4'
-            if ver[:3] in ['6.4','6.5']:
-                # still 6 for 6.4 and 6.5:-(
+            if ver[:3] == '6.4':
+                # still 6 for 6.4
                 rpmv_cmp = '6'
+            if ver[:3] == '6.5':
+                rpmv_cmp = '2'
             if ver[:3] in ['6.1', '6.3']:
                 rpmv_cmp = '5'
             elif ver.startswith('6.2'):
