@@ -4,9 +4,11 @@ from valid.valid_testcase import *
 class testcase_28_iptables(ValidTestcase):
     """
     Check default iptables setup
+    Note that in rhel6.5 iptables are disabled by default
     """
     stages = ['stage1']
     applicable = {'product': '(?i)RHEL|BETA'}
+    not_applicable = {"product": "(?i)RHEL|BETA", "version": "6.5"}
     tags = ['default']
 
     def test(self, connection, params):
