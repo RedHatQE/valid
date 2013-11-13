@@ -4,6 +4,7 @@ from valid.valid_testcase import *
 class testcase_32_ephemeral(ValidTestcase):
     """
     It should be possible to use ephemeral device (if we have one)
+    Note that in rhel6.5 there is no shift letter in dick device name
     """
     stages = ['stage1']
     tags = ['default']
@@ -22,7 +23,7 @@ class testcase_32_ephemeral(ValidTestcase):
                 elif (prod in ['RHEL', 'BETA']) and (ver.startswith('6.') and ver != '6.0'):
                     if name.startswith('/dev/sd'):
                         name = '/dev/xvd' + name[7:]
-                    if params['virtualization'] != 'hvm' and len(name) == 9 and ord(name[8]) < ord('w'):
+                    if params['virtualization'] != 'hvm' and ver != '6.5' and len(name) == 9 and ord(name[8]) < ord('w'):
                         # there is a 4-letter shift
                         name = name[:8] + chr(ord(name[8]) + 4)
                 else:
