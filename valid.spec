@@ -14,9 +14,11 @@ BuildRequires:	python-devel
 Requires:	python-patchwork >= 0.3 
 Requires:       python-paramiko PyYAML python-boto
 
-%if 0%{?fedora} >= 15
-Requires(post): systemd-units
-Requires(preun): systemd-units
+%if 0%{?fedora} >= 18
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
+BuildRequires: systemd
 %endif
 
 %description
@@ -53,23 +55,15 @@ useradd -r -g valid -d /var/lib/valid -s /sbin/nologin \
         -c "Validation user" valid
         exit 0
 
+%if 0%{?fedora} >= 18
 %post
-%if 0%{?fedora} >= 15
-/bin/systemctl daemon-reload &> /dev/null || :
-%endif
+%systemd_post %{name}.service
 
 %preun
-%if 0%{?fedora} >= 15
-/bin/systemctl --no-reload disable %{name}.service &> /dev/null
-/bin/systemctl stop %{name}.service &> /dev/null
-%endif
+%systemd_preun %{name}.service
 
 %postun
-%if 0%{?fedora} >= 15
-/bin/systemctl daemon-reload &> /dev/null
-if [ "$1" -ge "1" ] ; then
-   /bin/systemctl try-restart %{name}.service &> /dev/null
-fi
+%systemd_postun_with_restart %{name}.service
 %endif
 
 %files
