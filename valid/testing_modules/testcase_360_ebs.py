@@ -76,6 +76,9 @@ class testcase_360_ebs(ValidTestcase):
 
             if (prod in ['RHEL', 'BETA']) and (ver.startswith('5.')):
                 name = device
+            # no 4 letter shift in 6.5
+            elif (prod in ['RHEL', 'BETA']) and ver == '6.5':
+                name = device.replace("/dev/sd", "/dev/xvd")
             elif (prod in ['RHEL', 'BETA']) and (ver.startswith('6.')) and (params['virtualization'] != 'hvm'):
                 # 4 letter shift
                 name = device.replace("/dev/sd", "/dev/xvd")[:-1] + chr(ord(device.replace("/dev/sd", "/dev/xvd")[-1:]) + 4)
