@@ -70,7 +70,6 @@ useradd -r -g valid -d /var/lib/valid -s /sbin/nologin \
 %defattr(-,root,root,-)
 %doc LICENSE README.md
 %attr(0755, root, root) %{_bindir}/valid_runner.py
-%attr(0755, root, root) %{_bindir}/valid_bugzilla_reporter.py
 %attr(0755, root, root) %{_bindir}/valid_cert_creator.py
 %attr(0755, root, root) %{_bindir}/valid_debug_run.py
 %dir %{_sysconfdir}/valid
@@ -88,6 +87,7 @@ useradd -r -g valid -d /var/lib/valid -s /sbin/nologin \
 
 %files client
 %attr(0755, root, root) %{_bindir}/valid_client.py
+%attr(0755, root, root) %{_bindir}/valid_bugzilla_reporter.py
 
 %changelog
 * Tue May 14 2013 Vitaly Kuznetsov <vitty@redhat.com> 0.6-1
