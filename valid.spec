@@ -13,6 +13,7 @@ BuildArch:  noarch
 BuildRequires:	python-devel
 Requires:	python-patchwork >= 0.3 
 Requires:       python-paramiko PyYAML python-boto
+Requires:	valid-client = %{version}-%{release}
 
 %if 0%{?fedora} >= 18
 Requires(post): systemd
@@ -70,15 +71,13 @@ useradd -r -g valid -d /var/lib/valid -s /sbin/nologin \
 %defattr(-,root,root,-)
 %doc LICENSE README.md
 %attr(0755, root, root) %{_bindir}/valid_runner.py
-%attr(0755, root, root) %{_bindir}/valid_bugzilla_reporter.py
 %attr(0755, root, root) %{_bindir}/valid_cert_creator.py
 %attr(0755, root, root) %{_bindir}/valid_debug_run.py
 %dir %{_sysconfdir}/valid
 %config(noreplace) %attr(0640, root, valid) %{_sysconfdir}/validation.yaml
 %config(noreplace) %attr(0640, root, valid) %{_sysconfdir}/sysconfig/valid
 %config(noreplace) %attr(0644, root, valid) %{_sysconfdir}/valid/setup_script.sh
-%{python_sitelib}/*.egg-info
-%{python_sitelib}/valid/*
+%{python_sitelib}/valid/testing_modules
 %{_datadir}/%name
 %if 0%{?fedora} >= 15
 /lib/systemd/system/*.service
@@ -88,6 +87,10 @@ useradd -r -g valid -d /var/lib/valid -s /sbin/nologin \
 
 %files client
 %attr(0755, root, root) %{_bindir}/valid_client.py
+%attr(0755, root, root) %{_bindir}/valid_bugzilla_reporter.py
+%{python_sitelib}/*.egg-info
+%{python_sitelib}/valid/*
+%exclude %{python_sitelib}/valid/testing_modules
 
 %changelog
 * Tue May 14 2013 Vitaly Kuznetsov <vitty@redhat.com> 0.6-1

@@ -42,22 +42,23 @@ argparser.add_argument('-v', '--verbose', help='provide info in yaml',
 
 args = argparser.parse_args()
 
-confd = open(args.config, 'r')
-yamlconfig = yaml.load(confd)
-confd.close()
-
 resultd = open(args.result, 'r')
 result = yaml.load(resultd)
 resultd.close()
 
 summary = Summary(verbose=args.verbose)
 
-bugzilla_user = yamlconfig["bugzilla"]["user"]
-bugzilla_password = yamlconfig["bugzilla"]["password"]
-bzid = bugzilla.RHBugzilla(url=args.bugzilla_url, user=bugzilla_user, password=bugzilla_password)
-if not bzid:
-    print "Failed to connect to bugzilla!"
-    sys.exit(1)
+if not args.test:
+    confd = open(args.config, 'r')
+    yamlconfig = yaml.load(confd)
+    confd.close()
+
+    bugzilla_user = yamlconfig["bugzilla"]["user"]
+    bugzilla_password = yamlconfig["bugzilla"]["password"]
+    bzid = bugzilla.RHBugzilla(url=args.bugzilla_url, user=bugzilla_user, password=bugzilla_password)
+    if not bzid:
+        print "Failed to connect to bugzilla!"
+        sys.exit(1)
 
 for ami in result:
     ami_fd = tempfile.NamedTemporaryFile()
