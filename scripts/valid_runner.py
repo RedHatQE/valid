@@ -264,8 +264,7 @@ def add_data(data, emails=None, subject=None):
         logging.info('Validation transaction ' + transaction_id + ' added')
         return transaction_id
     else:
-        resultdic.pop(transaction_id)
-        logging.info('No data added')
+        logging.error('No data added')
         return None
 
 
