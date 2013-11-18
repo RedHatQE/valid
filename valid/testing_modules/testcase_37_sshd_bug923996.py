@@ -7,7 +7,7 @@ class testcase_37_sshd_bug923996(ValidTestcase):
     """
     stages = ['stage2']
     tags = ['default']
-    not_applicable = {'product': '(?i)RHEL|BETA', 'version': '^5\.[123456789]$|^6\.[1234]$'}
+    not_applicable = {'product': '(?i)RHEL|BETA', 'version': '^5\.[123456789]$|^6\.[01234]$'}
 
     def test(self, connection, params):
         if params['version'].startswith('5.'):
