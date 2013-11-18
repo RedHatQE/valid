@@ -269,13 +269,13 @@ def add_data(data, emails=None, subject=None):
         return None
 
 
-class ServerThread(multiprocessing.Process):
+class ServerProcess(multiprocessing.Process):
     """
-    Thread for handling HTTPS requests
+    Process for handling HTTPS requests
     """
     def __init__(self, resultdic, resultdic_yaml, hostname='0.0.0.0', port=8080):
         """
-        Create ServerThread object
+        Create ServerProcess object
 
         @param hostname: bind address
         @type hostname: str
@@ -289,7 +289,7 @@ class ServerThread(multiprocessing.Process):
 
     def runner(self, resultdic, resultdic_yaml):
         """
-        Run Thread
+        Run process
         """
         server_class = ValidHTTPServer
         httpd = server_class((self.hostname, self.port), HTTPHandler, resultdic, resultdic_yaml)
@@ -420,7 +420,7 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 class WatchmanProcess(multiprocessing.Process):
     """
-    Special Thread to watch over other Threads:
+    Special Process to watch over other Processes:
     - Create WorkerProcesses when we have long queue
     - report result for a transaction when it's ready
     """
@@ -432,27 +432,27 @@ class WatchmanProcess(multiprocessing.Process):
 
     def runner(self, resultdic, resultdic_lock, resultdic_yaml):
         """
-        Run Thread
+        Run process
         """
         while True:
-            logging.debug('WatchmanProcess: heartbeat numthreads: %i' % numthreads.value)
+            logging.debug('WatchmanProcess: heartbeat numprocesses: %i' % numprocesses.value)
             time.sleep(random.randint(2, 10))
             self.report_results(resultdic, resultdic_lock, resultdic_yaml)
-            self.add_worker_threads(resultdic, resultdic_lock)
+            self.add_worker_processes(resultdic, resultdic_lock)
             if resultdic.keys() == [] and not httpserver:
                 break
 
-    def add_worker_threads(self, resultdic, resultdic_lock):
+    def add_worker_processes(self, resultdic, resultdic_lock):
         """
-        Create additional worker threads when something has to be done
+        Create additional worker processes when something has to be done
         """
-        threads_to_create = min(maxthreads - numthreads.value, mainq.qsize())
-        if threads_to_create > 0:
-            logging.debug('WatchmanProcess: should create %i additional worker threads' % threads_to_create)
-            for i in range(threads_to_create):
-                wthread = WorkerProcess(resultdic, resultdic_lock)
-                numthreads.value += 1
-                wthread.start()
+        processes_2create = min(maxprocesses - numprocesses.value, mainq.qsize())
+        if processes_2create > 0:
+            logging.debug('WatchmanProcess: should create %i additional worker processes' % processes_2create)
+            for i in range(processes_2create):
+                wprocess = WorkerProcess(resultdic, resultdic_lock)
+                numprocesses.value += 1
+                wprocess.start()
 
     def report_results(self, resultdic, resultdic_lock, resultdic_yaml):
         """
@@ -526,7 +526,7 @@ class WatchmanProcess(multiprocessing.Process):
 
 class WorkerProcess(multiprocessing.Process):
     """
-    Worker Thread to do actual testing
+    Worker Process to do actual testing
     """
     def __init__(self, resultdic, resultdic_lock):
         """
@@ -537,20 +537,20 @@ class WorkerProcess(multiprocessing.Process):
 
     def runner(self, resultdic, resultdic_lock):
         """
-        Run thread:
+        Run process:
         - Get tasks from mainq (create/setup/test/terminate)
         - Check for maxtries
         """
         while True:
-            logging.debug(self.name + ': heartbeat numthreads: %i' % numthreads.value)
+            logging.debug(self.name + ': heartbeat numprocesses: %i' % numprocesses.value)
             if resultdic.keys() == [] and not httpserver:
                 logging.debug(self.name + ': not in server mode and nothing to do, suiciding')
-                numthreads.value -= 1
+                numprocesses.value -= 1
                 break
             if mainq.empty():
-                if numthreads.value > minthreads:
-                    logging.debug(self.name + ': too many worker threads and nothing to do, suiciding')
-                    numthreads.value -= 1
+                if numprocesses.value > minprocesses:
+                    logging.debug(self.name + ': too many worker processes and nothing to do, suiciding')
+                    numprocesses.value -= 1
                     break
                 time.sleep(random.randint(2, 10))
                 continue
@@ -1001,10 +1001,10 @@ argparser.add_argument('--maxtries', type=int,
 argparser.add_argument('--maxwait', type=int,
                        default=900, help='maximum wait time for instance creation')
 
-argparser.add_argument('--minthreads', type=int,
-                       default=8, help='minimum number of worker threads')
-argparser.add_argument('--maxthreads', type=int,
-                       default=32, help='maximum number of worker threads')
+argparser.add_argument('--minprocesses', type=int,
+                       default=8, help='minimum number of worker processes')
+argparser.add_argument('--maxprocesses', type=int,
+                       default=32, help='maximum number of worker processes')
 
 argparser.add_argument('--results-dir',
                        default=False, help='put resulting yaml files to specified location')
@@ -1020,8 +1020,8 @@ maxtries = args.maxtries
 maxwait = args.maxwait
 settlewait = args.settlewait
 
-minthreads = args.minthreads
-maxthreads = args.maxthreads
+minprocesses = args.minprocesses
+maxprocesses = args.maxprocesses
 
 httpserver = args.server
 
@@ -1143,7 +1143,7 @@ logging.getLogger('boto').setLevel(logging.CRITICAL)
 
 # Shared state
 manager = multiprocessing.Manager()
-# main queue for worker threads
+# main queue for worker processes
 mainq = manager.Queue()
 
 # resulting dictionary
@@ -1153,9 +1153,9 @@ resultdic = manager.dict()
 # resulting dictionary
 resultdic_yaml = manager.dict()
 
-# number of running threads
-numthreads = multiprocessing.Value('i', lock=True)
-numthreads.value = 0
+# number of running processes
+numprocesses = multiprocessing.Value('i', lock=True)
+numprocesses.value = 0
 
 if args.data:
     # Data file was supplied
@@ -1171,18 +1171,18 @@ elif not httpserver:
     logging.error('You need to set --data or --server option!')
     sys.exit(1)
 
-for i in range(minthreads):
-    # Creating minimum amount of worker threads
-    wthread = WorkerProcess(resultdic, resultdic_lock)
-    numthreads.value += 1
-    wthread.start()
+for i in range(minprocesses):
+    # Creating minimum amount of worker processes
+    wprocess = WorkerProcess(resultdic, resultdic_lock)
+    numprocesses.value += 1
+    wprocess.start()
 
 w = WatchmanProcess(resultdic, resultdic_lock, resultdic_yaml)
 w.start()
 
 if httpserver:
-    # Starting ServerThread
-    s = ServerThread(resultdic, resultdic_yaml)
+    # Starting ServerProcess
+    s = ServerProcess(resultdic, resultdic_yaml)
     s.start()
 
 try:
