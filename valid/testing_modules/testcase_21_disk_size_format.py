@@ -23,6 +23,9 @@ class testcase_21_disk_size_format(ValidTestcase):
                     if mpoint[0] == '/' and ((prod == 'RHEL' or prod == 'BETA') and params['version'].startswith('5.')):
                         # ext3 for / in RHEL5
                         self.get_return_value(connection, '[ %s = ext3 ]' % fs[0])
+                    elif mpoint[0] == '/' and ((prod == 'RHEL' or prod == 'BETA') and params['version'].startswith('7.')):
+                        # xfs for RHEL7
+                        self.get_return_value(connection, '[ %s = xfs ]' % fs[0])
                     elif mpoint[0] == '/':
                         # ext4 for / in other OSes
                         self.get_return_value(connection, '[ %s = ext4 ]' % fs[0])
