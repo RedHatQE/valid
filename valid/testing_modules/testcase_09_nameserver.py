@@ -3,7 +3,7 @@ from valid.valid_testcase import *
 
 class testcase_09_nameserver(ValidTestcase):
     """
-    Check if nameserver is working
+    Check if DNS resolving is working
     """
 
     stages = ['stage1']
@@ -12,8 +12,8 @@ class testcase_09_nameserver(ValidTestcase):
     def test(self, connection, params):
         prod = params['product'].upper()
         ver = params['version']
-        if prod == 'FEDORA':
-            self.get_return_value(connection, 'ping -c 5 clock.redhat.com', 30)
-        else:
+        if (params['product'].upper() == 'RHEL' or params['product'].upper() == 'BETA') and (params['version'].startswith('5.') or params['version'].startswith('6.')):
             self.get_return_value(connection, 'dig clock.redhat.com | grep 66.187.233.4', 30)
+        else:
+            self.get_return_value(connection, 'ping -c 5 clock.redhat.com', 30)
         return self.log

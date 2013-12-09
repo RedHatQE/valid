@@ -28,6 +28,7 @@
   userdata: &USERDATA |
       #! /bin/sh -ex
       yum -y install xdelta
+      yum -y install dosfstools
       touch /userdata_test
       date >> /userdata_test
   cpu: '16'

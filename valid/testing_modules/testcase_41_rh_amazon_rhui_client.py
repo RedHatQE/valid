@@ -13,8 +13,10 @@ class testcase_41_rh_amazon_rhui_client(ValidTestcase):
     def test(self, connection, params):
         prod = params['product'].upper()
         ver = params['version']
-        if prod in ['RHEL', 'BETA']:
+        if prod == 'RHEL':
             self.get_return_value(connection, 'rpm -q rh-amazon-rhui-client')
+        elif prod == 'BETA':
+            self.get_return_value(connection, 'rpm -q rh-amazon-rhui-client-beta')
         elif prod == "RHS":
             self.get_return_value(connection, 'rpm -q rh-amazon-rhui-client-rhs')
         elif prod == "JPEAP" and ver.startswith("5."):

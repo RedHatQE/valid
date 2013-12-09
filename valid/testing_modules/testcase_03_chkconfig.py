@@ -5,7 +5,7 @@ class testcase_03_chkconfig(ValidTestcase):
     """
     Check for several services runnung
     - crond
-    - iptables( should be disabled by default in rhel6.5)
+    - iptables( should be disabled by default in rhel6.5+)
     - yum-updatesd (RHEL5 only)
     """
     stages = ['stage1']
@@ -13,8 +13,14 @@ class testcase_03_chkconfig(ValidTestcase):
     def test(self, connection, params):
         is_systemd = self.get_result(connection, 'rpm -q systemd > /dev/null && echo True || echo False')
         if is_systemd == 'True':
+            self.get_return_value(connection, 'systemctl is-active auditd.service')
+            self.get_return_value(connection, 'systemctl is-active rsyslog.service')
             self.get_return_value(connection, 'systemctl is-active crond.service')
-            self.get_return_value(connection, 'systemctl is-active iptables.service')
+            self.get_return_value(connection, 'systemctl is-active chronyd.service')
+            self.get_return_value(connection, 'systemctl is-active postfix.service')
+            self.get_return_value(connection, 'systemctl is-active tuned.service')
+            if params['product'].upper() == 'FEDORA':
+                self.get_return_value(connection, 'systemctl is-active iptables.service')
         else:
             self.ping_pong(connection, 'chkconfig --list crond', '3:on')
             self.ping_pong(connection, 'chkconfig --list iptables', '3:off' if params['version'] == '6.5' else '3:on')

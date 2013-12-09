@@ -7,7 +7,7 @@ class testcase_42_ipv6(ValidTestcase):
     """
     stages = ['stage1']
     tags = ['default']
-    not_applicable = {'product': '(?i)FEDORA'}
+    applicable = {'product': '(?i)RHEL|BETA', "version": "5\..*|6\..*"}
 
     def test(self, connection, params):
 	prod = params['product'].upper()

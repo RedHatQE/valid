@@ -10,7 +10,10 @@ class testcase_15_rhel_version(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
-        rhelv = self.match(connection, 'rpm -q --qf \'%{RELEASE}\n\' --whatprovides redhat-release', re.compile('.*\r\n([0-9]\.[0-9]+\..*)\r\n.*', re.DOTALL))
+        if (params['product'].upper() == 'RHEL' or params['product'].upper() == 'BETA') and params['version'].startswith('7.'):
+            rhelv = self.match(connection, 'rpm -q --qf \'%{VERSION}\n\' --whatprovides redhat-release', re.compile('.*\r\n([0-9]\.[0-9]+)\r\n.*', re.DOTALL))
+        else:
+            rhelv = self.match(connection, 'rpm -q --qf \'%{RELEASE}\n\' --whatprovides redhat-release', re.compile('.*\r\n([0-9]\.[0-9]+\..*)\r\n.*', re.DOTALL))
         if rhelv:
             self.get_return_value(connection, '[ \'%s\' = \'%s\' ]' % (params['version'], rhelv[0][:len(params['version'])]))
         return self.log
