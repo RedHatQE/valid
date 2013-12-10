@@ -75,5 +75,5 @@ class testcase_02_selinux_context(ValidTestcase):
         if new_entries == lost_entries == []:
             self.log.append({'result': 'passed', 'comment': 'No new or lost entries detected. Restorecon output file matches with the list of allowed SElinux context discrepancies.'})
         if new_entries != []:
-            self.log.append({'result': 'fail', 'comment': '\nFail.New entries detected:' + str(new_entries) + '\nLost entries:' + str(lost_entries)})
+            self.log.append({'result': 'failed', 'comment': '\nFail.New entries detected:' + str(new_entries) + '\nLost entries:' + str(lost_entries)})
         return self.log
