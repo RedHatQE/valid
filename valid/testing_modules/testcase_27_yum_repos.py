@@ -17,44 +17,15 @@ class testcase_27_yum_repos(ValidTestcase):
     def test(self, connection, params):
         prod = params['product'].upper()
         ver = params['version']
-        # get repo details file
-        self.get_return_value(
-            connection,
-            'yum repolist -v all | csplit --prefix=repolist_xx - \'%Repo-id\s*:%\'',
-            40
-        )
-        # translate the details into an ini-like structure
-        try:
-            repos_fp = connection.sftp.open('/root/repolist_xx00')
-            repos_details = repos_fp.read()
-            repos_fp.close()
-        except IOError, e:
+        if connection.rpyc is None:
             self.log.append({
                 'result': 'failure',
-                'comment': 'failed to get actual repo list %s' % e})
+                'comment': 'test can\'t be performed without RPyC connection'})
             return self.log
-
-        # make 'Repo-id : <id>' ini section headers: '[<id>]'
-        pattern = re.compile('repo-id\s*:\s*([^\n]*)', re.DOTALL | re.IGNORECASE)
-        repos_details = pattern.sub('[\\1]', repos_details)
-        #getting rid of ":"
-        pattern1 = re.compile('(.*)enabled:(.*)')
-        repos_details = pattern1.sub(r'\1enabled\2',repos_details)
-        # extract particular repos as sections from the structure
-        # please note that ConfigParser makes all strings lower case by
-        # default
-        repos_fp = StringIO.StringIO(repos_details)
-        repos_conf = ConfigParser.ConfigParser()
-        repos_conf.readfp(repos_fp)
-        # convert into a dictionary of {'repo-id':{attr_name:attr_value,...}}
-        # this is to be able to compare with expected config dictionary
-        # all values would be:
-        #   repos = {id:dict(cfg.items(id)) for id in repos_conf.sections()}
-        # vaules of interrest:
-        #   repos = {id:{'repo-status': repos_conf.get(id, 'repo-status')} for id in repos_conf.sections()}
         repos = {}
-        for id in repos_conf.sections():
-            repos[id] = {'repo-status': repos_conf.get(id, 'repo-status')}
+        rb = connection.rpyc.modules.yum.YumBase()
+        for repo in rb.repos.repos:
+            repos[repo] = rb.repos.repos[repo].isEnabled()
 
         # figure out whether expected repos match repos
         with open('/usr/share/valid/data/repos.yaml') as expected_repos_fd:
