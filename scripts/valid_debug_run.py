@@ -11,16 +11,6 @@ import re
 RUNTIME_ERR = 2
 
 
-def na_exit(key, value):
-    # to exit with a skip result containing the N/A statement
-    test_result = {
-        "result": "skipped",
-        "comment": "not applicable for %s = %s" % (key, value)
-    }
-    sys.stdout.write(yaml.safe_dump(test_result))
-    sys.exit(0)
-
-
 class LoadError(Exception):
     pass
 
@@ -172,16 +162,31 @@ print "#  test: %s: %s" % (test_module, args.test)
 testcase = getattr(test_module, args.test)()
 
 if hasattr(testcase, 'not_applicable'):
+    na_flag = True
     for key in testcase.not_applicable.keys():
         r = re.compile(testcase.not_applicable[key])
-        if r.match(params[key]):
-            na_exit(key, params[key])
+        if key in params and r.match(str(params[key])) is None:
+            #na_exit(key, params[key])
+            na_flag = False
+    if na_flag:
+        test_result = {
+            "result": "skipped",
+            "comment": "'not applicable' matched"
+        }
+        sys.stdout.write(yaml.safe_dump(test_result))
+        sys.exit(0)
 
 if hasattr(testcase, 'applicable'):
     for key in testcase.applicable.keys():
         r = re.compile(testcase.applicable[key])
-        if not r.match(params[key]):
-            na_exit(key, params[key])
+        if key in params and not r.match(str(params[key])):
+            # to exit with a skip result containing the N/A statement
+            test_result = {
+                "result": "skipped",
+                "comment": "'applicable' doesn't match for %s = %s" % (key, params[key])
+            }
+            sys.stdout.write(yaml.safe_dump(test_result))
+            sys.exit(0)
 
 try:
     con = patchwork.connection.Connection(
