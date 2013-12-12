@@ -1,0 +1,108 @@
+#list of running services
+
+RHEL_5ANY: &RHEL_5ANY
+    yum-updatesd: true
+    crond: true
+    iptables: true
+
+BETA_5ANY: &BETA_5ANY
+    <<: *RHEL_5ANY
+
+RHEL_6ANY: &RHEL_6ANY
+    crond: true
+    iptables: true
+
+BETA_6ANY: &BETA_6ANY
+    <<: *RHEL_6ANY
+
+RHEL_7ANY: &RHEL_7ANY
+    auditd: true
+    rsyslog: true
+    crond: true
+    chronyd: true
+    postfix: true
+    iptables: true
+    tuned: true
+
+BETA_7ANY: &BETA_7ANY
+    <<: *RHEL_7ANY
+
+RHEL_5.5:
+    <<: *RHEL_5ANY
+
+BETA_5.5:
+    <<: *BETA_5ANY
+
+RHEL_5.6:
+    <<: *RHEL_5ANY
+
+BETA_5.6:
+    <<: *BETA_5ANY
+
+RHEL_5.7:
+    <<: *RHEL_5ANY
+
+BETA_5.7:
+    <<: *BETA_5ANY
+
+RHEL_5.8:
+    <<: *RHEL_5ANY
+
+BETA_5.8:
+    <<: *BETA_5ANY
+
+RHEL_5.9:
+    <<: *RHEL_5ANY
+
+BETA_5.9:
+    <<: *BETA_5ANY
+
+RHEL_5.10:
+    <<: *RHEL_5ANY
+
+BETA_5.10:
+    <<: *BETA_5ANY
+
+RHEL_6.0:
+    <<: *RHEL_6ANY
+
+BETA_6.0:
+    <<: *BETA_6ANY
+
+RHEL_6.1:
+    <<: *RHEL_6ANY
+
+BETA_6.1:
+    <<: *BETA_6ANY
+
+RHEL_6.2:
+    <<: *RHEL_6ANY
+
+BETA_6.2:
+    <<: *BETA_6ANY
+
+RHEL_6.3:
+    <<: *RHEL_6ANY
+
+BETA_6.3:
+    <<: *BETA_6ANY
+
+RHEL_6.4:
+    <<: *RHEL_6ANY
+
+BETA_6.4:
+    <<: *BETA_6ANY
+
+BETA_6.5:
+    <<: *BETA_6ANY
+
+RHEL_6.5:
+    <<: *RHEL_6ANY
+
+BETA_7.0:
+    <<: *RHEL_7ANY
+
+FEDORA_20:
+    auditd: true
+    rsyslog: true
+    crond: true
