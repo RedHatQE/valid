@@ -1,6 +1,7 @@
 #list of running services
 
 RHEL_5ANY: &RHEL_5ANY
+    auditd: true
     yum-updatesd: true
     crond: true
     iptables: true
@@ -9,6 +10,7 @@ BETA_5ANY: &BETA_5ANY
     <<: *RHEL_5ANY
 
 RHEL_6ANY: &RHEL_6ANY
+    auditd: true
     crond: true
     iptables: true
 
