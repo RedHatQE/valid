@@ -28,7 +28,7 @@ class testcase_27_yum_repos(ValidTestcase):
             repos[repo] = rb.repos.repos[repo].isEnabled()
 
         # figure out whether expected repos match repos
-        with open('/usr/share/valid/data/repos.yaml') as expected_repos_fd:
+        with open(self.datadir + '/repos.yaml') as expected_repos_fd:
             all_repos = yaml.safe_load(expected_repos_fd)
         try:
             expected_repos_ = all_repos[params['region']]['%s_%s' % (prod, ver)]

@@ -5,6 +5,8 @@ from patchwork.expect import *
 
 
 class ValidTestcase(object):
+    datadir = '/usr/share/valid/data'
+
     def __init__(self):
         self.log = []
 

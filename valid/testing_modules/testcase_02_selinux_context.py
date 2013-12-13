@@ -36,7 +36,7 @@ class testcase_02_selinux_context(ValidTestcase):
             destination_context = context.split(":")[5]
             restorecon_dict[filename] = [source_context, destination_context]
         #figure out if there are new/lost entries or the restorecon output matched the list of allowed exclusions
-        with open('/usr/share/valid/data/selinux_context.yaml') as selinux_context:
+        with open(self.datadir + '/selinux_context.yaml') as selinux_context:
             context_exclusions_ = yaml.load(selinux_context)
         try:
             context_exclusions = context_exclusions_['%s_%s' % (prod, ver)]

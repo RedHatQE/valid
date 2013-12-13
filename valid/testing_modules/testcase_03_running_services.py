@@ -12,7 +12,7 @@ class testcase_03_running_services(ValidTestcase):
     def test(self, connection, params):
         prod = params['product'].upper()
         ver = params['version']
-        with open('/usr/share/valid/data/running_services.yaml') as expected_services_fd:
+        with open(self.datadir + '/running_services.yaml') as expected_services_fd:
             all_services = yaml.safe_load(expected_services_fd)
         try:
             expected_services = all_services['%s_%s' % (prod, ver)]

@@ -17,7 +17,7 @@ class testcase_11_package_set(ValidTestcase):
                               re.compile('.*\r\n(.*),\r\n.*', re.DOTALL),
                               timeout=30)
         if packages:
-            basepath = '/usr/share/valid/data/packages_'
+            basepath = self.datadir + '/packages_'
             path = ''
             if params['product'].upper() == 'FEDORA':
                 basepath += 'fedora_'

@@ -34,9 +34,9 @@ def get_overall_result(ami):
                                     bug_description += "\t%s: %s\n" % (key, command[key])
                                 bug_description += "<---\n"
                 elif test_result == "skip":
-                    bug_description += "%s skipped\n" % stage
+                    bug_description += "%s: test skipped\n" % stage
                 else:
-                    bug_description += "stage testing failed!\n"
+                    bug_description += "%s: test failure\n" % stage
                     overall_result = "failure"
         else:
             bug_description += "instance testing failed!\n"

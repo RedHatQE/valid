@@ -1,0 +1,130 @@
+#list of modified files
+
+RHEL_5ANY: &RHEL_5ANY
+    /etc/pam.d/system-auth: true
+    /etc/sysconfig/iptables-config: true
+
+BETA_5ANY: &BETA_5ANY
+    <<: *RHEL_5ANY
+
+RHEL_6ANY: &RHEL_6ANY
+    /etc/pam.d/system-auth: true
+    /etc/pam.d/smartcard-auth: true
+    /etc/pam.d/password-auth: true
+    /etc/pam.d/fingerprint-auth: true
+
+BETA_6ANY: &BETA_6ANY
+    <<: *RHEL_6ANY
+
+RHEL_7ANY: &RHEL_7ANY
+    /: true
+    /sys: true
+    /etc/pam.d/fingerprint-auth: true
+    /etc/pam.d/password-auth: true
+    /etc/pam.d/postlogin: true
+    /etc/pam.d/smartcard-auth: true
+    /etc/pam.d/system-auth: true
+    /etc/ssh/sshd_config: true
+
+BETA_7ANY: &BETA_7ANY
+    <<: *RHEL_7ANY
+
+RHEL_5.5:
+    <<: *RHEL_5ANY
+
+BETA_5.5:
+    <<: *BETA_5ANY
+
+RHEL_5.6:
+    <<: *RHEL_5ANY
+
+BETA_5.6:
+    <<: *BETA_5ANY
+
+RHEL_5.7:
+    <<: *RHEL_5ANY
+
+BETA_5.7:
+    <<: *BETA_5ANY
+
+RHEL_5.8:
+    /var/cache/yum: true
+    <<: *RHEL_5ANY
+
+BETA_5.8:
+    /var/cache/yum: true
+    <<: *BETA_5ANY
+
+RHEL_5.9:
+    /var/cache/yum: true
+    <<: *RHEL_5ANY
+
+BETA_5.9:
+    /var/cache/yum: true
+    <<: *BETA_5ANY
+
+RHEL_5.10:
+    <<: *RHEL_5ANY
+
+BETA_5.10:
+    <<: *BETA_5ANY
+
+RHEL_6.0:
+    <<: *RHEL_6ANY
+
+BETA_6.0:
+    <<: *BETA_6ANY
+
+RHEL_6.1:
+    /var/cache/yum: true
+    <<: *RHEL_6ANY
+
+BETA_6.1:
+    /var/cache/yum: true
+    <<: *BETA_6ANY
+
+RHEL_6.2:
+    /var/cache/yum: true
+    /var/run/abrt: true
+    <<: *RHEL_6ANY
+
+BETA_6.2:
+    /var/cache/yum: true
+    /var/run/abrt: true
+    <<: *BETA_6ANY
+
+RHEL_6.3:
+    /var/cache/yum: true
+    <<: *RHEL_6ANY
+
+BETA_6.3:
+    /var/cache/yum: true
+    <<: *BETA_6ANY
+
+RHEL_6.4:
+    /etc/ssh/sshd_config: true
+    /var/cache/yum: true
+    <<: *RHEL_6ANY
+
+BETA_6.4:
+    /etc/ssh/sshd_config: true
+    /var/cache/yum: true
+    <<: *BETA_6ANY
+
+BETA_6.5:
+    /etc/ssh/sshd_config: true
+    /var/cache/yum: true
+    <<: *BETA_6ANY
+
+RHEL_6.5:
+    /etc/ssh/sshd_config: true
+    /var/cache/yum: true
+    <<: *RHEL_6ANY
+
+BETA_7.0:
+    <<: *RHEL_7ANY
+
+FEDORA_20:
+    /etc/ssh/sshd_config: true
+    /var/cache/yum: true
+    /var/log/journal: true

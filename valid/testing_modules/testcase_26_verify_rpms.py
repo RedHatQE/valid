@@ -1,38 +1,63 @@
 from valid.valid_testcase import *
 
+import yaml
+
 
 class testcase_26_verify_rpms(ValidTestcase):
     """
     Do rpm -Va and compare the number of packages with modified files
     """
     stages = ['stage1']
-    applicable = {'product': '(?i)RHEL|BETA', 'version': '5.*|6.*'}
     tags = ['default']
 
     def test(self, connection, params):
+        prod = params['product'].upper()
         ver = params['version']
-        if ver.startswith('6.'):
-            release_pkg = 'redhat-release-server'
-            rpmv_cmp = '4'
-            if ver[:3] == '6.4':
-                # still 6 for 6.4
-                rpmv_cmp = '6'
-            if ver[:3] == '6.5':
-                rpmv_cmp = '2'
-            if ver[:3] in ['6.1', '6.3']:
-                rpmv_cmp = '5'
-            elif ver.startswith('6.2'):
-                rpmv_cmp = '6'
-        elif ver.startswith('5.'):
-            release_pkg = 'redhat-release'
-            rpmv_cmp = '2'
-            if ver[:4] in ['5.10', '5.11']:
-                rpmv_cmp = '3'
-            elif ver[:3] in ['5.8', '5.9']:
-                rpmv_cmp = '3'
 
-        self.get_return_value(connection, '[ $(rpm -Va --nomtime --nosize --nomd5 | sort -fu | wc -l) = ' + rpmv_cmp + ' ]', 180)
-        self.get_return_value(connection, '[ $(rpm -q --queryformat \'%{RELEASE}\n\' ' + release_pkg + ' | cut -d. -f1,2) = ' + ver + ' ]', 30)
+        if connection.rpyc is None:
+            self.log.append({
+                'result': 'failure',
+                'comment': 'test can\'t be performed without RPyC connection'})
+            return self.log
 
-        packagers = self.get_result(connection, 'rpm -qa --queryformat \'%{PACKAGER}\n\' | sort -u | grep -v \'Red Hat, Inc.\'', 60)
+        modified_files = {}
+
+        cmd = ("/bin/sh", "-c", "rpm -Va --nomtime --nosize --nomd5; exit 0")
+        if list(connection.rpyc.modules.sys.version_info)[1] >= 6:
+            # python 2.6 - 2.7
+            cmd = list(cmd)
+ 
+        proc = connection.rpyc.modules.subprocess.Popen(cmd, stdout=connection.rpyc.modules.subprocess.PIPE, stderr=connection.rpyc.modules.subprocess.PIPE)
+        out, err = proc.communicate()
+        if proc.returncode != 0:
+            self.log.append({
+                'result': 'failure',
+                'comment': 'failed to get rpm -Va result from host, error %s' % proc.returncode})
+            return self.log
+
+        files = out.split('\n')
+
+        for fline in files:
+            pos = fline.find('/')
+            if pos != -1:
+                modified_files[fline[pos:]] = True
+
+        with open(self.datadir + '/verify_rpms.yaml') as expected_modified_fd:
+            all_modified = yaml.safe_load(expected_modified_fd)
+        try:
+            expected_modified = all_modified['%s_%s' % (prod, ver)]
+        except KeyError as e:
+            self.log.append({
+                'result': 'skip',
+                'comment': 'unsupported region and/or product-version combination'})
+            return self.log
+
+        ret = {
+            'expected modified files': expected_modified,
+            'actual modified files': modified_files
+        }
+
+        ret['result'] = expected_modified == modified_files and 'passed' or 'failed'
+        self.log.append(ret)
+
         return self.log
