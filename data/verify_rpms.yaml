@@ -114,12 +114,10 @@ BETA_6.4:
 BETA_6.5:
     /etc/ssh/sshd_config: true
     /var/cache/yum: true
-    <<: *BETA_6ANY
 
 RHEL_6.5:
     /etc/ssh/sshd_config: true
     /var/cache/yum: true
-    <<: *RHEL_6ANY
 
 BETA_7.0:
     <<: *RHEL_7ANY

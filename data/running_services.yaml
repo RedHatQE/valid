@@ -12,7 +12,6 @@ BETA_5ANY: &BETA_5ANY
 RHEL_6ANY: &RHEL_6ANY
     auditd: true
     crond: true
-    iptables: true
 
 BETA_6ANY: &BETA_6ANY
     <<: *RHEL_6ANY
@@ -67,33 +66,43 @@ BETA_5.10:
 
 RHEL_6.0:
     <<: *RHEL_6ANY
+    iptables: true
 
 BETA_6.0:
     <<: *BETA_6ANY
+    iptables: true
 
 RHEL_6.1:
     <<: *RHEL_6ANY
+    iptables: true
 
 BETA_6.1:
     <<: *BETA_6ANY
+    iptables: true
 
 RHEL_6.2:
     <<: *RHEL_6ANY
+    iptables: true
 
 BETA_6.2:
     <<: *BETA_6ANY
+    iptables: true
 
 RHEL_6.3:
     <<: *RHEL_6ANY
+    iptables: true
 
 BETA_6.3:
     <<: *BETA_6ANY
+    iptables: true
 
 RHEL_6.4:
     <<: *RHEL_6ANY
+    iptables: true
 
 BETA_6.4:
     <<: *BETA_6ANY
+    iptables: true
 
 BETA_6.5:
     <<: *BETA_6ANY
