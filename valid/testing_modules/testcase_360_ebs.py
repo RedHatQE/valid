@@ -21,11 +21,17 @@ class testcase_360_ebs(ValidTestcase):
         prod = params['product'].upper()
         ver = params['version'].upper()
         device = '/dev/sdk'
-        if params['ec2name'] == 'hs1.8xlarge':
+        device_modified = True
+        while device_modified:
+            # searching for free device
+            device_modified = False
             for dev in params['bmap']:
                 if dev['name'] == device:
-                    device = '/dev/xvdac'
-                    break
+                    device_modified = True
+                    device = device[:-1] + chr(ord(device[-1:]) + 1)
+                    if device == '/dev/sdz':
+                        # hs1.8xlarge possibly
+                        device = '/dev/xvdaa'
         ec2connection = params['instance']['connection']
         if 'placement' in params['instance']:
             volume = ec2connection.create_volume(10, params['instance']['placement'])
