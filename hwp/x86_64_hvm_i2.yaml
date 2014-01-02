@@ -1,0 +1,24 @@
+- arch: x86_64
+  bmap:
+  - {delete_on_termination: true, name: /dev/sda1, size: '15'}
+  - {ephemeral_name: ephemeral0, name: /dev/sdf}
+  - {ephemeral_name: ephemeral1, name: /dev/sdg}
+  - {ephemeral_name: ephemeral2, name: /dev/sdd}
+  - {ephemeral_name: ephemeral3, name: /dev/sde}
+  - {ephemeral_name: ephemeral4, name: /dev/sdj}
+  - {ephemeral_name: ephemeral5, name: /dev/sdk}
+  - {ephemeral_name: ephemeral6, name: /dev/sdh}
+  - {ephemeral_name: ephemeral7, name: /dev/sdi}
+  userdata: &USERDATA |
+      #! /bin/sh -ex
+      yum -y install xdelta
+      yum -y install dosfstools
+      touch /userdata_test
+      date >> /userdata_test
+  cpu: '32'
+  ec2name: i2.8xlarge
+  memory: '244000000'
+  virtualization: hvm
+- {arch: 'x86_64', cpu: '16', memory: '122000000', ec2name: i2.4xlarge, virtualization: 'hvm', userdata: *USERDATA}
+- {arch: 'x86_64', cpu: '8', memory: '61000000', ec2name: i2.2xlarge, virtualization: 'hvm', userdata: *USERDATA}
+- {arch: 'x86_64', cpu: '4', memory: '30500000', ec2name: i2.xlarge, virtualization: 'hvm', userdata: *USERDATA}
