@@ -1,8 +1,7 @@
+""" This module contains testcase_98_dmesg_stage1 test """
 import os
 import tempfile
-import paramiko
-import time
-from valid.valid_testcase import *
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_98_dmesg_stage1(ValidTestcase):
@@ -12,15 +11,17 @@ class testcase_98_dmesg_stage1(ValidTestcase):
     tags = ['kernel']
     stages = ['stage1']
 
+    # pylint: disable=W0613
     def test(self, connection, params):
+        """ Perform test """
+
         self.get_result(connection, 'dmesg > /tmp/dmesg; echo')
-        tf = tempfile.NamedTemporaryFile(delete=False)
-        tf.close()
-        connection.sftp.get('/tmp/dmesg', tf.name)
-        fd = open(tf.name, 'r')
-        dmesg = fd.read()
-        fd.close()
-        os.unlink(tf.name)
+        tfile = tempfile.NamedTemporaryFile(delete=False)
+        tfile.close()
+        connection.sftp.get('/tmp/dmesg', tfile.name)
+        with open(tfile.name, 'r') as dmesgfile:
+            dmesg = dmesgfile.read()
+        os.unlink(tfile.name)
         self.log.append({'result': 'passed',
                          'comand': 'get dmesg',
                          'dmesg': dmesg

@@ -1,5 +1,5 @@
-from valid.valid_testcase import *
-import logging
+""" This module contains testcase_50_yum_package_install test """
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_50_yum_package_install(ValidTestcase):
@@ -10,7 +10,10 @@ class testcase_50_yum_package_install(ValidTestcase):
     tags = ['default']
     not_applicable = {"product": "(?i)RHEL|BETA", "version": "6.0"}
 
+    # pylint: disable=W0613
     def test(self, connection, params):
+        """ Perform test """
+
         self.get_return_value(connection, 'yum clean all', 30)
         self.get_return_value(connection, 'yum repolist', 120)
         checkupdate = self.get_return_value(connection, 'yum check-update', 120, nolog=True)

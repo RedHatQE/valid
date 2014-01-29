@@ -1,7 +1,6 @@
-import os
-import paramiko
+""" This module contains testcase_90_1_kernel_bug874053 test """
 import time
-from valid.valid_testcase import *
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_90_1_kernel_bug874053(ValidTestcase):
@@ -12,6 +11,8 @@ class testcase_90_1_kernel_bug874053(ValidTestcase):
     tags = ['kernel']
 
     def test(self, connection, params):
+        """ Perform test """
+
         if len(params['bmap']) != 8:
             self.log.append({'result': 'skip',
                              'comment': 'Inappropriate bmap'
@@ -44,6 +45,7 @@ class testcase_90_1_kernel_bug874053(ValidTestcase):
         self.get_return_value(connection, 'gcc /root/fork.c')
         self.get_return_value(connection, 'taskset -c 0 ./a.out &')
         time.sleep(5)
+        # pylint: disable=C0301,W0702
         try:
             self.get_result(connection, 'for i in `seq 1 7`; do taskset -c $i dd if=/dev/zero of=/mnt/$i/testfile bs=10M count=10000 oflag=direct & echo $i ; done')
             time.sleep(10)

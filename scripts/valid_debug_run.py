@@ -1,8 +1,10 @@
 #! /usr/bin/python -tt
+"""
+Debug particular test
+"""
 
 import argparse
 import patchwork
-import valid
 import sys
 import yaml
 import re
@@ -12,20 +14,24 @@ RUNTIME_ERR = 2
 
 
 class LoadError(Exception):
+    """ LoadError expection """
     pass
 
 
-def load_yaml(file=None, index=0):
-    # load a yaml file in the format of a list of records
-    import yaml
-    import os
+class ParamsError(Exception):
+    """ ParamsError expection """
+    pass
+
+
+def load_yaml(filename=None, index=0):
+    """ Load a yaml file in the format of a list of records """
     data = None
     record = {}
-    if file is not None:
+    if filename is not None:
         try:
-            data = yaml.load(file)
-        except Exception as e:
-            raise LoadError("Error loading file %s: %s" % (args.file, e))
+            data = yaml.load(filename)
+        except Exception as err:
+            raise LoadError("Error loading file %s: %s" % (filename, err))
 
     if data is not None:
         if type(data) is not list:
@@ -36,13 +42,10 @@ def load_yaml(file=None, index=0):
     return record
 
 
-class ParamsError(Exception):
-    pass
-
-
 def get_params(args):
-    # merge cmdline parameters with data & hwp parameters
-    # cmdline overrides
+    """
+    Merge cmdline parameters with data & hwp parameters cmdline overrides
+    """
 
     params = {}
 
@@ -71,137 +74,142 @@ def get_params(args):
 
     return params
 
+def main():
+    """ Main """
 
-argparser = argparse.ArgumentParser(description='Run cloud image validation')
+    argparser = argparse.ArgumentParser(description='Run cloud image validation')
 
-argparser.add_argument('host', help='hostname')
-argparser.add_argument('key', help='keyfile')
-argparser.add_argument('test', help='test name')
+    argparser.add_argument('host', help='hostname')
+    argparser.add_argument('key', help='keyfile')
+    argparser.add_argument('test', help='test name')
 
-argparser.add_argument('--user', help='e.g. root', default='root')
+    argparser.add_argument('--user', help='e.g. root', default='root')
 
-argparser.add_argument('--product', help='product name')
-argparser.add_argument('--version', help='version')
-argparser.add_argument('--region', help='aws region')
-argparser.add_argument('--ami', help='e.g. ami-12345678')
-argparser.add_argument('--ec2name', help='ec2 instance type')
-argparser.add_argument('--itype', help='access/hourly')
-argparser.add_argument('--arch', help='i386/x86_64')
-argparser.add_argument('--memory', help='required memory')
-argparser.add_argument('--virtualization', help='virtualization type')
-argparser.add_argument('--test-file', help="python file to load test from")
+    argparser.add_argument('--product', help='product name')
+    argparser.add_argument('--version', help='version')
+    argparser.add_argument('--region', help='aws region')
+    argparser.add_argument('--ami', help='e.g. ami-12345678')
+    argparser.add_argument('--ec2name', help='ec2 instance type')
+    argparser.add_argument('--itype', help='access/hourly')
+    argparser.add_argument('--arch', help='i386/x86_64')
+    argparser.add_argument('--memory', help='required memory')
+    argparser.add_argument('--virtualization', help='virtualization type')
+    argparser.add_argument('--test-file', help="python file to load test from")
 
-data_parser = argparser.add_argument_group(
-    'data',
-    description='''
-        Load data-params from a yaml file.
-        The format is list of records(dictionaries).
-        Items expected are the same as for valid_runner.py.
-        If no list index is given, first record is used by default.
-    '''
-)
-data_parser.add_argument(
-    '--data-file',
-    help='data YAML file',
-    type=argparse.FileType('r')
-)
-data_parser.add_argument(
-    '--data-index',
-    help='index into the YAML file',
-    type=int,
-    default=0
-)
-
-hwp_parser = argparser.add_argument_group(
-    'hwp',
-    description='''
-        Load hwp-params from a yaml file.
-        The format is list of records(dictionaries).
-        Items expected are the same as for valid_runner.py.
-        If no list index is given, first record is used by default.
-    '''
-)
-hwp_parser.add_argument(
-    '--hwp-file',
-    help='hwp YAML file',
-    type=argparse.FileType('r')
-)
-hwp_parser.add_argument(
-    '--hwp-index',
-    help='index into the YAML file',
-    type=int,
-    default=0
-)
-
-args = argparser.parse_args()
-
-
-params = get_params(args)
-print "# using params:"
-print "#  host: %s" % args.host
-print "#  key:  %s" % args.key
-print "#  user: %s" % args.user
-
-m = "valid.testing_modules." + args.test
-if args.test_file is not None:
-    # try loading a module from a path
-    import imp
-    test_module = imp.load_source(
-        'valid.testing_modules.test',
-        args.test_file
+    data_parser = argparser.add_argument_group(
+        'data',
+        description='''
+            Load data-params from a yaml file.
+            The format is list of records(dictionaries).
+            Items expected are the same as for valid_runner.py.
+            If no list index is given, first record is used by default.
+        '''
     )
-elif args.test in sys.modules:
-    test_module = sys.modules[args.test]
-elif m in sys.modules:
-    test_module = sys.modules[m]
-else:
-    print >>sys.stderr, "Can't locate test: %s" % args.test
-    exit(RUNTIME_ERR)
+    data_parser.add_argument(
+        '--data-file',
+        help='data YAML file',
+        type=argparse.FileType('r')
+    )
+    data_parser.add_argument(
+        '--data-index',
+        help='index into the YAML file',
+        type=int,
+        default=0
+    )
 
-print "#  test: %s: %s" % (test_module, args.test)
-testcase = getattr(test_module, args.test)()
+    hwp_parser = argparser.add_argument_group(
+        'hwp',
+        description='''
+            Load hwp-params from a yaml file.
+            The format is list of records(dictionaries).
+            Items expected are the same as for valid_runner.py.
+            If no list index is given, first record is used by default.
+        '''
+    )
+    hwp_parser.add_argument(
+        '--hwp-file',
+        help='hwp YAML file',
+        type=argparse.FileType('r')
+    )
+    hwp_parser.add_argument(
+        '--hwp-index',
+        help='index into the YAML file',
+        type=int,
+        default=0
+    )
 
-if hasattr(testcase, 'not_applicable'):
-    na_flag = True
-    for key in testcase.not_applicable.keys():
-        r = re.compile(testcase.not_applicable[key])
-        if key in params and r.match(str(params[key])) is None:
-            #na_exit(key, params[key])
-            na_flag = False
-    if na_flag:
-        test_result = {
-            "result": "skipped",
-            "comment": "'not applicable' matched"
-        }
-        sys.stdout.write(yaml.safe_dump(test_result))
-        sys.exit(0)
+    args = argparser.parse_args()
 
-if hasattr(testcase, 'applicable'):
-    for key in testcase.applicable.keys():
-        r = re.compile(testcase.applicable[key])
-        if key in params and not r.match(str(params[key])):
-            # to exit with a skip result containing the N/A statement
+
+    params = get_params(args)
+    print "# using params:"
+    print "#  host: %s" % args.host
+    print "#  key:  %s" % args.key
+    print "#  user: %s" % args.user
+
+    mod = "valid.testing_modules." + args.test
+    if args.test_file is not None:
+        # try loading a module from a path
+        import imp
+        test_module = imp.load_source(
+            'valid.testing_modules.test',
+            args.test_file
+        )
+    elif args.test in sys.modules:
+        test_module = sys.modules[args.test]
+    elif mod in sys.modules:
+        test_module = sys.modules[mod]
+    else:
+        print >> sys.stderr, "Can't locate test: %s" % args.test
+        exit(RUNTIME_ERR)
+
+    print "#  test: %s: %s" % (test_module, args.test)
+    testcase = getattr(test_module, args.test)()
+
+    if hasattr(testcase, 'not_applicable'):
+        na_flag = True
+        for key in testcase.not_applicable.keys():
+            rexp = re.compile(testcase.not_applicable[key])
+            if key in params and rexp.match(str(params[key])) is None:
+                #na_exit(key, params[key])
+                na_flag = False
+        if na_flag:
             test_result = {
                 "result": "skipped",
-                "comment": "'applicable' doesn't match for %s = %s" % (key, params[key])
+                "comment": "'not applicable' matched"
             }
             sys.stdout.write(yaml.safe_dump(test_result))
             sys.exit(0)
 
-try:
-    con = patchwork.connection.Connection(
-        {
-            "public_hostname": args.host,
-            "private_hostname": args.host
-        },
-        username=args.user,
-        key_filename=args.key
-    )
-except Exception as e:
-    print >> sys.stderr, "Error opening connection: %s" % e
-    exit(RUNTIME_ERR)
+    if hasattr(testcase, 'applicable'):
+        for key in testcase.applicable.keys():
+            rexp = re.compile(testcase.applicable[key])
+            if key in params and not rexp.match(str(params[key])):
+                # to exit with a skip result containing the N/A statement
+                test_result = {
+                    "result": "skipped",
+                    "comment": "'applicable' doesn't match for %s = %s" % (key, params[key])
+                }
+                sys.stdout.write(yaml.safe_dump(test_result))
+                sys.exit(0)
+
+    try:
+        con = patchwork.connection.Connection(
+            {
+                "public_hostname": args.host,
+                "private_hostname": args.host
+            },
+            username=args.user,
+            key_filename=args.key
+        )
+    except Exception as err:
+        print >> sys.stderr, "Error opening connection: %s" % err
+        exit(RUNTIME_ERR)
 
 
-test_result = testcase.test(con, params)
+    test_result = testcase.test(con, params)
 
-sys.stdout.write(yaml.safe_dump([params, {args.test: test_result}]))
+    sys.stdout.write(yaml.safe_dump([params, {args.test: test_result}]))
+
+if __name__ == "__main__":
+    main()

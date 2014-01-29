@@ -1,4 +1,5 @@
-from valid.valid_testcase import *
+""" This module contains testcase_60_yum_update test """
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_60_yum_update(ValidTestcase):
@@ -11,6 +12,8 @@ class testcase_60_yum_update(ValidTestcase):
     not_applicable = {"product": "(?i)RHEL|BETA", "version": "6.0"}
 
     def test(self, connection, params):
+        """ Perform test """
+
         prod = params['product'].upper()
         ver = params['version']
         if prod in ['RHEL', 'BETA'] and ver.startswith('6.') and params['ec2name'] == 't1.micro':

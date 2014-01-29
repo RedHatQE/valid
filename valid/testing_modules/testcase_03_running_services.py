@@ -1,4 +1,6 @@
-from valid.valid_testcase import *
+""" This module contains testcase_03_running_services test """
+
+from valid.valid_testcase import ValidTestcase
 
 import yaml
 
@@ -9,14 +11,17 @@ class testcase_03_running_services(ValidTestcase):
     """
     stages = ['stage1']
     tags = ['default']
+
     def test(self, connection, params):
+        """ Perform test """
+
         prod = params['product'].upper()
         ver = params['version']
         with open(self.datadir + '/running_services.yaml') as expected_services_fd:
             all_services = yaml.safe_load(expected_services_fd)
         try:
             expected_services = all_services['%s_%s' % (prod, ver)]
-        except KeyError as e:
+        except KeyError:
             self.log.append({
                 'result': 'skip',
                 'comment': 'unsupported region and/or product-version combination'})

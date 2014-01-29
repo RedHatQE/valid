@@ -1,5 +1,7 @@
+""" This module contains testcase_11_package_set test """
 import os
-from valid.valid_testcase import *
+import re
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_11_package_set(ValidTestcase):
@@ -12,6 +14,8 @@ class testcase_11_package_set(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
+        """ Perform test """
+
         packages = self.match(connection,
                               'rpm -qa --queryformat \'%{NAME},\' && echo',
                               re.compile('.*\r\n(.*),\r\n.*', re.DOTALL),
@@ -32,9 +36,8 @@ class testcase_11_package_set(ValidTestcase):
             if path == '':
                 self.log.append({'result': 'skip', 'comment': 'no package set for this os version'})
                 return self.log
-            fd = open(path, 'r')
-            package_set_requred = set(fd.read().split('\n')[:-1])
-            fd.close()
+            with open(path, 'r') as psetfile:
+                package_set_requred = set(psetfile.read().split('\n')[:-1])
             package_set_got = set(packages[0].split(','))
             if params['userdata'].find('yum -y install xdelta') != -1:
                 # package was installed by cloud-init

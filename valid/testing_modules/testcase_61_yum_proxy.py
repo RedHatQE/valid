@@ -1,8 +1,7 @@
-from valid.valid_testcase import *
+""" This module contains testcase_61_yum_proxy test """
+from valid.valid_testcase import ValidTestcase
 import StringIO
 import ConfigParser
-
-yum_timeout = 300
 
 
 class testcase_61_yum_proxy(ValidTestcase):
@@ -13,6 +12,9 @@ class testcase_61_yum_proxy(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
+        """ Perform test """
+        yum_timeout = 300
+
         try:
             proxy = params['proxy']
             if params['version'].startswith('5'):
@@ -48,9 +50,9 @@ class testcase_61_yum_proxy(ValidTestcase):
             yum_conf_fp = connection.sftp.open('/etc/yum.conf')
             yum_conf_data = yum_conf_fp.read()
             yum_conf_fp.close()
-        except IOError, e:
+        except IOError, err:
             self.log.append({'result': 'failure',
-                             'comment': 'failed to get actual repo list %s' % e
+                             'comment': 'failed to get actual repo list %s' % err
                              })
             return self.log
         # read as INI
@@ -60,10 +62,10 @@ class testcase_61_yum_proxy(ValidTestcase):
         yum_conf_data_old = copy.deepcopy(yum_conf_data)
         try:
             yum_conf.readfp(yum_conf_fp)
-        except Exception as e:
+        except ConfigParser.Error as err:
             self.log.append({
                 'result': 'failure',
-                'comment': 'failed parsing yum.conf: %s' % e
+                'comment': 'failed parsing yum.conf: %s' % err
             })
             return self.log
         # provide the proxy config details
@@ -81,10 +83,10 @@ class testcase_61_yum_proxy(ValidTestcase):
             yum_conf_fp = connection.sftp.open('/etc/yum.conf', 'w+')
             yum_conf.write(yum_conf_fp)
             yum_conf_fp.close()
-        except Error as e:
+        except IOError as err:
             self.log.append({
                 'result': 'failure',
-                'comment': 'couldn\'t write \'/etc/yum.conf\': %s' % e
+                'comment': 'couldn\'t write \'/etc/yum.conf\': %s' % err
             })
             return self.log
         # test all works
@@ -98,10 +100,10 @@ class testcase_61_yum_proxy(ValidTestcase):
             yum_conf_fp = connection.sftp.open('/etc/yum.conf', 'w+')
             yum_conf_fp.write(yum_conf_data_old)
             yum_conf_fp.close()
-        except Error as e:
+        except IOError as err:
             self.log.append({
                 'result': 'failure',
-                'comment': 'couldn\'t write \'/etc/yum.conf\': %s' % e
+                'comment': 'couldn\'t write \'/etc/yum.conf\': %s' % err
             })
             return self.log
         # try the same with an env variable

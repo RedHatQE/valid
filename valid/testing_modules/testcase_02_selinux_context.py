@@ -1,9 +1,9 @@
+""" This module contains testcase_02_selinux_context test """
 import re
 import yaml
 import os
 import tempfile
-import paramiko
-from valid.valid_testcase import *
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_02_selinux_context(ValidTestcase):
@@ -14,17 +14,20 @@ class testcase_02_selinux_context(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
+        """ Perform test """
+
         prod = params['product'].upper()
         ver = params['version']
         #get the restorecon output file
+        # pylint: disable=C0301
         self.ping_pong(connection, "restorecon -R -v -n -e /proc -e /sys / | sed -e 's, context , ,' -e 's,^restorecon reset ,,' | cat > /tmp/restorecon_output.txt && echo SUCCESS", "\r\nSUCCESS\r\n", 260)
-        tf = tempfile.NamedTemporaryFile(delete=False)
-        tf.close()
-        connection.sftp.get('/tmp/restorecon_output.txt', tf.name)
-        output = open(tf.name, 'r')
+        tfile = tempfile.NamedTemporaryFile(delete=False)
+        tfile.close()
+        connection.sftp.get('/tmp/restorecon_output.txt', tfile.name)
+        output = open(tfile.name, 'r')
         result = output.read()
         output.close()
-        os.unlink(tf.name)
+        os.unlink(tfile.name)
         # convert output file into a dictionary to be able to compare with allowed selinux exclusions
         result = result.split("\n")
         result.pop()
@@ -40,7 +43,7 @@ class testcase_02_selinux_context(ValidTestcase):
             context_exclusions_ = yaml.load(selinux_context)
         try:
             context_exclusions = context_exclusions_['%s_%s' % (prod, ver)]
-        except KeyError as e:
+        except KeyError:
             self.log.append({
                 'result': 'skip',
                 'comment': 'unsupported product-version combination'})
@@ -51,10 +54,10 @@ class testcase_02_selinux_context(ValidTestcase):
             pattern = re.compile('%s' % filename)
             matched = False
             for filename_rest in restorecon_dict:
-                    match_result = pattern.match(filename_rest)
-                    if match_result and context_exclusions[filename] == restorecon_dict[filename_rest]:
-                        matched = True
-                        break
+                match_result = pattern.match(filename_rest)
+                if match_result and context_exclusions[filename] == restorecon_dict[filename_rest]:
+                    matched = True
+                    break
             if not matched:
                 lost_entries.append([filename, context_exclusions[filename]])
 

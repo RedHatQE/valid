@@ -1,4 +1,5 @@
-from valid.valid_testcase import *
+""" This module contains testcase_20_auditd test """
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_20_auditd(ValidTestcase):
@@ -8,10 +9,12 @@ class testcase_20_auditd(ValidTestcase):
     - config files shoud have specified checksums
     """
     stages = ['stage1']
-    applicable = {'product': '(?i)RHEL|BETA', 'version': '5\..*|6\..*|7\..*'}
+    applicable = {'product': '(?i)RHEL|BETA', 'version': r'5\..*|6\..*|7\..*'}
     tags = ['default']
 
     def test(self, connection, params):
+        """ Perform test """
+
         if params['version'].startswith('6.'):
             if params['version'] in ['6.0', '6.1']:
                 auditd_checksum = '612ddf28c3916530d47ef56a1b1ed1ed'

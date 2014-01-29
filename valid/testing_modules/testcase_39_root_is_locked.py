@@ -1,18 +1,17 @@
-import os
-import tempfile
-import paramiko
-import time
-from valid.valid_testcase import *
+""" This module contains testcase_39_root_is_locked test """
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_39_root_is_locked(ValidTestcase):
     """
-    Check root password
+    Root account should be locked
     """
     tags = ['default']
     stages = ['stage1']
 
+    # pylint: disable=W0613
     def test(self, connection, params):
-        # Root account should be locked
-        self.get_return_value(connection, 'egrep "^root:(\!\!|\*|x|locked):" /etc/shadow')
+        """ Perform test """
+
+        self.get_return_value(connection, r'egrep "^root:(\!\!|\*|x|locked):" /etc/shadow')
         return self.log

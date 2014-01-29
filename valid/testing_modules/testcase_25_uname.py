@@ -1,4 +1,5 @@
-from valid.valid_testcase import *
+""" This module contains testcase_25_uname test """
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_25_uname(ValidTestcase):
@@ -13,6 +14,8 @@ class testcase_25_uname(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
+        """ Perform test """
+
         prod = params['product'].upper()
         ver = params['version']
         kernel_ver = None
@@ -20,14 +23,15 @@ class testcase_25_uname(ValidTestcase):
 
         if prod in ['RHEL', 'BETA']:
             if ver.startswith('5.'):
-                uname_r = self.get_result(connection, 'uname -r | sed \'s,\.el5xen,.el5,\'')
+                uname_r = self.get_result(connection, r'uname -r | sed \'s,\.el5xen,.el5,\'')
                 kernel_ver = self.get_result(connection, 'rpm -q --last kernel-xen | sed -e \'s,^kernel-xen-,,\' -e \'s,[[:space:]].*$,,\' | head -1', 30)
             else:
-                uname_r = self.get_result(connection, 'uname -r | sed -e \'s,\.i686$,,\'  -e \'s,\.x86_64$,,\'')
-                kernel_ver = self.get_result(connection, 'rpm -q --last kernel | sed -e \'s,^kernel-,,\' -e \'s,[[:space:]].*$,,\' | head -1 | sed -e \'s,\.i686$,,\'  -e \'s,\.x86_64$,,\'', 30)
+                uname_r = self.get_result(connection, r'uname -r | sed -e \'s,\.i686$,,\'  -e \'s,\.x86_64$,,\'')
+                # pylint: disable=C0301
+                kernel_ver = self.get_result(connection, r'rpm -q --last kernel | sed -e \'s,^kernel-,,\' -e \'s,[[:space:]].*$,,\' | head -1 | sed -e \'s,\.i686$,,\'  -e \'s,\.x86_64$,,\'', 30)
         elif prod == 'FEDORA':
             if ver in ['18', '19', '20'] and params['arch'] == 'i386':
-                uname_r = self.get_result(connection, 'uname -r | sed \'s,[\.+]PAE,,\'')
+                uname_r = self.get_result(connection, r'uname -r | sed \'s,[\.+]PAE,,\'')
                 kernel_ver = self.get_result(connection, 'rpm -q --queryformat \'%{VERSION}-%{RELEASE}.%{ARCH}\n\' kernel-PAE | sort | tail -1', 30)
             else:
                 uname_r = self.get_result(connection, 'uname -r')

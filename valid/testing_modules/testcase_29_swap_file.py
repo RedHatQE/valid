@@ -1,4 +1,5 @@
-from valid.valid_testcase import *
+""" This module contains testcase_29_swap_file test """
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_29_swap_file(ValidTestcase):
@@ -7,10 +8,13 @@ class testcase_29_swap_file(ValidTestcase):
     (not applicable for t1.micro and hvm instances)
     """
     stages = ['stage1']
-    applicable = {'ec2name': '(?!t1\.micro)', 'virtualization': '(?!hvm)', 'arch': '(?!x86_64)'}
+    applicable = {'ec2name': r'(?!t1\.micro)', 'virtualization': '(?!hvm)', 'arch': '(?!x86_64)'}
     tags = ['default']
 
+    # pylint: disable=W0613
     def test(self, connection, params):
+        """ Perform test """
+
         size = self.get_result(connection, 'parted -l | grep linux-swap | awk \'{print $4}\' | awk -F\'MB\' \'{print $1}\'', 15)
         partition = self.get_result(connection, 'parted -l | grep -B 6 swap | grep \'^Disk /\' | awk \'{print $2}\' | sed \'$s/.$//\' | head -1', 15)
         if size and partition:

@@ -1,4 +1,5 @@
-from valid.valid_testcase import *
+""" This module contains testcase_34_cpu test """
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_34_cpu(ValidTestcase):
@@ -9,6 +10,8 @@ class testcase_34_cpu(ValidTestcase):
     tags = ['default', 'kernel']
 
     def test(self, connection, params):
+        """ Perform test """
+
         if 'cpu' in params.keys():
             self.ping_pong(connection, 'cat /proc/cpuinfo | grep \'^processor\' | wc -l', params['cpu'])
         else:

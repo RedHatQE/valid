@@ -1,4 +1,6 @@
-from valid.valid_testcase import *
+""" This module contains testcase_05_grub test """
+
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_05_grub(ValidTestcase):
@@ -13,6 +15,8 @@ class testcase_05_grub(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
+        """ Perform test """
+
         self.get_return_value(connection, 'test -h /boot/grub/menu.lst')
         self.ping_pong(connection, 'readlink -e /boot/grub/menu.lst', '/boot/grub/grub.conf')
         if params['virtualization'] != 'hvm':

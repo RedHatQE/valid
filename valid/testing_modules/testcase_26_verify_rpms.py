@@ -1,6 +1,6 @@
-from valid.valid_testcase import *
-
+""" This module contains testcase_26_verify_rpms test """
 import yaml
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_26_verify_rpms(ValidTestcase):
@@ -11,6 +11,8 @@ class testcase_26_verify_rpms(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
+        """ Perform test """
+
         prod = params['product'].upper()
         ver = params['version']
 
@@ -26,9 +28,9 @@ class testcase_26_verify_rpms(ValidTestcase):
         if list(connection.rpyc.modules.sys.version_info)[1] >= 6:
             # python 2.6 - 2.7
             cmd = list(cmd)
- 
+
         proc = connection.rpyc.modules.subprocess.Popen(cmd, stdout=connection.rpyc.modules.subprocess.PIPE, stderr=connection.rpyc.modules.subprocess.PIPE)
-        out, err = proc.communicate()
+        out, _ = proc.communicate()
         if proc.returncode != 0:
             self.log.append({
                 'result': 'failure',
@@ -46,7 +48,7 @@ class testcase_26_verify_rpms(ValidTestcase):
             all_modified = yaml.safe_load(expected_modified_fd)
         try:
             expected_modified = all_modified['%s_%s' % (prod, ver)]
-        except KeyError as e:
+        except KeyError:
             self.log.append({
                 'result': 'skip',
                 'comment': 'unsupported region and/or product-version combination'})

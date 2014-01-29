@@ -1,4 +1,5 @@
-from valid.valid_testcase import *
+""" This module contains testcase_28_iptables test """
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_28_iptables(ValidTestcase):
@@ -8,14 +9,18 @@ class testcase_28_iptables(ValidTestcase):
     """
     stages = ['stage1']
     applicable = {'product': '(?i)RHEL|BETA'}
-    not_applicable = {"product": "(?i)RHEL|BETA", "version": "6.5|7\..*"}
+    not_applicable = {'product': '(?i)RHEL|BETA', 'version': r'6.5|7\..*'}
     tags = ['default']
 
     def test(self, connection, params):
+        """ Perform test """
+
         ver = params['version']
         if ver == '6.5':
             # check that there are no pre-loaded rules
-            self.ping_pong(connection, 'iptables -L -n | egrep -v "^Chain .* \(policy ACCEPT\)$|^target.*prot.*opt.*source.*destination|^$" && echo "FAILED" || echo "SUCCESS"', '\r\nSUCCESS\r\n')
+            # pylint: disable=C0301
+            self.ping_pong(connection, r'iptables -L -n | egrep -v "^Chain .* \(policy ACCEPT\)$|^target.*prot.*opt.*source.*destination|^$" && echo "FAILED" || echo "SUCCESS"',
+                           '\r\nSUCCESS\r\n')
         else:
             self.ping_pong(connection, 'iptables -L -n | grep :22 | grep ACCEPT | wc -l', '\r\n1\r\n')
             self.ping_pong(connection, 'iptables -L -n | grep RELATED,ESTABLISHED | grep ACCEPT | wc -l', '\r\n1\r\n')

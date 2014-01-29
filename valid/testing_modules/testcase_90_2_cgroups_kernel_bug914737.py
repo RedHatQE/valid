@@ -1,5 +1,6 @@
+""" This module contains testcase_90_2_cgroups_kernel_bug914737 test """
 import time
-from valid.valid_testcase import *
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_90_2_cgroups_kernel_bug914737(ValidTestcase):
@@ -10,8 +11,11 @@ class testcase_90_2_cgroups_kernel_bug914737(ValidTestcase):
     tags = ['kernel']
 
     def test(self, connection, params):
+        """ Perform test """
+
         prod = params['product'].upper()
         ver = params['version'].upper()
+        # pylint: disable=W0702
         try:
             memory = int(params['memory'])
         except:
@@ -28,8 +32,10 @@ class testcase_90_2_cgroups_kernel_bug914737(ValidTestcase):
         self.get_return_value(connection, 'gcc /root/memhog_with_forks.c -o /root/memhog_with_forks')
         # Creating cpu and memory cgroups
         self.get_return_value(connection, 'for i in `seq 0 1000 `; do cgcreate -g cpu:/Group$i ; cgcreate -g memory:/Group$i ; done')
+        # pylint: disable=C0301,W0702
         self.get_return_value(connection, 'for i in `seq 0 1000 `; do cgset -r memory.limit_in_bytes=' + str(memory) + ' /Group$i ; cgset -r cpu.shares=$i /Group$i ; done')
         try:
+            # pylint: disable=C0301
             self.get_result(connection, 'for i in `seq 0 1000 `; do cgexec -g cpu:/Group$i -g memory:/Group$i /root/memhog_with_forks %i & echo $i ; done' % (memory // 1000000), 60)
             time.sleep(30)
             self.get_return_value(connection, 'id', 30)

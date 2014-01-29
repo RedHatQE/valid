@@ -1,7 +1,6 @@
-from valid.valid_testcase import *
+""" This module contains testcase_27_yum_repos test """
+from valid.valid_testcase import ValidTestcase
 
-import StringIO
-import ConfigParser
 import yaml
 
 
@@ -15,6 +14,8 @@ class testcase_27_yum_repos(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
+        """ Perform test """
+
         prod = params['product'].upper()
         ver = params['version']
         if connection.rpyc is None:
@@ -23,24 +24,24 @@ class testcase_27_yum_repos(ValidTestcase):
                 'comment': 'test can\'t be performed without RPyC connection'})
             return self.log
         repos = {}
-        rb = connection.rpyc.modules.yum.YumBase()
-        for repo in rb.repos.repos:
-            repos[repo] = rb.repos.repos[repo].isEnabled()
+        rbase = connection.rpyc.modules.yum.YumBase()
+        for repo in rbase.repos.repos:
+            repos[repo] = rbase.repos.repos[repo].isEnabled()
 
         # figure out whether expected repos match repos
         with open(self.datadir + '/repos.yaml') as expected_repos_fd:
             all_repos = yaml.safe_load(expected_repos_fd)
         try:
             expected_repos_ = all_repos[params['region']]['%s_%s' % (prod, ver)]
-        except KeyError as e:
+        except KeyError:
             self.log.append({
                 'result': 'skip',
                 'comment': 'unsupported region and/or product-version combination'})
             return self.log
         # expand %region%
         expected_repos = {}
-        for k, v in expected_repos_.items():
-            expected_repos[k.replace('%region%', params['region'])] = v
+        for key, val in expected_repos_.items():
+            expected_repos[key.replace('%region%', params['region'])] = val
         ret = {
             'expected repos': expected_repos,
             'actual repos': repos

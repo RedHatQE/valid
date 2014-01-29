@@ -1,12 +1,15 @@
-from valid.valid_testcase import *
+""" This module contains testcase_30_rhn_certificates test """
+from valid.valid_testcase import ValidTestcase
 from datetime import datetime
 import re
-_seven_year_releases = re.compile('^5\.[12345678]$|^6\.[012345]$')
+
 
 
 def _expiration_date(params):
-    # get expiration delta in years
-    if _seven_year_releases.match(params['version']):
+    """ Get expiration delta in years """
+    seven_year_releases = re.compile(r'^5\.[12345678]$|^6\.[012345]$')
+
+    if seven_year_releases.match(params['version']):
         expiration = 7
     else:
         expiration = 10
@@ -27,23 +30,24 @@ class testcase_30_rhn_certificates(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
+        """ Perform test """
+
         if params['product'].upper() == 'BETA':
             config_rpms = 'rh-amazon-rhui-client rh-amazon-rhui-client-beta'
         else:
             config_rpms = 'rh-amazon-rhui-client'
         cert_files = self.get_result(
             connection,
-            'rpm -ql %s | egrep \'.*\.(pem|crt)\'' % config_rpms
+            r'rpm -ql %s | egrep \'.*\.(pem|crt)\'' % config_rpms
         )
         # for each cert file, the notAfter field is examined
         # against the expiration_date and the result is stored in self.log
         try:
             expiration_date = _expiration_date(params)
-        except ValueError as e:
+        except ValueError as err:
             # just log and return in case expiration can't be determined
-            self.log.append({'result': 'failure', 'comment': str(e)})
+            self.log.append({'result': 'failure', 'comment': str(err)})
             return self.log
-        results = []
         for cert in cert_files.split():
             date_string = self.get_result(
                 connection,
@@ -68,5 +72,3 @@ class testcase_30_rhn_certificates(ValidTestcase):
                 self.log.append({'result': 'failed', 'comment': 'failed to check expiration date for  %s' % cert})
 
         return self.log
-
-__all__ = ['testcase_19_1_rhn_certificates']

@@ -1,7 +1,8 @@
+""" This module contains testcase_98_kernel_upgrade_pre test """
 import os
 import paramiko
 import time
-from valid.valid_testcase import *
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_98_kernel_upgrade_pre(ValidTestcase):
@@ -13,6 +14,8 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
     stages = ['stage0']
 
     def test(self, connection, params):
+        """ Perform test """
+
         prod = params['product'].upper()
         ver = params['version']
         if (prod in ['RHEL', 'BETA']) and (ver.startswith('6.')):
@@ -41,10 +44,11 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
         if kernel_updated == 0:
             if prod == 'FEDORA' and ver == '18':
                 # we have a bug in kernel upgrade
+                # pylint: disable=C0301
                 self.get_result(connection, 'cat /boot/grub/grub.conf | sed -e \'s|hd0,0|hd0|\' -e \'s|default=1|default=0|\' > /boot/grub/menu.lst && echo SUCCESS')
             try:
                 self.get_return_value(connection, 'reboot', nolog=True)
-            except (paramiko.SSHException, EOFError), e:
+            except (paramiko.SSHException, EOFError):
                 self.log.append({'result': 'passed', 'command': 'reboot'})
             time.sleep(30)
         else:

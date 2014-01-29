@@ -1,7 +1,6 @@
+""" This module contains testcase_98_package_install_pre test """
 import os
-import paramiko
-import time
-from valid.valid_testcase import *
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_98_package_install_pre(ValidTestcase):
@@ -13,8 +12,8 @@ class testcase_98_package_install_pre(ValidTestcase):
     stages = ['stage0']
 
     def test(self, connection, params):
-        prod = params['product'].upper()
-        ver = params['version']
+        """ Perform test """
+
         self.get_return_value(connection, 'yum check-update ||:', 900)
         if 'pkg' in params:
             rpmfiles = ''
@@ -28,6 +27,7 @@ class testcase_98_package_install_pre(ValidTestcase):
                 pkgbase = os.path.basename(pkg)
                 connection.sftp.put(pkg, '/tmp/%s' % pkgbase)
                 rpmfiles += '/tmp/%s ' % pkgbase
+                # pylint: disable=C0301
                 checklist.append('[ "' + pkgbase + '" = "$(rpm -q --queryformat %{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm $(rpm -qp --queryformat %{NAME} /tmp/' + pkgbase + '))" ]')
                 self.get_return_value(connection, 'ls -l /tmp/%s' % pkgbase)
             self.get_return_value(connection, 'yum -y --nogpgcheck localinstall %s' % rpmfiles, 900)

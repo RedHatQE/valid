@@ -1,4 +1,6 @@
-from valid.valid_testcase import *
+""" This module contains testcase_04_cloud_firstboot test """
+
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_04_cloud_firstboot(ValidTestcase):
@@ -9,7 +11,10 @@ class testcase_04_cloud_firstboot(ValidTestcase):
     applicable = {'product': '(?i)RHEL|BETA', 'version': '5.*|6.*'}
     tags = ['default']
 
+    # pylint: disable=W0613
     def test(self, connection, params):
+        """ Perform test """
+
         self.ping_pong(connection, 'chkconfig --list rh-cloud-firstboot', '3:off')
         self.get_return_value(connection, 'test -f /etc/sysconfig/rh-cloud-firstboot')
         self.ping_pong(connection, 'cat /etc/sysconfig/rh-cloud-firstboot', 'RUN_FIRSTBOOT=NO')

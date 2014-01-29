@@ -1,4 +1,5 @@
-from valid.valid_testcase import *
+""" This module contains testcase_22_gpg_keys test """
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_22_gpg_keys(ValidTestcase):
@@ -11,7 +12,9 @@ class testcase_22_gpg_keys(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
-        self.ping_pong(connection, 'grep \'^gpgcheck=\' /etc/yum.repos.d/redhat-*.repo | cut -d\= -f2 | sort -uf | tr -d \' \'', '\r\n1\r\n')
+        """ Perform test """
+
+        self.ping_pong(connection, r'grep \'^gpgcheck=\' /etc/yum.repos.d/redhat-*.repo | cut -d\= -f2 | sort -uf | tr -d \' \'', '\r\n1\r\n')
         self.ping_pong(connection, 'rpm -qa gpg-pubkey* | wc -l', '\r\n2\r\n', 10)
         self.get_return_value(connection, 'rpm -q gpg-pubkey-2fa658e0-45700c69', 30)
         if params['version'].startswith('6.'):
@@ -19,5 +22,5 @@ class testcase_22_gpg_keys(ValidTestcase):
         elif params['version'].startswith('5.'):
             self.get_return_value(connection, 'rpm -q gpg-pubkey-37017186-45761324', 30)
         if params['product'].upper() == 'BETA':
-            self.get_return_value(connection, 'test -f /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta')        
+            self.get_return_value(connection, 'test -f /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta')
         return self.log

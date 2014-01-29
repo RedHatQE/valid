@@ -1,5 +1,5 @@
-import paramiko
-from valid.valid_testcase import *
+""" This module contains testcase_41_rh_amazon_rhui_client test """
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_41_rh_amazon_rhui_client(ValidTestcase):
@@ -11,6 +11,8 @@ class testcase_41_rh_amazon_rhui_client(ValidTestcase):
     not_applicable = {'product': '(?i)FEDORA'}
 
     def test(self, connection, params):
+        """ Perform test """
+
         prod = params['product'].upper()
         ver = params['version']
         if prod == 'RHEL':

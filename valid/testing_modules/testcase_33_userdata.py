@@ -1,4 +1,5 @@
-from valid.valid_testcase import *
+""" This module contains testcase_33_userdata test """
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_33_userdata(ValidTestcase):
@@ -10,6 +11,8 @@ class testcase_33_userdata(ValidTestcase):
     not_applicable = {"product": "(?i)RHEL|BETA", "version": "5.*"}
 
     def test(self, connection, params):
+        """ Perform test """
+
         if params['userdata']:
             if self.get_result(connection, 'rpm -q --queryformat \'%{NAME}\n\' cloud-init', 5) == 'cloud-init':
                 userdata_tested = False

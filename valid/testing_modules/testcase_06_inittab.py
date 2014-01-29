@@ -1,4 +1,6 @@
-from valid.valid_testcase import *
+""" This module contains testcase_06_inittab test """
+
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_06_inittab(ValidTestcase):
@@ -9,6 +11,8 @@ class testcase_06_inittab(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
+        """ Perform test """
+
         is_systemd = self.get_result(connection, 'rpm -q systemd > /dev/null && echo True || echo False')
         if is_systemd == 'True':
             self.ping_pong(connection, 'readlink -f /etc/systemd/system/default.target', '/lib/systemd/system/multi-user.target')

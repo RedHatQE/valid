@@ -1,4 +1,5 @@
-from valid.valid_testcase import *
+""" This module contains testcase_32_ephemeral test """
+from valid.valid_testcase import ValidTestcase
 
 
 class testcase_32_ephemeral(ValidTestcase):
@@ -10,6 +11,8 @@ class testcase_32_ephemeral(ValidTestcase):
     tags = ['default']
 
     def test(self, connection, params):
+        """ Perform test """
+
         prod = params['product'].upper()
         ver = params['version'].upper()
         has_ephemeral = False
