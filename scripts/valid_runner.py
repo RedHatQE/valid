@@ -995,7 +995,7 @@ argparser.add_argument('--debug', action='store_const', const=True,
                        default=False, help='debug mode')
 
 argparser.add_argument('--disable-stages', type=csv, help='disable specified stages')
-argparser.add_argument('--enable-stages', type=csv, help='enable specified stages (overrides --disable-stages')
+argparser.add_argument('--enable-stages', type=csv, help='enable specified stages (overrides --disable-stages)')
 
 argparser.add_argument('--disable-tests', type=csv, help='disable specified tests')
 argparser.add_argument('--enable-tests', type=csv, help='enable specified tests only (overrides --disabe-tests)')
