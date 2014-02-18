@@ -78,5 +78,12 @@ RHEL_6.5:
     <<: *RHEL_6ANY
 FEDORA_20:
     /var/cache/yum.*: [file_t,rpm_var_cache_t]
-BETA_7.0: {}
-RHEL_7.0: {}
+
+RHEL_7ANY: &RHEL_7ANY
+    /var/lib/misc/postfix.aliasesdb-stamp: [init_var_lib_t, var_lib_t]
+    /userdata_test: [root_t, etc_runtime_t]
+
+BETA_7.0:
+    <<: *RHEL_7ANY
+RHEL_7.0:
+    <<: *RHEL_7ANY
