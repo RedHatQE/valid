@@ -79,3 +79,4 @@ RHEL_6.5:
 FEDORA_20:
     /var/cache/yum.*: [file_t,rpm_var_cache_t]
 BETA_7.0: {}
+RHEL_7.0: {}

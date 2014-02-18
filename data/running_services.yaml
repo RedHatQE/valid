@@ -113,6 +113,9 @@ RHEL_6.5:
 BETA_7.0:
     <<: *RHEL_7ANY
 
+RHEL_7.0:
+    <<: *RHEL_7ANY
+
 FEDORA_20:
     auditd: true
     rsyslog: true
