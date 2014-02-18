@@ -22,7 +22,6 @@ RHEL_7ANY: &RHEL_7ANY
     crond: true
     chronyd: true
     postfix: true
-    iptables: true
     tuned: true
 
 BETA_7ANY: &BETA_7ANY
@@ -112,6 +111,7 @@ RHEL_6.5:
 
 BETA_7.0:
     <<: *RHEL_7ANY
+    iptables: true
 
 RHEL_7.0:
     <<: *RHEL_7ANY
