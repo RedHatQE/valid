@@ -14,7 +14,7 @@ class testcase_22_gpg_keys(ValidTestcase):
     def test(self, connection, params):
         """ Perform test """
 
-        self.ping_pong(connection, r'grep \'^gpgcheck=\' /etc/yum.repos.d/redhat-*.repo | cut -d\= -f2 | sort -uf | tr -d \' \'', '\r\n1\r\n')
+        self.ping_pong(connection, 'grep \'^gpgcheck=\' /etc/yum.repos.d/redhat-*.repo | cut -d\= -f2 | sort -uf | tr -d \' \'', '\r\n1\r\n')
         self.ping_pong(connection, 'rpm -qa gpg-pubkey* | wc -l', '\r\n2\r\n', 10)
         self.get_return_value(connection, 'rpm -q gpg-pubkey-2fa658e0-45700c69', 30)
         if params['version'].startswith('6.'):
