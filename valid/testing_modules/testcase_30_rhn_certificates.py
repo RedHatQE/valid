@@ -7,7 +7,7 @@ import re
 
 def _expiration_date(params):
     """ Get expiration delta in years """
-    seven_year_releases = re.compile(r'^5\.[12345678]$|^6\.[012345]$')
+    seven_year_releases = re.compile('^5\.[12345678]$|^6\.[012345]$')
 
     if seven_year_releases.match(params['version']):
         expiration = 7
@@ -38,7 +38,7 @@ class testcase_30_rhn_certificates(ValidTestcase):
             config_rpms = 'rh-amazon-rhui-client'
         cert_files = self.get_result(
             connection,
-            r'rpm -ql %s | egrep \'.*\.(pem|crt)\'' % config_rpms
+            'rpm -ql %s | egrep \'.*\.(pem|crt)\'' % config_rpms
         )
         # for each cert file, the notAfter field is examined
         # against the expiration_date and the result is stored in self.log
