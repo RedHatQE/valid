@@ -55,4 +55,5 @@ import valid.testing_modules.testcase_97_collect_packagelist
 import valid.testing_modules.testcase_98_dmesg_stage1
 import valid.testing_modules.testcase_98_kernel_upgrade_pre
 import valid.testing_modules.testcase_98_package_install_pre
+import valid.testing_modules.testcase_98_kernel_parameter
 import valid.testing_modules.testcase_99_reboot
