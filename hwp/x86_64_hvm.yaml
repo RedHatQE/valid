@@ -37,7 +37,7 @@
   virtualization: hvm
 - {arch: 'x86_64', cpu: '4', memory: '14000000', ec2name: m3.xlarge, virtualization: 'hvm', userdata: *USERDATA}
 - {arch: 'x86_64', cpu: '8', memory: '29700000', ec2name: m3.2xlarge, virtualization: 'hvm', userdata: *USERDATA}
-- {arch: 'x86_64', cpu: '8', memory: '21700000', ec2name: cc1.4xlarge, virtualization: 'hvm', userdata: *USERDATA}
+- {arch: 'x86_64', cpu: '8', memory: '21600000', ec2name: cc1.4xlarge, virtualization: 'hvm', userdata: *USERDATA}
 - {arch: 'x86_64', cpu: '32', memory: '60500000', ec2name: cc2.8xlarge, virtualization: 'hvm', userdata: *USERDATA}
 - {arch: 'x86_64', cpu: '16', memory: '20900000', ec2name: cg1.4xlarge, virtualization: 'hvm', userdata: *USERDATA}
 - {arch: 'x86_64', cpu: '16', memory: '60500000', ec2name: hi1.4xlarge, virtualization: 'hvm', userdata: *USERDATA}
