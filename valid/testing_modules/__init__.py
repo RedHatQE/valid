@@ -50,6 +50,7 @@ import valid.testing_modules.testcase_61_yum_proxy
 import valid.testing_modules.testcase_80_no_avc_denials
 import valid.testing_modules.testcase_90_1_kernel_bug874053
 import valid.testing_modules.testcase_90_2_cgroups_kernel_bug914737
+import valid.testing_modules.testcase_90_3_bug1074660
 import valid.testing_modules.testcase_97_collect_packagelist
 import valid.testing_modules.testcase_98_dmesg_stage1
 import valid.testing_modules.testcase_98_kernel_upgrade_pre
