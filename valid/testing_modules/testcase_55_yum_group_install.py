@@ -14,7 +14,7 @@ class testcase_55_yum_group_install(ValidTestcase):
     def test(self, connection, params):
         """ Perform test """
 
-        self.get_return_value(connection, 'yum -y groupinstall \'Development tools\'', 900)
+        self.get_return_value(connection, 'yum -y groupinstall \'Development tools\'', 1200)
         # Checking whether something was installed
         self.get_return_value(connection, 'rpm -q glibc-devel')
         return self.log
