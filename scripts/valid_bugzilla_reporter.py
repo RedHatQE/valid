@@ -8,6 +8,7 @@ import yaml
 import bugzilla
 import tempfile
 import sys
+import time
 from valid import valid_result
 
 
@@ -90,7 +91,14 @@ def main():
             attach_name = ami["ami"] + ".yaml"
             bzid.attachfile(bugid, ami_fd, attach_name, filename=attach_name, contenttype="text/yaml", ispatch=False)
             # FIXME: check previous call result
-            bug = bzid.getbug(bugid)
+            bug = None
+            for ntry in xrange(10):
+                try:
+                    bug = bzid.getbug(bugid)
+                    break
+                except:
+                    # bug not found, retry
+                    time.sleep(10)
             if bug:
                 bugnr = bug.id
                 bug.addcomment(bug_description)
