@@ -32,5 +32,5 @@ class testcase_60_yum_update(ValidTestcase):
             self.get_return_value(connection, 'yum -y install kernel-PAE', 900)
         else:
             self.get_return_value(connection, 'yum -y install kernel', 900)
-        self.get_return_value(connection, 'yum -y update', 1200)
+        self.get_return_value(connection, 'yum -y update', 1800)
         return self.log
