@@ -20,7 +20,7 @@ class testcase_02_selinux_context(ValidTestcase):
         ver = params['version']
         #get the restorecon output file
         # pylint: disable=C0301
-        self.ping_pong(connection, "restorecon -R -v -n -e /proc -e /sys / | sed -e 's, context , ,' -e 's,^restorecon reset ,,' | cat > /tmp/restorecon_output.txt && echo SUCCESS", "\r\nSUCCESS\r\n", 260)
+        self.ping_pong(connection, "restorecon -R -v -n -e /proc -e /sys -e /mnt / | sed -e 's, context , ,' -e 's,^restorecon reset ,,' | cat > /tmp/restorecon_output.txt && echo SUCCESS", "\r\nSUCCESS\r\n", 260)
         tfile = tempfile.NamedTemporaryFile(delete=False)
         tfile.close()
         connection.sftp.get('/tmp/restorecon_output.txt', tfile.name)
