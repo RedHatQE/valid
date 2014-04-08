@@ -40,7 +40,6 @@ import valid.testing_modules.testcase_361_ebs_deferred_detach
 import valid.testing_modules.testcase_37_sshd_bug923996
 import valid.testing_modules.testcase_38_rclocal_checksum
 import valid.testing_modules.testcase_39_root_is_locked
-import valid.testing_modules.testcase_40_selinux_context
 import valid.testing_modules.testcase_41_rh_amazon_rhui_client
 import valid.testing_modules.testcase_42_ipv6
 import valid.testing_modules.testcase_50_yum_package_install
