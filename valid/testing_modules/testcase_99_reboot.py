@@ -22,7 +22,7 @@ class testcase_99_reboot(ValidTestcase):
             # Booting the latest kernel for stage2 testing
             self.get_return_value(connection, r'sed -i "s,\(default\)=.*$,\1=0," /boot/grub/menu.lst')
         try:
-            self.get_return_value(connection, 'reboot', nolog=True)
+            self.get_return_value(connection, 'nohup sleep 1s && nohup echo test &', nolog=True)
         except (SocketError, SSHException, EOFError):
             self.log.append({'result': 'passed', 'command': 'reboot'})
         time.sleep(30)
