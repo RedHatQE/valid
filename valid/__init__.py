@@ -9,3 +9,4 @@ import valid_testcase
 import valid_connection
 import valid_result
 import valid_worker
+import valid_watchman

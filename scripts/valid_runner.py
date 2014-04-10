@@ -10,10 +10,8 @@ import argparse
 import yaml
 import os
 import sys
-import paramiko
 import random
 import string
-import tempfile
 import traceback
 import BaseHTTPServer
 import urlparse
@@ -22,10 +20,6 @@ import re
 import urllib2
 import getpass
 import subprocess
-import smtplib
-import socket
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 sys.path.append("..")
 sys.path.append(".")
@@ -419,115 +413,6 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.wfile.write(err.message)
 
 
-class WatchmanProcess(multiprocessing.Process):
-    """
-    Special Process to watch over other Processes:
-    - Create WorkerProcesses when we have long queue
-    - report result for a transaction when it's ready
-    """
-    def __init__(self, resultdic, resultdic_lock, resultdic_yaml):
-        """
-        Create WatchmanProcess object
-        """
-        multiprocessing.Process.__init__(self, name='WatchmanProcess', target=self.runner, args=(resultdic, resultdic_lock, resultdic_yaml))
-        self.logger = logging.getLogger('valid.runner')
-
-    def runner(self, resultdic, resultdic_lock, resultdic_yaml):
-        """
-        Run process
-        """
-        while True:
-            self.logger.debug('WatchmanProcess: heartbeat numprocesses: %i', numprocesses.value)
-            time.sleep(random.randint(2, 10))
-            self.report_results(resultdic, resultdic_lock, resultdic_yaml)
-            self.add_worker_processes(resultdic, resultdic_lock)
-            if resultdic.keys() == [] and not httpserver:
-                break
-
-    def add_worker_processes(self, resultdic, resultdic_lock):
-        """
-        Create additional worker processes when something has to be done
-        """
-        processes_2create = min(maxprocesses - numprocesses.value, mainq.qsize())
-        if processes_2create > 0:
-            self.logger.debug('WatchmanProcess: should create %i additional worker processes', processes_2create)
-            for _ in range(processes_2create):
-                workprocess = valid.valid_worker.WorkerProcess(resultdic, resultdic_lock, mainq, numprocesses, minprocesses, yamlconfig, settlewait, maxtries, maxwait, httpserver)
-                numprocesses.value += 1
-                workprocess.start()
-
-    def report_results(self, resultdic, resultdic_lock, resultdic_yaml):
-        """
-        Looking if we can report some transactions
-        """
-        with resultdic_lock:
-            for transaction_id in resultdic.keys():
-                # Checking all transactions
-                transaction_dict = resultdic[transaction_id].copy()
-                report_ready = True
-                for ami in transaction_dict.keys():
-                    # Checking all amis: they should be finished
-                    if transaction_dict[ami]['ninstances'] != len(transaction_dict[ami]['instances']):
-                        # Still have some jobs running ...
-                        self.logger.debug('WatchmanProcess: ' + transaction_id + ': ' + ami + ':  waiting for ' + str(transaction_dict[ami]['ninstances']) + ' results, got ' + str(len(transaction_dict[ami]['instances'])))
-                        report_ready = False
-                if report_ready:
-                    resfile = resdir + '/' + transaction_id + '.yaml'
-                    result = []
-                    data = transaction_dict
-                    emails = None
-                    subject = None
-                    for ami in data.keys():
-                        result_item = {'ami': data[ami]['instances'][0]['ami'],
-                                       'product': data[ami]['instances'][0]['product'],
-                                       'version': data[ami]['instances'][0]['version'],
-                                       'arch': data[ami]['instances'][0]['arch'],
-                                       'region': data[ami]['instances'][0]['region'],
-                                       'console_output': {},
-                                       'result': {}}
-                        for instance in data[ami]['instances']:
-                            if not instance['instance_type'] in result_item['result'].keys():
-                                result_item['result'][instance['instance_type']] = instance['result'].copy()
-                            else:
-                                result_item['result'][instance['instance_type']].update(instance['result'])
-                            # we're interested in latest console output only, overwriting
-                            result_item['console_output'][instance['instance_type']] = instance['console_output']
-                        result.append(result_item)
-                        if 'emails' in data[ami].keys():
-                            emails = data[ami]['emails']
-                        if 'subject' in data[ami].keys():
-                            subject = data[ami]['subject']
-                    result_yaml = yaml.safe_dump(result)
-                    resultdic_yaml[transaction_id] = result_yaml
-                    try:
-                        result_fd = open(resfile, 'w')
-                        result_fd.write(result_yaml)
-                        result_fd.close()
-                        if emails:
-                            for ami in result:
-                                overall_result, bug_summary, bug_description = valid.valid_result.get_overall_result(ami)
-                                msg = MIMEMultipart()
-                                msg.preamble = 'Validation result'
-                                if subject:
-                                    msg['Subject'] = "[" + overall_result + "] " + subject
-                                else:
-                                    msg['Subject'] = "[" + overall_result + "] " + bug_summary
-                                msg['From'] = mailfrom
-                                msg['To'] = emails
-                                txt = MIMEText(bug_description + '\n')
-                                msg.attach(txt)
-                                txt = MIMEText(yaml.safe_dump(ami), 'yaml')
-                                msg.attach(txt)
-                                smtp = smtplib.SMTP('localhost')
-                                smtp.sendmail(mailfrom, emails.split(','), msg.as_string())
-                                smtp.quit()
-                    except Exception, err:
-                        self.logger.error('WatchmanProcess: saving result failed, %s', err)
-                    self.logger.info('Transaction ' + transaction_id + ' finished. Result: ' + resfile)
-                    resultdic.pop(transaction_id)
-
-
-
 # pylint: disable=C0103,E1101
 argparser = argparse.ArgumentParser(description='Run cloud image validation')
 argparser.add_argument('--data', help='data file for validation')
@@ -732,7 +617,7 @@ for _ in range(minprocesses):
     numprocesses.value += 1
     wprocess.start()
 
-watchprocess = WatchmanProcess(resultdic, resultdic_lock, resultdic_yaml)
+watchprocess = valid.valid_watchman.WatchmanProcess(resultdic, resultdic_lock, resultdic_yaml, mainq, mailfrom, numprocesses, minprocesses, maxprocesses, yamlconfig, settlewait, maxtries, maxwait, httpserver, resdir)
 watchprocess.start()
 
 if httpserver:
