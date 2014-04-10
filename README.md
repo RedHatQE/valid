@@ -95,7 +95,7 @@ There are several useful tools available:
 
 Requirements
 ------------
-python-paramiko and python-rpyc are required.
+python-paramiko, python-rpyc, and python-boto are required.
 
 Server mode
 -----------
@@ -134,11 +134,10 @@ valid/testing_modules/testcase_xx_testname.py:
         def test(self, connection, params):
 	    # doing testing
 
-'connection' is a valid.valid_connection.ValidConnection object.
-'params' is a data line united with hardware profile and runtime information (so you can use something like
-params["memory"], params["product"], ...)
-Setting "stages" and "tags" is mandatory. Don't forget to include your new test in valid/testing_modules/__init__.py.
-Tests are executed in alphabetical order with repetition count and stage name as prefix (e.g. 01stage1testcase_xx_testname).
+* 'connection' is a valid.valid_connection.ValidConnection object.
+* 'params' is a data line united with hardware profile and runtime information (so you can use something like params["memory"], params["product"], ...)
+* Setting "stages" and "tags" is mandatory. Don't forget to include your new test in `valid/testing_modules/__init__.py`.
+* Tests are executed in alphabetical order with repetition count and stage name as prefix (e.g. 01stage1testcase_xx_testname).
 
 Prebuil RPMs
 ------------
