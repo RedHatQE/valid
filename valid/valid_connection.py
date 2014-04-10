@@ -307,34 +307,38 @@ t.start()
         @return: local port
         @rtype: int
         """
-        class SubHandler (ForwardHandler):
+        class SubHandler(ForwardHandler):
             chain_host = remote_host
             chain_port = remote_port
             ssh_transport = self.cli.get_transport()
-        fs = ForwardServer(('', local_port), SubHandler)
-        forwardthread = threading.Thread(target = _forward_threadfunc, args = (self, fs))
+        fserver = ForwardServer(('', local_port), SubHandler)
+        forwardthread = threading.Thread(target=_forward_threadfunc, args=(self, fserver))
         forwardthread.setDaemon(True)
         forwardthread.start()
-        return fs.server_address[1]
+        return fserver.server_address[1]
 
 def _forward_threadfunc(connection, forwardserver):
-    while hasattr(connection, '_lazy_cli'): 
+    while hasattr(connection, '_lazy_cli'):
         # stop handling requests when cli was destroyed
         forwardserver.handle_request()
 
-class ForwardServer (SocketServer.ThreadingTCPServer):
+class ForwardServer(SocketServer.ThreadingTCPServer):
     daemon_threads = True
     allow_reuse_address = True
 
 class ForwardHandler(SocketServer.BaseRequestHandler):
-    def handle(self):
+# pylint: disable=E1101
+    def __init__(self, *args, **kwargs):
+        SocketServer.BaseRequestHandler.__init__(self, *args, **kwargs)
         self.logger = logging.getLogger('patchwork.connection')
+
+    def handle(self):
         try:
             chan = self.ssh_transport.open_channel('direct-tcpip',
                                                    (self.chain_host, self.chain_port),
                                                    self.request.getpeername())
-        except Exception, e:
-            self.logger.debug('Incoming request to %s:%d failed: %s', self.chain_host, self.chain_port, repr(e))
+        except Exception, exc:
+            self.logger.debug('Incoming request to %s:%d failed: %s', self.chain_host, self.chain_port, repr(exc))
             return
         if chan is None:
             self.logger.debug('Incoming request to %s:%d was rejected by the SSH server.', self.chain_host, self.chain_port)
@@ -344,13 +348,13 @@ class ForwardHandler(SocketServer.BaseRequestHandler):
 
         self.logger.debug('Connected!  Tunnel open %r -> %r -> %r', peername, chan.getpeername(), (self.chain_host, self.chain_port))
         while True:
-            r, w, x = select.select([self.request, chan], [], [])
-            if self.request in r:
+            rlist, _, _ = select.select([self.request, chan], [], [])
+            if self.request in rlist:
                 data = self.request.recv(1024)
                 if len(data) == 0:
                     break
                 chan.send(data)
-            if chan in r:
+            if chan in rlist:
                 data = chan.recv(1024)
                 if len(data) == 0:
                     break

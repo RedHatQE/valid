@@ -315,7 +315,7 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """
     def __init__(self):
         BaseHTTPServer.BaseHTTPRequestHandler.__init__(self)
-        self.logger =  logging.getLogger('valid.runner')
+        self.logger = logging.getLogger('valid.runner')
 
     def do_HEAD(self):
         """
@@ -1167,7 +1167,7 @@ manager = multiprocessing.Manager()
 mainq = manager.Queue()
 
 # resulting dictionary
-resultdic_lock =  multiprocessing.Lock()
+resultdic_lock = multiprocessing.Lock()
 resultdic = manager.dict()
 
 # resulting dictionary
