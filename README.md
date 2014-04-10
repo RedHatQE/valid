@@ -95,9 +95,7 @@ There are several useful tools available:
 
 Requirements
 ------------
-Python-patchwork library is required. You can get it here: https://github.com/RedHatQE/python-patchwork or
-you can alternatively download prebuilt RPM here: https://rhuiqerpm.s3.amazonaws.com/index.html
-
+python-paramiko and python-rpyc are required.
 
 Server mode
 -----------
@@ -136,7 +134,7 @@ valid/testing_modules/testcase_xx_testname.py:
         def test(self, connection, params):
 	    # doing testing
 
-'connection' is a patchwork.connection.Connection object.
+'connection' is a valid.valid_connection.ValidConnection object.
 'params' is a data line united with hardware profile and runtime information (so you can use something like
 params["memory"], params["product"], ...)
 Setting "stages" and "tags" is mandatory. Don't forget to include your new test in valid/testing_modules/__init__.py.

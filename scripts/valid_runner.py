@@ -28,14 +28,11 @@ import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from patchwork.connection import Connection
-from patchwork.expect import Expect, ExpectFailed
 from boto.ec2.blockdevicemapping import BlockDeviceType
 from boto.ec2.blockdevicemapping import BlockDeviceMapping
 
+sys.path.append("../")
 import valid
-from valid import valid_result
-
 
 def csv(value):
     """
@@ -505,7 +502,7 @@ class WatchmanProcess(multiprocessing.Process):
                         result_fd.close()
                         if emails:
                             for ami in result:
-                                overall_result, bug_summary, bug_description = valid_result.get_overall_result(ami)
+                                overall_result, bug_summary, bug_description = valid.valid_result.get_overall_result(ami)
                                 msg = MIMEMultipart()
                                 msg.preamble = 'Validation result'
                                 if subject:
@@ -783,14 +780,14 @@ class WorkerProcess(multiprocessing.Process):
                 # If we're able to login with one of these users allow root ssh immediately
                 try:
                     con = self.get_connection(params['instance'], user, ssh_key)
-                    Expect.ping_pong(con, 'uname', 'Linux')
-                    Expect.ping_pong(con, 'sudo su -c \'cp -af /home/' + user + '/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys\' && echo SUCCESS', '\r\nSUCCESS\r\n')
+                    valid.valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
+                    valid.valid_connection.Expect.ping_pong(con, 'sudo su -c \'cp -af /home/' + user + '/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys\' && echo SUCCESS', '\r\nSUCCESS\r\n')
                     self.close_connection(params['instance'], user, ssh_key)
                 except:
                     pass
 
             con = self.get_connection(params['instance'], 'root', ssh_key)
-            Expect.ping_pong(con, 'uname', 'Linux')
+            valid.valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
 
             logging.debug(self.name + ': sleeping for ' + str(settlewait) + ' sec. to make sure instance has been settled.')
             time.sleep(settlewait)
@@ -816,7 +813,7 @@ class WorkerProcess(multiprocessing.Process):
                 self.remote_command(con, remote_script_path)
             os.unlink(tfile.name)
             mainq.put((0, 'test', params.copy()))
-        except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, ExpectFailed) as err:
+        except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, valid.valid_connection.ExpectFailed) as err:
             logging.debug(self.name + ': got \'predictable\' error during instance setup, %s, ntry: %i' % (err, ntry))
             logging.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
@@ -876,7 +873,7 @@ class WorkerProcess(multiprocessing.Process):
                 paramiko.SSHException,
                 paramiko.PasswordRequiredException,
                 paramiko.AuthenticationException,
-                ExpectFailed) as err:
+                valid.valid_connection.ExpectFailed) as err:
             # Looks like we've failed to connect to the instance
             logging.debug(self.name + ': got \'predictable\' error during instance testing, %s, ntry: %i' % (err, ntry))
             logging.debug(self.name + ':' + traceback.format_exc())
@@ -932,11 +929,11 @@ class WorkerProcess(multiprocessing.Process):
         @return: return value or None
         @rtype: int or None
 
-        @raises ExpectFailed
+        @raises valid.valid_connection.ExpectFailed
         """
         status = connection.recv_exit_status(command + ' >/dev/null 2>&1', timeout)
         if status != 0:
-            raise ExpectFailed('Command ' + command + ' failed with ' + str(status) + ' status.')
+            raise valid.valid_connection.ExpectFailed('Command ' + command + ' failed with ' + str(status) + ' status.')
         return status
 
     @staticmethod
@@ -961,7 +958,7 @@ class WorkerProcess(multiprocessing.Process):
             logging.debug(self.name + ': found %s in connection cache (%s)' % (ikey, con))
         if con is not None:
             try:
-                Expect.ping_pong(con, 'uname', 'Linux')
+                valid.valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
             except:
                 # connection looks dead
                 logging.debug(self.name + ': eliminating dead connection to %s' % ikey)
@@ -970,7 +967,7 @@ class WorkerProcess(multiprocessing.Process):
                 con = None
         if con is None:
             logging.debug(self.name + ': creating connection to %s' % ikey)
-            con = Connection(instance, user, ssh_key)
+            con = valid.valid_connection.ValidConnection(instance, user, ssh_key)
             logging.debug(self.name + ': created connection to %s (%s)' % (ikey, con))
             self.connection_cache[ikey] = con
         return con

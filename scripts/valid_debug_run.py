@@ -4,11 +4,10 @@ Debug particular test
 """
 
 import argparse
-import patchwork
 import sys
 import yaml
 import re
-
+from valid.valid_connection import *
 
 RUNTIME_ERR = 2
 
@@ -194,7 +193,7 @@ def main():
                 sys.exit(0)
 
     try:
-        con = patchwork.connection.Connection(
+        con = ValidConnection(
             {
                 "public_hostname": args.host,
                 "private_hostname": args.host

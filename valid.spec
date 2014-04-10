@@ -11,8 +11,7 @@ BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch:  noarch
 
 BuildRequires:	python-devel
-Requires:	python-patchwork >= 0.3 
-Requires:       python-paramiko PyYAML python-boto
+Requires:       python-rpyc python-paramiko PyYAML python-boto
 Requires:	valid-client = %{version}-%{release}
 
 %if 0%{?fedora} >= 18

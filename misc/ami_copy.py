@@ -15,8 +15,7 @@ import time
 import urllib2
 import base64
 
-from patchwork.connection import Connection
-from patchwork.expect import Expect
+from valid.valid_connection import ValidConnection, Expect
 
 from boto import ec2
 
@@ -311,9 +310,9 @@ class InstanceThread(threading.Thread):
             logging.debug(self.getName() + ":   key name: %s, key file: %s" % (key_name, key_file))
 
             con = None
-            for user in ['ec2-user', 'cloud-user', 'root']:
+            for user in ['ec2-user', 'cloud-user', 'fedora' ,'root']:
                 try:
-                    con = Connection(instance, user, key_file)
+                    con = ValidConnection(instance, user, key_file)
                     # update client packages
                     #if ami['product'].upper().startswith('RHEL'):
                     #    Expect.expect_retval(con, "yum update rh-amazon-rhui-client", timeout=600) 
