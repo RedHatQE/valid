@@ -39,7 +39,7 @@ class testcase_361_ebs_deferred_detach(ValidTestcase):
                              'comment': 'Failed to get instance placement'
                              })
             return self.log
-        logging.debug(multiprocessing.current_process().name + ': Volume %s created' % volume.id)
+        self.logger.debug(multiprocessing.current_process().name + ': Volume %s created' % volume.id)
         time.sleep(5)
         volume.update()
         wait = 0
@@ -53,7 +53,7 @@ class testcase_361_ebs_deferred_detach(ValidTestcase):
                 ec2connection.delete_volume(volume.id)
                 return self.log
         if volume.volume_state() == 'available':
-            logging.debug(multiprocessing.current_process().name + ': Ready to attach %s: %s %s' % (volume.id,
+            self.logger.debug(multiprocessing.current_process().name + ': Ready to attach %s: %s %s' % (volume.id,
                                                                                                     volume.volume_state(),
                                                                                                     volume.attachment_state()))
             ec2connection.attach_volume(volume.id, params['instance']['id'], device)
@@ -62,7 +62,7 @@ class testcase_361_ebs_deferred_detach(ValidTestcase):
             wait = 0
             while volume.attachment_state() == 'attaching':
                 volume.update()
-                logging.debug(multiprocessing.current_process().name + ': Wait attaching %s: %s %s' % (volume.id,
+                self.logger.debug(multiprocessing.current_process().name + ': Wait attaching %s: %s %s' % (volume.id,
                                                                                                        volume.volume_state(),
                                                                                                        volume.attachment_state()))
                 time.sleep(1)
@@ -74,7 +74,7 @@ class testcase_361_ebs_deferred_detach(ValidTestcase):
                     ec2connection.delete_volume(volume.id)
                     return self.log
             if volume.attachment_state() != 'attached':
-                logging.debug(multiprocessing.current_process().name + ': Error attaching volume %s' % volume.id)
+                self.logger.debug(multiprocessing.current_process().name + ': Error attaching volume %s' % volume.id)
                 self.log.append({'result': 'failure',
                                  'comment': 'Failed to attach EBS volume %s' % volume.id
                                  })
@@ -100,7 +100,7 @@ class testcase_361_ebs_deferred_detach(ValidTestcase):
             self.get_return_value(connection, 'mount %s /mnt/deferred' % name)
             self.get_return_value(connection, 'dd if=/dev/zero of=/mnt/deferred/zzz_file bs=512 count=102400')
 
-            logging.debug(multiprocessing.current_process().name + ': Ready to detach %s: %s %s' % (volume.id,
+            self.logger.debug(multiprocessing.current_process().name + ': Ready to detach %s: %s %s' % (volume.id,
                                                                                                     volume.volume_state(),
                                                                                                     volume.attachment_state()))
             ec2connection.detach_volume(volume.id)
@@ -115,7 +115,7 @@ class testcase_361_ebs_deferred_detach(ValidTestcase):
             wait = 0
             while volume.attachment_state() == 'detaching':
                 volume.update()
-                logging.debug(multiprocessing.current_process().name + ': Wait detaching %s: %s %s' % (volume.id,
+                self.logger.debug(multiprocessing.current_process().name + ': Wait detaching %s: %s %s' % (volume.id,
                                                                                                        volume.volume_state(),
                                                                                                        volume.attachment_state()))
                 time.sleep(1)
@@ -127,12 +127,12 @@ class testcase_361_ebs_deferred_detach(ValidTestcase):
                     ec2connection.delete_volume(volume.id)
                     return self.log
             if volume.volume_state() != 'available':
-                logging.debug(multiprocessing.current_process().name + ': Error detaching volume %s' % volume.id)
+                self.logger.debug(multiprocessing.current_process().name + ': Error detaching volume %s' % volume.id)
                 self.log.append({'result': 'failure',
                                  'comment': 'Failed to detach EBS volume %s' % volume.id
                                  })
                 return self.log
-            logging.debug(multiprocessing.current_process().name + ': Ready to delete %s: %s %s' % (volume.id,
+            self.logger.debug(multiprocessing.current_process().name + ': Ready to delete %s: %s %s' % (volume.id,
                                                                                                     volume.volume_state(),
                                                                                                     volume.attachment_state()))
             if not ec2connection.delete_volume(volume.id):

@@ -77,7 +77,8 @@ def get_test_stages(params):
              01stage1testcase02_xx_test, ...])
     @rtype: list
     """
-    logging.debug('Getting enabled stages for %s', params['iname'])
+    logger = logging.getLogger('valid.runner')
+    logger.debug('Getting enabled stages for %s', params['iname'])
     result = []
     for module_name in sys.modules.keys():
         if module_name.startswith('valid.testing_modules.testcase'):
@@ -101,25 +102,25 @@ def get_test_stages(params):
                             break
                     applicable_flag = True
                     if hasattr(testcase, 'not_applicable'):
-                        logging.debug('Checking not_applicable list for ' + test_name)
+                        logger.debug('Checking not_applicable list for ' + test_name)
                         not_applicable = testcase.not_applicable
                         applicable_flag = False
                         for nakey in not_applicable.keys():
-                            logging.debug('not_applicable key %s %s ... ', nakey, not_applicable[nakey])
+                            logger.debug('not_applicable key %s %s ... ', nakey, not_applicable[nakey])
                             rexp = re.compile(not_applicable[nakey])
                             if rexp.match(params[nakey]) is None:
                                 applicable_flag = True
-                                logging.debug('not_applicable check failed for ' + test_name + ' %s = %s', nakey, params[nakey])
+                                logger.debug('not_applicable check failed for ' + test_name + ' %s = %s', nakey, params[nakey])
                             else:
-                                logging.debug('got not_applicable for ' + test_name + ' %s = %s' % (nakey, params[nakey]))
+                                logger.debug('got not_applicable for ' + test_name + ' %s = %s' % (nakey, params[nakey]))
                     if hasattr(testcase, 'applicable'):
-                        logging.debug('Checking applicable list for ' + test_name)
+                        logger.debug('Checking applicable list for ' + test_name)
                         applicable = testcase.applicable
                         for akey in applicable.keys():
-                            logging.debug('applicable key %s %s ... ', akey, applicable[akey])
+                            logger.debug('applicable key %s %s ... ', akey, applicable[akey])
                             rexp = re.compile(applicable[akey])
                             if not rexp.match(params[akey]):
-                                logging.debug('Got \'not applicable\' for ' + test_name + ' %s = %s', akey, params[akey])
+                                logger.debug('Got \'not applicable\' for ' + test_name + ' %s = %s', akey, params[akey])
                                 applicable_flag = False
                                 break
                     if not applicable_flag:
@@ -134,8 +135,8 @@ def get_test_stages(params):
                         # Everything is fine, appending stage to the result
                         result.append(stage + ':' + test_name)
                 except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), err:
-                    logging.error('bad test, %s %s', module_name, err)
-                    logging.debug(traceback.format_exc())
+                    logger.error('bad test, %s %s', module_name, err)
+                    logger.debug(traceback.format_exc())
                     sys.exit(1)
                 break
     result.sort()
@@ -146,7 +147,7 @@ def get_test_stages(params):
             for stage in result:
                 result_repeat.append(strzero(cnt, params['repeat']) + stage)
         result = result_repeat
-    logging.debug('Testing stages %s discovered for %s', result, params['iname'])
+    logger.debug('Testing stages %s discovered for %s', result, params['iname'])
     return result
 
 
@@ -166,7 +167,8 @@ def add_data(data, emails=None, subject=None):
     @rtype: str or None
     """
     transaction_id = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
-    logging.info('Adding validation transaction ' + transaction_id)
+    logger = logging.getLogger('valid.runner')
+    logger.info('Adding validation transaction ' + transaction_id)
     transaction_dict = {}
     count = 0
     for params in data:
@@ -179,9 +181,9 @@ def add_data(data, emails=None, subject=None):
                 if type(params[field]) != str:
                     params[field] = str(params[field])
             if params['ami'] in transaction_dict.keys():
-                logging.error('Ami %s was already added for transaction %s!', params['ami'], transaction_id)
+                logger.error('Ami %s was already added for transaction %s!', params['ami'], transaction_id)
                 continue
-            logging.debug('Got valid data line ' + str(params))
+            logger.debug('Got valid data line ' + str(params))
             hwp_found = False
             for hwpdir in ['hwp', '/usr/share/valid/hwp']:
                 try:
@@ -192,10 +194,10 @@ def add_data(data, emails=None, subject=None):
                     hwp = [x for x in hwp if re.match(args.hwp_filter, x['ec2name']) is not None]
                     if not len(hwp):
                         # precautions
-                        logging.info('no hwp match for %s; nothing to do', args.hwp_filter)
+                        logger.info('no hwp match for %s; nothing to do', args.hwp_filter)
                         continue
 
-                    logging.info('using hwps: %s',
+                    logger.info('using hwps: %s',
                                  reduce(lambda x, y: x + ', %s' % str(y['ec2name']),
                                         hwp[1:],
                                         str(hwp[0]['ec2name'])
@@ -236,11 +238,11 @@ def add_data(data, emails=None, subject=None):
                         params_copy['stages'] = get_test_stages(params_copy)
                         ninstances += len(params_copy['stages'])
                         if params_copy['stages'] != []:
-                            logging.info('Adding ' + params_copy['iname'] + ': ' + hwp_item['ec2name'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
+                            logger.info('Adding ' + params_copy['iname'] + ': ' + hwp_item['ec2name'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
                             mainq.put((0, 'create', params_copy))
                             count += 1
                         else:
-                            logging.info('No tests for ' + params_copy['iname'] + ': ' + hwp_item['ec2name'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
+                            logger.info('No tests for ' + params_copy['iname'] + ': ' + hwp_item['ec2name'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
                     if ninstances > 0:
                         transaction_dict[params['ami']] = {'ninstances': ninstances, 'instances': []}
                         if emails:
@@ -250,18 +252,18 @@ def add_data(data, emails=None, subject=None):
                     hwp_found = True
                     break
                 except:
-                    logging.debug(':' + traceback.format_exc())
+                    logger.debug(':' + traceback.format_exc())
             if not hwp_found:
-                logging.error('HWP for ' + params['arch'] + ' is not found, skipping dataline for ' + params['ami'])
+                logger.error('HWP for ' + params['arch'] + ' is not found, skipping dataline for ' + params['ami'])
         else:
             # we something is missing
-            logging.error('Got invalid data line: ' + str(params))
+            logger.error('Got invalid data line: ' + str(params))
     if count > 0:
         resultdic[transaction_id] = transaction_dict
-        logging.info('Validation transaction ' + transaction_id + ' added')
+        logger.info('Validation transaction ' + transaction_id + ' added')
         return transaction_id
     else:
-        logging.error('No data added')
+        logger.error('No data added')
         return None
 
 
@@ -311,6 +313,10 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """
     HTTP Handler
     """
+    def __init__(self):
+        BaseHTTPServer.BaseHTTPRequestHandler.__init__(self)
+        self.logger =  logging.getLogger('valid.runner')
+
     def do_HEAD(self):
         """
         Process HEAD request
@@ -326,7 +332,7 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         try:
             path = urlparse.urlparse(self.path).path
             query = urlparse.parse_qs(urlparse.urlparse(self.path).query)
-            logging.debug('GET request: ' + self.path)
+            self.logger.debug('GET request: ' + self.path)
             if path[-1:] == '/':
                 path = path[:-1]
             if path == '':
@@ -377,7 +383,7 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
             self.wfile.write(err.message)
-            logging.debug('HTTP Server:' + traceback.format_exc())
+            self.logger.debug('HTTP Server:' + traceback.format_exc())
 
     def do_POST(self):
         """
@@ -389,15 +395,15 @@ class HTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             post_data = urlparse.parse_qs(self.rfile.read(length).decode('utf-8'))
             if post_data and ('data' in post_data.keys()):
                 data = yaml.load(post_data['data'][0])
-                logging.debug('POST DATA:' + str(data))
+                self.logger.debug('POST DATA:' + str(data))
                 if 'emails' in post_data.keys():
                     emails = post_data['emails'][0]
-                    logging.debug('POST EMAILS:' + emails)
+                    self.logger.debug('POST EMAILS:' + emails)
                 else:
                     emails = None
                 if 'subject' in post_data.keys() and emails:
                     subject = post_data['subject'][0]
-                    logging.debug('POST SUBJECT:' + subject)
+                    self.logger.debug('POST SUBJECT:' + subject)
                 else:
                     subject = None
                 transaction_id = add_data(data, emails, subject)
@@ -427,27 +433,27 @@ class WatchmanProcess(multiprocessing.Process):
         Create WatchmanProcess object
         """
         multiprocessing.Process.__init__(self, name='WatchmanProcess', target=self.runner, args=(resultdic, resultdic_lock, resultdic_yaml))
+        self.logger = logging.getLogger('valid.runner')
 
     def runner(self, resultdic, resultdic_lock, resultdic_yaml):
         """
         Run process
         """
         while True:
-            logging.debug('WatchmanProcess: heartbeat numprocesses: %i', numprocesses.value)
+            self.logger.debug('WatchmanProcess: heartbeat numprocesses: %i', numprocesses.value)
             time.sleep(random.randint(2, 10))
             self.report_results(resultdic, resultdic_lock, resultdic_yaml)
             self.add_worker_processes(resultdic, resultdic_lock)
             if resultdic.keys() == [] and not httpserver:
                 break
 
-    @staticmethod
-    def add_worker_processes(resultdic, resultdic_lock):
+    def add_worker_processes(self, resultdic, resultdic_lock):
         """
         Create additional worker processes when something has to be done
         """
         processes_2create = min(maxprocesses - numprocesses.value, mainq.qsize())
         if processes_2create > 0:
-            logging.debug('WatchmanProcess: should create %i additional worker processes', processes_2create)
+            self.logger.debug('WatchmanProcess: should create %i additional worker processes', processes_2create)
             for _ in range(processes_2create):
                 workprocess = WorkerProcess(resultdic, resultdic_lock)
                 numprocesses.value += 1
@@ -466,7 +472,7 @@ class WatchmanProcess(multiprocessing.Process):
                     # Checking all amis: they should be finished
                     if transaction_dict[ami]['ninstances'] != len(transaction_dict[ami]['instances']):
                         # Still have some jobs running ...
-                        logging.debug('WatchmanProcess: ' + transaction_id + ': ' + ami + ':  waiting for ' + str(transaction_dict[ami]['ninstances']) + ' results, got ' + str(len(transaction_dict[ami]['instances'])))
+                        self.logger.debug('WatchmanProcess: ' + transaction_id + ': ' + ami + ':  waiting for ' + str(transaction_dict[ami]['ninstances']) + ' results, got ' + str(len(transaction_dict[ami]['instances'])))
                         report_ready = False
                 if report_ready:
                     resfile = resdir + '/' + transaction_id + '.yaml'
@@ -519,8 +525,8 @@ class WatchmanProcess(multiprocessing.Process):
                                 smtp.sendmail(mailfrom, emails.split(','), msg.as_string())
                                 smtp.quit()
                     except Exception, err:
-                        logging.error('WatchmanProcess: saving result failed, %s', err)
-                    logging.info('Transaction ' + transaction_id + ' finished. Result: ' + resfile)
+                        self.logger.error('WatchmanProcess: saving result failed, %s', err)
+                    self.logger.info('Transaction ' + transaction_id + ' finished. Result: ' + resfile)
                     resultdic.pop(transaction_id)
 
 
@@ -534,6 +540,7 @@ class WorkerProcess(multiprocessing.Process):
         """
         multiprocessing.Process.__init__(self, name='WorkerProcess_%s' % random.randint(1, 16384), target=self.runner, args=(resultdic, resultdic_lock))
         self.connection_cache = {}
+        self.logger = logging.getLogger('valid.runner')
 
     def runner(self, resultdic, resultdic_lock):
         """
@@ -542,14 +549,14 @@ class WorkerProcess(multiprocessing.Process):
         - Check for maxtries
         """
         while True:
-            logging.debug(self.name + ': heartbeat numprocesses: %i' % numprocesses.value)
+            self.logger.debug(self.name + ': heartbeat numprocesses: %i' % numprocesses.value)
             if resultdic.keys() == [] and not httpserver:
-                logging.debug(self.name + ': not in server mode and nothing to do, suiciding')
+                self.logger.debug(self.name + ': not in server mode and nothing to do, suiciding')
                 numprocesses.value -= 1
                 break
             if mainq.empty():
                 if numprocesses.value > minprocesses:
-                    logging.debug(self.name + ': too many worker processes and nothing to do, suiciding')
+                    self.logger.debug(self.name + ': too many worker processes and nothing to do, suiciding')
                     numprocesses.value -= 1
                     break
                 time.sleep(random.randint(2, 10))
@@ -560,7 +567,7 @@ class WorkerProcess(multiprocessing.Process):
                 continue
             if ntry > maxtries:
                 # Maxtries reached: something is wrong, reporting 'failure' and terminating the instance
-                logging.error(self.name + ': ' + action + ':' + str(params) + ' failed after ' + str(maxtries) + ' tries')
+                self.logger.error(self.name + ': ' + action + ':' + str(params) + ' failed after ' + str(maxtries) + ' tries')
                 if action in ['create', 'setup']:
                     params['result'] = {action: 'failure'}
                 elif action == 'test':
@@ -570,19 +577,19 @@ class WorkerProcess(multiprocessing.Process):
                 continue
             if action == 'create':
                 # create an instance
-                logging.debug(self.name + ': picking up ' + params['iname'])
+                self.logger.debug(self.name + ': picking up ' + params['iname'])
                 self.do_create(ntry, params, resultdic, resultdic_lock)
             elif action == 'setup':
                 # setup instance for testing
-                logging.debug(self.name + ': doing setup for ' + params['iname'])
+                self.logger.debug(self.name + ': doing setup for ' + params['iname'])
                 self.do_setup(ntry, params)
             elif action == 'test':
                 # do some testing
-                logging.debug(self.name + ': doing testing for ' + params['iname'])
+                self.logger.debug(self.name + ': doing testing for ' + params['iname'])
                 self.do_testing(ntry, params, resultdic, resultdic_lock)
             elif action == 'terminate':
                 # terminate instance
-                logging.debug(self.name + ': terminating ' + params['iname'])
+                self.logger.debug(self.name + ': terminating ' + params['iname'])
                 self.do_terminate(ntry, params)
 
     def abort_testing(self, params, resultdic, resultdic_lock):
@@ -615,9 +622,9 @@ class WorkerProcess(multiprocessing.Process):
                 #getting console output after last stage
                 connection = params['instance']['connection']
                 console_output = connection.get_console_output(params['id']).output
-                logging.debug(self.name + ': got console output for %s: %s' % (params['iname'], console_output))
+                self.logger.debug(self.name + ': got console output for %s: %s' % (params['iname'], console_output))
             except Exception, err:
-                logging.error(self.name + ': report_results: Failed to get console output %s' % err)
+                self.logger.error(self.name + ': report_results: Failed to get console output %s' % err)
         report_value = {'instance_type': params['ec2name'],
                         'ami': params['ami'],
                         'region': params['region'],
@@ -626,13 +633,13 @@ class WorkerProcess(multiprocessing.Process):
                         'product': params['product'],
                         'console_output': console_output,
                         'result': params['result']}
-        logging.debug(self.name + ': reporting result: %s' % (report_value, ))
-        logging.debug(self.name + ': resultdic before report: %s' % (resultdic.items(), ))
+        self.logger.debug(self.name + ': reporting result: %s' % (report_value, ))
+        self.logger.debug(self.name + ': resultdic before report: %s' % (resultdic.items(), ))
         with resultdic_lock:
             transd = resultdic[params['transaction_id']]
             transd[params['ami']]['instances'].append(report_value)
             resultdic[params['transaction_id']] = transd
-        logging.debug(self.name + ': resultdic after report: %s' % (resultdic.items(), ))
+        self.logger.debug(self.name + ': resultdic after report: %s' % (resultdic.items(), ))
 
     def do_create(self, ntry, params, resultdic, resultdic_lock):
         """
@@ -645,13 +652,13 @@ class WorkerProcess(multiprocessing.Process):
         @type params: list
         """
         result = None
-        logging.debug(self.name + ': trying to create instance  ' + params['iname'] + ', ntry ' + str(ntry))
+        self.logger.debug(self.name + ': trying to create instance  ' + params['iname'] + ', ntry ' + str(ntry))
         ntry += 1
         try:
             bmap = BlockDeviceMapping()
             for device in params['bmap']:
                 if not 'name' in device.keys():
-                    logging.debug(self.name + ': bad device ' + str(device))
+                    self.logger.debug(self.name + ': bad device ' + str(device))
                     continue
                 dev = BlockDeviceType()
                 if 'size' in device.keys():
@@ -683,7 +690,7 @@ class WorkerProcess(multiprocessing.Process):
             time.sleep(10)
             while myinstance.update() == 'pending' and count < maxwait / 5:
                 # Waiting out instance to appear
-                logging.debug(params['iname'] + '... waiting...' + str(count))
+                self.logger.debug(params['iname'] + '... waiting...' + str(count))
                 time.sleep(5)
                 count += 1
             connection.close()
@@ -692,7 +699,7 @@ class WorkerProcess(multiprocessing.Process):
                 # Instance appeared - scheduling 'setup' stage
                 myinstance.add_tag('Name', params['name'])
                 result = myinstance.__dict__
-                logging.info(self.name + ': created instance ' + params['iname'] + ', ' + result['id'] + ':' + result['public_dns_name'])
+                self.logger.info(self.name + ': created instance ' + params['iname'] + ', ' + result['id'] + ':' + result['public_dns_name'])
                 # packing creation results into params
                 params['id'] = result['id']
                 params['instance'] = result.copy()
@@ -700,7 +707,7 @@ class WorkerProcess(multiprocessing.Process):
                 return
             elif instance_state == 'pending':
                 # maxwait seconds is enough to create an instance. If not -- EC2 failed.
-                logging.error('Error during instance creation: timeout in pending state')
+                self.logger.error('Error during instance creation: timeout in pending state')
                 result = myinstance.__dict__
                 if 'id' in result.keys():
                     # terminate stucked instance
@@ -709,54 +716,54 @@ class WorkerProcess(multiprocessing.Process):
                     mainq.put((0, 'terminate', params.copy()))
             else:
                 # error occured
-                logging.error('Error during instance creation: ' + instance_state)
+                self.logger.error('Error during instance creation: ' + instance_state)
 
         except boto.exception.EC2ResponseError, err:
             # Boto errors should be handled according to their error Message - there are some well-known ones
-            logging.debug(self.name + ': got boto error during instance creation: %s' % err)
+            self.logger.debug(self.name + ': got boto error during instance creation: %s' % err)
             if str(err).find('<Code>InstanceLimitExceeded</Code>') != -1:
                 # InstanceLimit is temporary problem
-                logging.debug(self.name + ': got InstanceLimitExceeded - not increasing ntry')
+                self.logger.debug(self.name + ': got InstanceLimitExceeded - not increasing ntry')
                 ntry -= 1
             elif str(err).find('<Code>InvalidParameterValue</Code>') != -1:
                 # InvalidParameterValue is really bad
-                logging.error(self.name + ': got error during instance creation: %s' % err)
+                self.logger.error(self.name + ': got error during instance creation: %s' % err)
                 # Failing testing
                 params['result'] = {"create": 'failure'}
                 self.abort_testing(params, resultdic, resultdic_lock)
                 return
             elif str(err).find('<Code>InvalidAMIID.NotFound</Code>') != -1:
                 # No such AMI in the region
-                logging.error(self.name + ': AMI %s not found in %s' % (params['ami'], params['region']))
+                self.logger.error(self.name + ': AMI %s not found in %s' % (params['ami'], params['region']))
                 # Failing testing
                 params['result'] = {"create": 'failure, no such ami in the region'}
                 self.abort_testing(params, resultdic, resultdic_lock)
                 return
             elif str(err).find('<Code>AuthFailure</Code>') != -1:
                 # Not authorized is permanent
-                logging.error(self.name + ': not authorized for AMI %s in %s' % (params['ami'], params['region']))
+                self.logger.error(self.name + ': not authorized for AMI %s in %s' % (params['ami'], params['region']))
                 # Failing testing
                 params['result'] = {"create": 'failure, not authorized for images'}
                 self.abort_testing(params, resultdic, resultdic_lock)
                 return
             elif str(err).find('<Code>Unsupported</Code>') != -1:
                 # Unsupported hardware in the region
-                logging.debug(self.name + ': got Unsupported - most likely the permanent error: %s' % err)
+                self.logger.debug(self.name + ': got Unsupported - most likely the permanent error: %s' % err)
                 # Skipping testing
                 params['result'] = {"create": 'skip'}
                 self.abort_testing(params, resultdic, resultdic_lock)
                 return
             else:
-                logging.debug(self.name + ':' + traceback.format_exc())
+                self.logger.debug(self.name + ':' + traceback.format_exc())
         except socket.error, err:
             # Network errors are usual, reschedult silently
-            logging.debug(self.name + ': got socket error during instance creation: %s' % err)
-            logging.debug(self.name + ':' + traceback.format_exc())
+            self.logger.debug(self.name + ': got socket error during instance creation: %s' % err)
+            self.logger.debug(self.name + ':' + traceback.format_exc())
         except Exception, err:
             # Unexpected error happened
-            logging.error(self.name + ': got error during instance creation: %s %s' % (type(err), err))
-            logging.debug(self.name + ':' + traceback.format_exc())
-        logging.debug(self.name + ': something went wrong with ' + params['iname'] + ' during creation, ntry: ' + str(ntry) + ', rescheduling')
+            self.logger.error(self.name + ': got error during instance creation: %s %s' % (type(err), err))
+            self.logger.debug(self.name + ':' + traceback.format_exc())
+        self.logger.debug(self.name + ': something went wrong with ' + params['iname'] + ' during creation, ntry: ' + str(ntry) + ', rescheduling')
         # reschedule creation
         time.sleep(10)
         mainq.put((ntry, 'create', params.copy()))
@@ -772,9 +779,9 @@ class WorkerProcess(multiprocessing.Process):
         @type params: list
         """
         try:
-            logging.debug(self.name + ': trying to do setup for ' + params['iname'] + ', ntry ' + str(ntry))
+            self.logger.debug(self.name + ': trying to do setup for ' + params['iname'] + ', ntry ' + str(ntry))
             (_, ssh_key) = yamlconfig['ssh'][params['region']]
-            logging.debug(self.name + ': ssh-key ' + ssh_key)
+            self.logger.debug(self.name + ': ssh-key ' + ssh_key)
 
             for user in ['ec2-user', 'fedora']:
                 # If we're able to login with one of these users allow root ssh immediately
@@ -789,20 +796,20 @@ class WorkerProcess(multiprocessing.Process):
             con = self.get_connection(params['instance'], 'root', ssh_key)
             valid.valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
 
-            logging.debug(self.name + ': sleeping for ' + str(settlewait) + ' sec. to make sure instance has been settled.')
+            self.logger.debug(self.name + ': sleeping for ' + str(settlewait) + ' sec. to make sure instance has been settled.')
             time.sleep(settlewait)
 
             setup_scripts = []
             if 'setup' in yamlconfig:
                 # upload and execute a setup script as root in /tmp/
-                logging.debug(self.name + ': executing global setup script: %s' % yamlconfig['setup'])
+                self.logger.debug(self.name + ': executing global setup script: %s' % yamlconfig['setup'])
                 local_script_path = os.path.expandvars(os.path.expanduser(yamlconfig['setup']))
                 setup_scripts.append(local_script_path)
             tfile = tempfile.NamedTemporaryFile(delete=False)
             if 'setup' in params.keys() and params['setup']:
                 if type(params['setup']) is list:
                     params['setup'] = '\n'.join([str(x) for x in params['setup']])
-                logging.debug(self.name + ': executing ami-specific setup script: %s' % params['setup'])
+                self.logger.debug(self.name + ': executing ami-specific setup script: %s' % params['setup'])
                 tfile.write(params['setup'])
                 setup_scripts.append(tfile.name)
             tfile.close()
@@ -814,13 +821,13 @@ class WorkerProcess(multiprocessing.Process):
             os.unlink(tfile.name)
             mainq.put((0, 'test', params.copy()))
         except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, valid.valid_connection.ExpectFailed) as err:
-            logging.debug(self.name + ': got \'predictable\' error during instance setup, %s, ntry: %i' % (err, ntry))
-            logging.debug(self.name + ':' + traceback.format_exc())
+            self.logger.debug(self.name + ': got \'predictable\' error during instance setup, %s, ntry: %i' % (err, ntry))
+            self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
             mainq.put((ntry + 1, 'setup', params.copy()))
         except Exception, err:
-            logging.error(self.name + ': got error during instance setup, %s %s, ntry: %i' % (type(err), err, ntry))
-            logging.debug(self.name + ':' + traceback.format_exc())
+            self.logger.error(self.name + ': got error during instance setup, %s %s, ntry: %i' % (type(err), err, ntry))
+            self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
             mainq.put((ntry + 1, 'setup', params.copy()))
 
@@ -836,28 +843,28 @@ class WorkerProcess(multiprocessing.Process):
         """
         try:
             stage = params['stages'][0]
-            logging.debug(self.name + ': trying to do testing for ' + params['iname'] + ' ' + stage + ', ntry ' + str(ntry))
+            self.logger.debug(self.name + ': trying to do testing for ' + params['iname'] + ' ' + stage + ', ntry ' + str(ntry))
 
             (_, ssh_key) = yamlconfig['ssh'][params['region']]
-            logging.debug(self.name + ': ssh-key ' + ssh_key)
+            self.logger.debug(self.name + ': ssh-key ' + ssh_key)
 
             con = self.get_connection(params['instance'], 'root', ssh_key)
 
-            logging.info(self.name + ': doing testing for ' + params['iname'] + ' ' + stage)
+            self.logger.info(self.name + ': doing testing for ' + params['iname'] + ' ' + stage)
 
             try:
                 test_name = stage.split(':')[1]
                 testcase = getattr(sys.modules['valid.testing_modules.' + test_name], test_name)()
-                logging.debug(self.name + ': doing test ' + test_name + ' for ' + params['iname'] + ' ' + stage)
+                self.logger.debug(self.name + ': doing test ' + test_name + ' for ' + params['iname'] + ' ' + stage)
                 test_result = testcase.test(con, params)
-                logging.debug(self.name + ': ' + params['iname'] + ': test ' + test_name + ' finised with ' + str(test_result))
+                self.logger.debug(self.name + ': ' + params['iname'] + ': test ' + test_name + ' finised with ' + str(test_result))
                 result = test_result
             except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError, boto.exception.EC2ResponseError), err:
-                logging.error(self.name + ': bad test, %s %s' % (stage, err))
-                logging.debug(self.name + ':' + traceback.format_exc())
+                self.logger.error(self.name + ': bad test, %s %s' % (stage, err))
+                self.logger.debug(self.name + ':' + traceback.format_exc())
                 result = 'Failure'
 
-            logging.info(self.name + ': done testing for ' + params['iname'] + ' ' + stage)
+            self.logger.info(self.name + ': done testing for ' + params['iname'] + ' ' + stage)
 
             params_new = params.copy()
             if len(params['stages']) > 1:
@@ -865,7 +872,7 @@ class WorkerProcess(multiprocessing.Process):
                 mainq.put((0, 'test', params_new))
             else:
                 mainq.put((0, 'terminate', params_new))
-            logging.debug(self.name + ': done testing for ' + params['iname'] + ', result: ' + str(result))
+            self.logger.debug(self.name + ': done testing for ' + params['iname'] + ', result: ' + str(result))
             params['result'] = {params['stages'][0]: result}
             self.report_results(params, resultdic, resultdic_lock)
         except (socket.error,
@@ -875,14 +882,14 @@ class WorkerProcess(multiprocessing.Process):
                 paramiko.AuthenticationException,
                 valid.valid_connection.ExpectFailed) as err:
             # Looks like we've failed to connect to the instance
-            logging.debug(self.name + ': got \'predictable\' error during instance testing, %s, ntry: %i' % (err, ntry))
-            logging.debug(self.name + ':' + traceback.format_exc())
+            self.logger.debug(self.name + ': got \'predictable\' error during instance testing, %s, ntry: %i' % (err, ntry))
+            self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
             mainq.put((ntry + 1, 'test', params.copy()))
         except Exception, err:
             # Got unexpected error
-            logging.error(self.name + ': got error during instance testing, %s %s, ntry: %i' % (type(err), err, ntry))
-            logging.debug(self.name + ':' + traceback.format_exc())
+            self.logger.error(self.name + ': got error during instance testing, %s %s, ntry: %i' % (type(err), err, ntry))
+            self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
             mainq.put((ntry + 1, 'test', params.copy()))
 
@@ -897,19 +904,19 @@ class WorkerProcess(multiprocessing.Process):
         @type params: list
         """
         if 'keepalive' in params and params['keepalive'] is not None:
-            logging.info(self.name + ': will not terminate %s (keepalive requested)' % params['iname'])
+            self.logger.info(self.name + ': will not terminate %s (keepalive requested)' % params['iname'])
             return True
         try:
-            logging.debug(self.name + ': trying to terminata instance  ' + params['iname'] + ', ntry ' + str(ntry))
+            self.logger.debug(self.name + ': trying to terminata instance  ' + params['iname'] + ', ntry ' + str(ntry))
             connection = params['instance']['connection']
             res = connection.terminate_instances([params['id']])
-            logging.info(self.name + ': terminated ' + params['iname'])
+            self.logger.info(self.name + ': terminated ' + params['iname'])
             (_, ssh_key) = yamlconfig['ssh'][params['region']]
             self.close_connection(params['instance'], "root", ssh_key)
             return res
         except Exception, err:
-            logging.error(self.name + ': got error during instance termination, %s %s' % (type(err), err))
-            logging.debug(self.name + ':' + traceback.format_exc())
+            self.logger.error(self.name + ': got error during instance termination, %s %s' % (type(err), err))
+            self.logger.debug(self.name + ':' + traceback.format_exc())
             mainq.put((ntry + 1, 'terminate', params.copy()))
 
     @staticmethod
@@ -949,26 +956,26 @@ class WorkerProcess(multiprocessing.Process):
 
     def get_connection(self, instance, user, ssh_key):
         """ Get connection """
-        logging.debug(self.name + ': connection cache is: %s' % self.connection_cache)
+        self.logger.debug(self.name + ': connection cache is: %s' % self.connection_cache)
         ikey = self._get_instance_key(instance, user, ssh_key)
-        logging.debug(self.name + ': searching for %s in connection cache' % ikey)
+        self.logger.debug(self.name + ': searching for %s in connection cache' % ikey)
         con = None
         if ikey in self.connection_cache:
             con = self.connection_cache[ikey]
-            logging.debug(self.name + ': found %s in connection cache (%s)' % (ikey, con))
+            self.logger.debug(self.name + ': found %s in connection cache (%s)' % (ikey, con))
         if con is not None:
             try:
                 valid.valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
             except:
                 # connection looks dead
-                logging.debug(self.name + ': eliminating dead connection to %s' % ikey)
+                self.logger.debug(self.name + ': eliminating dead connection to %s' % ikey)
                 con.disconnect()
                 self.connection_cache.pop(ikey)
                 con = None
         if con is None:
-            logging.debug(self.name + ': creating connection to %s' % ikey)
+            self.logger.debug(self.name + ': creating connection to %s' % ikey)
             con = valid.valid_connection.ValidConnection(instance, user, ssh_key)
-            logging.debug(self.name + ': created connection to %s (%s)' % (ikey, con))
+            self.logger.debug(self.name + ': created connection to %s (%s)' % (ikey, con))
             self.connection_cache[ikey] = con
         return con
 
@@ -977,7 +984,7 @@ class WorkerProcess(multiprocessing.Process):
         ikey = self._get_instance_key(instance, user, ssh_key)
         con = None
         if ikey in self.connection_cache:
-            logging.debug(self.name + ': closing connection to %s' % ikey)
+            self.logger.debug(self.name + ': closing connection to %s' % ikey)
             con = self.connection_cache[ikey]
             self.connection_cache.pop(ikey)
         if con is not None:
@@ -1098,10 +1105,15 @@ repeat = args.repeat
 ec2_key = yamlconfig['ec2']['ec2-key']
 ec2_secret_key = yamlconfig['ec2']['ec2-secret-key']
 
+logger = logging.getLogger('valid.runner')
+
 if args.debug:
     loglevel = logging.DEBUG
 else:
     loglevel = logging.INFO
+
+logging.getLogger('valid.runner').setLevel(loglevel)
+logging.getLogger('valid.testcase').setLevel(loglevel)
 
 if not httpserver:
     logging.basicConfig(level=loglevel, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -1124,28 +1136,28 @@ except re.error as err:
     print 'error compiling hwp-filter: %s: %s' % (args.hwp_filter, err)
     sys.exit(1)
 
-logging.debug('Tags enabled: %s', enable_tags)
-logging.debug('Tags disabled: %s', disable_tags)
-logging.debug('Stages enabled: %s', enable_stages)
-logging.debug('Stages disabled: %s', disable_stages)
-logging.debug('Tests enabled: %s', enable_tests)
-logging.debug('Tests disabled: %s', disable_tests)
+logger.debug('Tags enabled: %s', enable_tags)
+logger.debug('Tags disabled: %s', disable_tags)
+logger.debug('Stages enabled: %s', enable_stages)
+logger.debug('Stages disabled: %s', disable_stages)
+logger.debug('Tests enabled: %s', enable_tests)
+logger.debug('Tests disabled: %s', disable_tests)
 
 mailfrom = 'root@localhost'
 if httpserver:
     hostname = ''
     try:
-        logging.debug('Trying to fetch real hostname from EC2')
+        logger.debug('Trying to fetch real hostname from EC2')
         response = urllib2.urlopen('http://169.254.169.254/latest/meta-data/public-hostname', timeout=5)
         hostname = response.read()
-        logging.debug('Fetched %s as real hostname')
+        logger.debug('Fetched %s as real hostname')
     except:
         # looks like we're not in EC2 environment
         pass
     if not hostname or hostname == '':
         hostname = subprocess.check_output(['hostname', '-f'])[:-1]
     mailfrom = getpass.getuser() + '@' + hostname
-    logging.debug('Will send resulting emails from ' + mailfrom)
+    logger.debug('Will send resulting emails from ' + mailfrom)
 
 logging.getLogger('boto').setLevel(logging.CRITICAL)
 
@@ -1172,11 +1184,11 @@ if args.data:
         data2add = yaml.load(datafd)
         datafd.close()
     except Exception, err:
-        logging.error('Failed to read data file %s with error %s', args.data, err)
+        logger.error('Failed to read data file %s with error %s', args.data, err)
         sys.exit(1)
     add_data(data2add)
 elif not httpserver:
-    logging.error('You need to set --data or --server option!')
+    logger.error('You need to set --data or --server option!')
     sys.exit(1)
 
 for _ in range(minprocesses):
@@ -1198,7 +1210,7 @@ try:
     while processes_alive:
         processes_alive = False
         processes = multiprocessing.active_children()
-        logging.debug("Active children: %s", processes)
+        logger.debug("Active children: %s", processes)
         for process in processes:
             if not process.name.startswith("SyncManager"):
                 processes_alive = True
