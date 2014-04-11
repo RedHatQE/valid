@@ -20,51 +20,41 @@ class WorkerProcess(multiprocessing.Process):
     """
     Worker Process to do actual testing
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, shareddata):
         """
         Create WorkerProcess object
         """
-        multiprocessing.Process.__init__(self, name='WorkerProcess_%s' % random.randint(1, 16384), target=self.runner, args=args, kwargs=kwargs)
+        multiprocessing.Process.__init__(self, name='WorkerProcess_%s' % random.randint(1, 16384), target=self.runner, args=(shareddata,))
         self.connection_cache = {}
         self.logger = logging.getLogger('valid.runner')
 
-    def runner(self, resultdic, resultdic_lock, mainq, numprocesses, minprocesses, yamlconfig, settlewait, maxtries, maxwait, httpserver):
+    def runner(self, shareddata):
         """
         Run process:
         - Get tasks from mainq (create/setup/test/terminate)
         - Check for maxtries
         """
-        self.resultdic = resultdic
-        self.resultdic_lock = resultdic_lock
-        self.mainq = mainq
-        self.numprocesses = numprocesses
-        self.minprocesses = minprocesses
-        self.yamlconfig = yamlconfig
-        self.settlewait = settlewait
-        self.maxtries = maxtries
-        self.maxwait = maxwait
-        self.httpserver = httpserver
-
+        self.shareddata = shareddata
         while True:
-            self.logger.debug(self.name + ': heartbeat numprocesses: %i' % numprocesses.value)
-            if resultdic.keys() == [] and not httpserver:
+            self.logger.debug(self.name + ': heartbeat numprocesses: %i' % shareddata.numprocesses.value)
+            if shareddata.resultdic.keys() == [] and not shareddata.httpserver:
                 self.logger.debug(self.name + ': not in server mode and nothing to do, suiciding')
-                numprocesses.value -= 1
+                shareddata.numprocesses.value -= 1
                 break
-            if mainq.empty():
-                if numprocesses.value > minprocesses:
+            if shareddata.mainq.empty():
+                if shareddata.numprocesses.value > shareddata.minprocesses:
                     self.logger.debug(self.name + ': too many worker processes and nothing to do, suiciding')
-                    numprocesses.value -= 1
+                    shareddata.numprocesses.value -= 1
                     break
                 time.sleep(random.randint(2, 10))
                 continue
             try:
-                (ntry, action, params) = mainq.get()
+                (ntry, action, params) = shareddata.mainq.get()
             except:
                 continue
-            if ntry > maxtries:
+            if ntry > shareddata.maxtries:
                 # Maxtries reached: something is wrong, reporting 'failure' and terminating the instance
-                self.logger.error(self.name + ': ' + action + ':' + str(params) + ' failed after ' + str(maxtries) + ' tries')
+                self.logger.error(self.name + ': ' + action + ':' + str(params) + ' failed after ' + str(shareddata.maxtries) + ' tries')
                 if action in ['create', 'setup']:
                     params['result'] = {action: 'failure'}
                 elif action == 'test':
@@ -97,14 +87,14 @@ class WorkerProcess(multiprocessing.Process):
         @type params: list
         """
         # we need to change expected value in resultdic
-        with self.resultdic_lock:
-            transd = self.resultdic[params['transaction_id']]
+        with self.shareddata.resultdic_lock:
+            transd = self.shareddata.resultdic[params['transaction_id']]
             transd[params['ami']]['ninstances'] -= (len(params['stages']) - 1)
-            self.resultdic[params['transaction_id']] = transd
+            self.shareddata.resultdic[params['transaction_id']] = transd
         self.report_results(params)
         if 'id' in params.keys():
             # Try to terminate the instance
-            self.mainq.put((0, 'terminate', params.copy()))
+            self.shareddata.mainq.put((0, 'terminate', params.copy()))
 
     def report_results(self, params):
         """
@@ -131,12 +121,12 @@ class WorkerProcess(multiprocessing.Process):
                         'console_output': console_output,
                         'result': params['result']}
         self.logger.debug(self.name + ': reporting result: %s' % (report_value, ))
-        self.logger.debug(self.name + ': self.resultdic before report: %s' % (self.resultdic.items(), ))
-        with self.resultdic_lock:
-            transd = self.resultdic[params['transaction_id']]
+        self.logger.debug(self.name + ': self.resultdic before report: %s' % (self.shareddata.resultdic.items(), ))
+        with self.shareddata.resultdic_lock:
+            transd = self.shareddata.resultdic[params['transaction_id']]
             transd[params['ami']]['instances'].append(report_value)
-            self.resultdic[params['transaction_id']] = transd
-        self.logger.debug(self.name + ': self.resultdic after report: %s' % (self.resultdic.items(), ))
+            self.shareddata.resultdic[params['transaction_id']] = transd
+        self.logger.debug(self.name + ': self.resultdic after report: %s' % (self.shareddata.resultdic.items(), ))
 
     def do_create(self, ntry, params):
         """
@@ -166,12 +156,12 @@ class WorkerProcess(multiprocessing.Process):
                     dev.ephemeral_name = device['ephemeral_name']
                 bmap[device['name']] = dev
 
-            ec2_key = self.yamlconfig['ec2']['ec2-key']
-            ec2_secret_key = self.yamlconfig['ec2']['ec2-secret-key']
+            ec2_key = self.shareddata.yamlconfig['ec2']['ec2-key']
+            ec2_secret_key = self.shareddata.yamlconfig['ec2']['ec2-secret-key']
 
             reg = boto.ec2.get_region(params['region'], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
-            (ssh_key_name, _) = self.yamlconfig['ssh'][params['region']]
+            (ssh_key_name, _) = self.shareddata.yamlconfig['ssh'][params['region']]
             # all handled params to be put in here
             boto_params = ['ami', 'subnet_id']
             for param in boto_params:
@@ -188,7 +178,7 @@ class WorkerProcess(multiprocessing.Process):
             count = 0
             # Sometimes EC2 failes to return something meaningful without small timeout between run_instances() and update()
             time.sleep(10)
-            while myinstance.update() == 'pending' and count < self.maxwait / 5:
+            while myinstance.update() == 'pending' and count < self.shareddata.maxwait / 5:
                 # Waiting out instance to appear
                 self.logger.debug(params['iname'] + '... waiting...' + str(count))
                 time.sleep(5)
@@ -203,7 +193,7 @@ class WorkerProcess(multiprocessing.Process):
                 # packing creation results into params
                 params['id'] = result['id']
                 params['instance'] = result.copy()
-                self.mainq.put((0, 'setup', params))
+                self.shareddata.mainq.put((0, 'setup', params))
                 return
             elif instance_state == 'pending':
                 # maxwait seconds is enough to create an instance. If not -- EC2 failed.
@@ -213,7 +203,7 @@ class WorkerProcess(multiprocessing.Process):
                     # terminate stucked instance
                     params['id'] = result['id']
                     params['instance'] = result.copy()
-                    self.mainq.put((0, 'terminate', params.copy()))
+                    self.shareddata.mainq.put((0, 'terminate', params.copy()))
             else:
                 # error occured
                 self.logger.error('Error during instance creation: ' + instance_state)
@@ -266,7 +256,7 @@ class WorkerProcess(multiprocessing.Process):
         self.logger.debug(self.name + ': something went wrong with ' + params['iname'] + ' during creation, ntry: ' + str(ntry) + ', rescheduling')
         # reschedule creation
         time.sleep(10)
-        self.mainq.put((ntry, 'create', params.copy()))
+        self.shareddata.mainq.put((ntry, 'create', params.copy()))
 
     def do_setup(self, ntry, params):
         """
@@ -280,7 +270,7 @@ class WorkerProcess(multiprocessing.Process):
         """
         try:
             self.logger.debug(self.name + ': trying to do setup for ' + params['iname'] + ', ntry ' + str(ntry))
-            (_, ssh_key) = self.yamlconfig['ssh'][params['region']]
+            (_, ssh_key) = self.shareddata.yamlconfig['ssh'][params['region']]
             self.logger.debug(self.name + ': ssh-key ' + ssh_key)
 
             for user in ['ec2-user', 'fedora']:
@@ -296,14 +286,14 @@ class WorkerProcess(multiprocessing.Process):
             con = self.get_connection(params['instance'], 'root', ssh_key)
             valid.valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
 
-            self.logger.debug(self.name + ': sleeping for ' + str(self.settlewait) + ' sec. to make sure instance has been settled.')
-            time.sleep(self.settlewait)
+            self.logger.debug(self.name + ': sleeping for ' + str(self.shareddata.settlewait) + ' sec. to make sure instance has been settled.')
+            time.sleep(self.shareddata.settlewait)
 
             setup_scripts = []
-            if 'setup' in self.yamlconfig:
+            if 'setup' in self.shareddata.yamlconfig:
                 # upload and execute a setup script as root in /tmp/
-                self.logger.debug(self.name + ': executing global setup script: %s' % self.yamlconfig['setup'])
-                local_script_path = os.path.expandvars(os.path.expanduser(self.yamlconfig['setup']))
+                self.logger.debug(self.name + ': executing global setup script: %s' % self.shareddata.yamlconfig['setup'])
+                local_script_path = os.path.expandvars(os.path.expanduser(self.shareddata.yamlconfig['setup']))
                 setup_scripts.append(local_script_path)
             tfile = tempfile.NamedTemporaryFile(delete=False)
             if 'setup' in params.keys() and params['setup']:
@@ -319,17 +309,17 @@ class WorkerProcess(multiprocessing.Process):
                 con.sftp.chmod(remote_script_path, 0700)
                 self.remote_command(con, remote_script_path)
             os.unlink(tfile.name)
-            self.mainq.put((0, 'test', params.copy()))
+            self.shareddata.mainq.put((0, 'test', params.copy()))
         except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, valid.valid_connection.ExpectFailed) as err:
             self.logger.debug(self.name + ': got \'predictable\' error during instance setup, %s, ntry: %i' % (err, ntry))
             self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
-            self.mainq.put((ntry + 1, 'setup', params.copy()))
+            self.shareddata.mainq.put((ntry + 1, 'setup', params.copy()))
         except Exception, err:
             self.logger.error(self.name + ': got error during instance setup, %s %s, ntry: %i' % (type(err), err, ntry))
             self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
-            self.mainq.put((ntry + 1, 'setup', params.copy()))
+            self.shareddata.mainq.put((ntry + 1, 'setup', params.copy()))
 
     def do_testing(self, ntry, params):
         """
@@ -345,7 +335,7 @@ class WorkerProcess(multiprocessing.Process):
             stage = params['stages'][0]
             self.logger.debug(self.name + ': trying to do testing for ' + params['iname'] + ' ' + stage + ', ntry ' + str(ntry))
 
-            (_, ssh_key) = self.yamlconfig['ssh'][params['region']]
+            (_, ssh_key) = self.shareddata.yamlconfig['ssh'][params['region']]
             self.logger.debug(self.name + ': ssh-key ' + ssh_key)
 
             con = self.get_connection(params['instance'], 'root', ssh_key)
@@ -369,9 +359,9 @@ class WorkerProcess(multiprocessing.Process):
             params_new = params.copy()
             if len(params['stages']) > 1:
                 params_new['stages'] = params['stages'][1:]
-                self.mainq.put((0, 'test', params_new))
+                self.shareddata.mainq.put((0, 'test', params_new))
             else:
-                self.mainq.put((0, 'terminate', params_new))
+                self.shareddata.mainq.put((0, 'terminate', params_new))
             self.logger.debug(self.name + ': done testing for ' + params['iname'] + ', result: ' + str(result))
             params['result'] = {params['stages'][0]: result}
             self.report_results(params)
@@ -385,13 +375,13 @@ class WorkerProcess(multiprocessing.Process):
             self.logger.debug(self.name + ': got \'predictable\' error during instance testing, %s, ntry: %i' % (err, ntry))
             self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
-            self.mainq.put((ntry + 1, 'test', params.copy()))
+            self.shareddata.mainq.put((ntry + 1, 'test', params.copy()))
         except Exception, err:
             # Got unexpected error
             self.logger.error(self.name + ': got error during instance testing, %s %s, ntry: %i' % (type(err), err, ntry))
             self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
-            self.mainq.put((ntry + 1, 'test', params.copy()))
+            self.shareddata.mainq.put((ntry + 1, 'test', params.copy()))
 
     def do_terminate(self, ntry, params):
         """
@@ -411,13 +401,13 @@ class WorkerProcess(multiprocessing.Process):
             connection = params['instance']['connection']
             res = connection.terminate_instances([params['id']])
             self.logger.info(self.name + ': terminated ' + params['iname'])
-            (_, ssh_key) = self.yamlconfig['ssh'][params['region']]
+            (_, ssh_key) = self.shareddata.yamlconfig['ssh'][params['region']]
             self.close_connection(params['instance'], "root", ssh_key)
             return res
         except Exception, err:
             self.logger.error(self.name + ': got error during instance termination, %s %s' % (type(err), err))
             self.logger.debug(self.name + ':' + traceback.format_exc())
-            self.mainq.put((ntry + 1, 'terminate', params.copy()))
+            self.shareddata.mainq.put((ntry + 1, 'terminate', params.copy()))
 
     @staticmethod
     def remote_command(connection, command, timeout=5):
