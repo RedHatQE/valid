@@ -6,6 +6,8 @@ import yaml
 import random
 import string
 
+from valid.testing_modules import *
+
 
 def strzero(value, maxvalue):
     """

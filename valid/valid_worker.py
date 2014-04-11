@@ -13,7 +13,7 @@ import traceback
 from boto.ec2.blockdevicemapping import BlockDeviceType
 from boto.ec2.blockdevicemapping import BlockDeviceMapping
 
-import valid
+from valid import valid_connection
 
 
 class WorkerProcess(multiprocessing.Process):
@@ -277,14 +277,14 @@ class WorkerProcess(multiprocessing.Process):
                 # If we're able to login with one of these users allow root ssh immediately
                 try:
                     con = self.get_connection(params['instance'], user, ssh_key)
-                    valid.valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
-                    valid.valid_connection.Expect.ping_pong(con, 'sudo su -c \'cp -af /home/' + user + '/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys\' && echo SUCCESS', '\r\nSUCCESS\r\n')
+                    valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
+                    valid_connection.Expect.ping_pong(con, 'sudo su -c \'cp -af /home/' + user + '/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys\' && echo SUCCESS', '\r\nSUCCESS\r\n')
                     self.close_connection(params['instance'], user, ssh_key)
                 except:
                     pass
 
             con = self.get_connection(params['instance'], 'root', ssh_key)
-            valid.valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
+            valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
 
             self.logger.debug(self.name + ': sleeping for ' + str(self.shareddata.settlewait) + ' sec. to make sure instance has been settled.')
             time.sleep(self.shareddata.settlewait)
@@ -310,7 +310,7 @@ class WorkerProcess(multiprocessing.Process):
                 self.remote_command(con, remote_script_path)
             os.unlink(tfile.name)
             self.shareddata.mainq.put((0, 'test', params.copy()))
-        except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, valid.valid_connection.ExpectFailed) as err:
+        except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, valid_connection.ExpectFailed) as err:
             self.logger.debug(self.name + ': got \'predictable\' error during instance setup, %s, ntry: %i' % (err, ntry))
             self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
@@ -370,7 +370,7 @@ class WorkerProcess(multiprocessing.Process):
                 paramiko.SSHException,
                 paramiko.PasswordRequiredException,
                 paramiko.AuthenticationException,
-                valid.valid_connection.ExpectFailed) as err:
+                valid_connection.ExpectFailed) as err:
             # Looks like we've failed to connect to the instance
             self.logger.debug(self.name + ': got \'predictable\' error during instance testing, %s, ntry: %i' % (err, ntry))
             self.logger.debug(self.name + ':' + traceback.format_exc())
@@ -426,11 +426,11 @@ class WorkerProcess(multiprocessing.Process):
         @return: return value or None
         @rtype: int or None
 
-        @raises valid.valid_connection.ExpectFailed
+        @raises valid_connection.ExpectFailed
         """
         status = connection.recv_exit_status(command + ' >/dev/null 2>&1', timeout)
         if status != 0:
-            raise valid.valid_connection.ExpectFailed('Command ' + command + ' failed with ' + str(status) + ' status.')
+            raise valid_connection.ExpectFailed('Command ' + command + ' failed with ' + str(status) + ' status.')
         return status
 
     @staticmethod
@@ -455,7 +455,7 @@ class WorkerProcess(multiprocessing.Process):
             self.logger.debug(self.name + ': found %s in connection cache (%s)' % (ikey, con))
         if con is not None:
             try:
-                valid.valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
+                valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
             except:
                 # connection looks dead
                 self.logger.debug(self.name + ': eliminating dead connection to %s' % ikey)
@@ -464,7 +464,7 @@ class WorkerProcess(multiprocessing.Process):
                 con = None
         if con is None:
             self.logger.debug(self.name + ': creating connection to %s' % ikey)
-            con = valid.valid_connection.ValidConnection(instance, user, ssh_key)
+            con = valid_connection.ValidConnection(instance, user, ssh_key)
             self.logger.debug(self.name + ': created connection to %s (%s)' % (ikey, con))
             self.connection_cache[ikey] = con
         return con

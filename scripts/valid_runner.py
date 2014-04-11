@@ -16,7 +16,7 @@ import getpass
 import subprocess
 
 sys.path.append(".")
-import valid
+from valid import valid_misc, valid_worker, valid_watchman, valid_server
 
 
 def csv(value):
@@ -252,23 +252,23 @@ if args.data:
     except Exception, err:
         logger.error('Failed to read data file %s with error %s', args.data, err)
         sys.exit(1)
-    valid.valid_misc.add_data(shareddata, data2add)
+    valid_misc.add_data(shareddata, data2add)
 elif not shareddata.httpserver:
     logger.error('You need to set --data or --server option!')
     sys.exit(1)
 
 for _ in range(shareddata.minprocesses):
     # Creating minimum amount of worker processes
-    wprocess = valid.valid_worker.WorkerProcess(shareddata)
+    wprocess = valid_worker.WorkerProcess(shareddata)
     shareddata.numprocesses.value += 1
     wprocess.start()
 
-watchprocess = valid.valid_watchman.WatchmanProcess(shareddata)
+watchprocess = valid_watchman.WatchmanProcess(shareddata)
 watchprocess.start()
 
 if shareddata.httpserver:
     # Starting ServerProcess
-    sprocess = valid.valid_server.ServerProcess(shareddata)
+    sprocess = valid_server.ServerProcess(shareddata)
     sprocess.start()
 
 try:

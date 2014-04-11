@@ -8,7 +8,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-import valid
+from valid import valid_result, valid_worker
 
 
 class WatchmanProcess(multiprocessing.Process):
@@ -45,7 +45,7 @@ class WatchmanProcess(multiprocessing.Process):
         if processes_2create > 0:
             self.logger.debug('WatchmanProcess: should create %i additional worker processes', processes_2create)
             for _ in range(processes_2create):
-                workprocess = valid.valid_worker.WorkerProcess(self.shareddata)
+                workprocess = valid_worker.WorkerProcess(self.shareddata)
                 self.shareddata.numprocesses.value += 1
                 workprocess.start()
 
@@ -98,7 +98,7 @@ class WatchmanProcess(multiprocessing.Process):
                         result_fd.close()
                         if emails:
                             for ami in result:
-                                overall_result, bug_summary, bug_description = valid.valid_result.get_overall_result(ami)
+                                overall_result, bug_summary, bug_description = valid_result.get_overall_result(ami)
                                 msg = MIMEMultipart()
                                 msg.preamble = 'Validation result'
                                 if subject:
