@@ -46,10 +46,7 @@ class testcase_98_kernel_upgrade_pre(ValidTestcase):
                 # we have a bug in kernel upgrade
                 # pylint: disable=C0301
                 self.get_result(connection, 'cat /boot/grub/grub.conf | sed -e \'s|hd0,0|hd0|\' -e \'s|default=1|default=0|\' > /boot/grub/menu.lst && echo SUCCESS')
-            try:
-                self.get_return_value(connection, 'reboot', nolog=True)
-            except (paramiko.SSHException, EOFError):
-                self.log.append({'result': 'passed', 'command': 'reboot'})
+            self.get_return_value(connection, 'nohup sleep 1s && nohup reboot &')
             time.sleep(30)
         else:
             self.log.append({'result': 'skip',

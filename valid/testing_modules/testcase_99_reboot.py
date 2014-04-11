@@ -21,9 +21,6 @@ class testcase_99_reboot(ValidTestcase):
         if (prod in ['RHEL', 'BETA'] and ver.startswith('5.')) or prod == 'FEDORA':
             # Booting the latest kernel for stage2 testing
             self.get_return_value(connection, r'sed -i "s,\(default\)=.*$,\1=0," /boot/grub/menu.lst')
-        try:
-            self.get_return_value(connection, 'nohup sleep 1s && nohup echo test &', nolog=True)
-        except (SocketError, SSHException, EOFError):
-            self.log.append({'result': 'passed', 'command': 'reboot'})
+        self.get_return_value(connection, 'nohup sleep 1s && nohup reboot &')
         time.sleep(30)
         return self.log
