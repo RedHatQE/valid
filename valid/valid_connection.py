@@ -16,13 +16,16 @@ import select
 import SocketServer
 import threading
 
+
 class ValidConnectionException(Exception):
     """ PatchworkConnection Exception """
     pass
 
+
 def lazyprop(func):
     """ Create lazy property """
     attr_name = '_lazy_' + func.__name__
+
     @property
     def _lazyprop(self):
         """ Create lazy property """
@@ -317,14 +320,17 @@ t.start()
         forwardthread.start()
         return fserver.server_address[1]
 
+
 def _forward_threadfunc(connection, forwardserver):
     while hasattr(connection, '_lazy_cli'):
         # stop handling requests when cli was destroyed
         forwardserver.handle_request()
 
+
 class ForwardServer(SocketServer.ThreadingTCPServer):
     daemon_threads = True
     allow_reuse_address = True
+
 
 class ForwardHandler(SocketServer.BaseRequestHandler):
 # pylint: disable=E1101

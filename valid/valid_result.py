@@ -1,5 +1,6 @@
 """ Result parsing functions """
 
+
 def get_overall_result(ami):
     """ Get human-readable representation of the result """
 

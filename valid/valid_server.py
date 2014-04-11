@@ -162,4 +162,3 @@ class ValidHTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
             self.wfile.write(err.message)
-

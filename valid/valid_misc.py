@@ -160,12 +160,7 @@ def add_data(shareddata, data, emails=None, subject=None):
                         logger.info('no hwp match for %s; nothing to do', shareddata.hwp_filter)
                         continue
 
-                    logger.info('using hwps: %s',
-                                 reduce(lambda x, y: x + ', %s' % str(y['ec2name']),
-                                        hwp[1:],
-                                        str(hwp[0]['ec2name'])
-                                        )
-                                 )
+                    logger.info('using hwps: %s', reduce(lambda x, y: x + ', %s' % str(y['ec2name']), hwp[1:], str(hwp[0]['ec2name'])))
                     ninstances = 0
                     for hwp_item in hwp:
                         params_copy = params.copy()

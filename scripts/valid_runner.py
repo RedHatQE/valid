@@ -15,9 +15,9 @@ import urllib2
 import getpass
 import subprocess
 
-sys.path.append("..")
 sys.path.append(".")
 import valid
+
 
 def csv(value):
     """
