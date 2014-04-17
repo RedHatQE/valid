@@ -339,6 +339,7 @@ class ForwardHandler(SocketServer.BaseRequestHandler):
         self.logger = logging.getLogger('patchwork.connection')
 
     def handle(self):
+        self.logger = logging.getLogger('patchwork.connection')
         try:
             chan = self.ssh_transport.open_channel('direct-tcpip',
                                                    (self.chain_host, self.chain_port),
