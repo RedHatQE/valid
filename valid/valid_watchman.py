@@ -34,7 +34,7 @@ class WatchmanProcess(multiprocessing.Process):
             time.sleep(random.randint(2, 10))
             self.report_results()
             self.add_worker_processes()
-            if shareddata.resultdic.keys() == [] and not shareddata.httpserver:
+            if shareddata.resultdic.keys() == [] and shareddata.time2die.get():
                 break
 
     def add_worker_processes(self):

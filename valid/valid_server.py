@@ -6,8 +6,6 @@ import logging
 import yaml
 import traceback
 
-from valid import valid_misc
-
 
 class ServerProcess(multiprocessing.Process):
     """
@@ -148,7 +146,7 @@ class ValidHTTPHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     logger.debug('POST SUBJECT:' + subject)
                 else:
                     subject = None
-                transaction_id = valid_misc.add_data(self.server.shareddata, data, emails, subject)
+                transaction_id = self.server.shareddata.add_data(data, emails, subject)
                 if not transaction_id:
                     raise Exception('Bad data')
                 self.send_response(200)

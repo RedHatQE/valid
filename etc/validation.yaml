@@ -13,4 +13,3 @@ setup: /etc/valid/setup_script.sh
 server_ssl_ca: /etc/pki/CA/certs/valid_ca.crt
 server_ssl_cert: /etc/pki/tls/certs/valid_server.crt
 server_ssl_key: /etc/pki/tls/private/valid_server.key
-results_dir: /var/lib/valid

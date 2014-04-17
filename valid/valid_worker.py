@@ -27,6 +27,11 @@ class WorkerProcess(multiprocessing.Process):
         multiprocessing.Process.__init__(self, name='WorkerProcess_%s' % random.randint(1, 16384), target=self.runner, args=(shareddata,))
         self.connection_cache = {}
         self.logger = logging.getLogger('valid.runner')
+        logging.getLogger('boto').setLevel(logging.CRITICAL)
+        if shareddata.debug:
+            logging.getLogger('paramiko').setLevel(logging.DEBUG)
+        else:
+            logging.getLogger('paramiko').setLevel(logging.ERROR)
 
     def runner(self, shareddata):
         """
@@ -37,8 +42,8 @@ class WorkerProcess(multiprocessing.Process):
         self.shareddata = shareddata
         while True:
             self.logger.debug(self.name + ': heartbeat numprocesses: %i' % shareddata.numprocesses.value)
-            if shareddata.resultdic.keys() == [] and not shareddata.httpserver:
-                self.logger.debug(self.name + ': not in server mode and nothing to do, suiciding')
+            if shareddata.resultdic.keys() == [] and shareddata.time2die.get():
+                self.logger.debug(self.name + ': nothing to do and time to die and, suiciding')
                 shareddata.numprocesses.value -= 1
                 break
             if shareddata.mainq.empty():
