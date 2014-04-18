@@ -152,6 +152,11 @@ ANY_REGION: &ANY_REGION
         rhui-REGION-rhel-server-releases-beta: true
         rhui-REGION-rhel-server-releases-source-beta: false
         rhui-REGION-rhel-server-releases-debug-beta: false
+    RHEL_7.0:
+        rhui-REGION-client-config-server-7: true
+        rhui-REGION-rhel-server-releases: true
+        rhui-REGION-rhel-server-releases-source: false
+        rhui-REGION-rhel-server-releases-debug: false
 
 # particular regions follow
 ap-northeast-1:

@@ -18,7 +18,6 @@ BETA_6ANY: &BETA_6ANY
 
 RHEL_7ANY: &RHEL_7ANY
     /: true
-    /sys: true
     /etc/pam.d/fingerprint-auth: true
     /etc/pam.d/password-auth: true
     /etc/pam.d/postlogin: true
@@ -120,9 +119,11 @@ RHEL_6.5:
     /var/cache/yum: true
 
 BETA_7.0:
+    /sys: true
     <<: *RHEL_7ANY
 
 RHEL_7.0:
+    /var/run/wpa_supplicant: true
     <<: *RHEL_7ANY
 
 FEDORA_20:
