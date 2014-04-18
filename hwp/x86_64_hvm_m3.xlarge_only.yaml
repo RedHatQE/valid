@@ -8,6 +8,6 @@
       touch /userdata_test
       date >> /userdata_test
   cpu: '4'
-  ec2name: m3.xlarge
+  cloudhwname: m3.xlarge
   memory: '14000000'
   virtualization: hvm

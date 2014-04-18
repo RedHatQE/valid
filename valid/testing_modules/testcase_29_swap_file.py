@@ -8,7 +8,7 @@ class testcase_29_swap_file(ValidTestcase):
     (not applicable for t1.micro and hvm instances)
     """
     stages = ['stage1']
-    applicable = {'ec2name': r'(?!t1\.micro)', 'virtualization': '(?!hvm)', 'arch': '(?!x86_64)'}
+    applicable = {'cloudhwname': r'(?!t1\.micro)', 'virtualization': '(?!hvm)', 'arch': '(?!x86_64)'}
     tags = ['default']
 
     # pylint: disable=W0613

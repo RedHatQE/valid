@@ -117,7 +117,7 @@ class WorkerProcess(multiprocessing.Process):
                 self.logger.debug(self.name + ': got console output for %s: %s' % (params['iname'], console_output))
             except Exception, err:
                 self.logger.error(self.name + ': report_results: Failed to get console output %s' % err)
-        report_value = {'instance_type': params['ec2name'],
+        report_value = {'instance_type': params['cloudhwname'],
                         'ami': params['ami'],
                         'region': params['region'],
                         'arch': params['arch'],
@@ -173,7 +173,7 @@ class WorkerProcess(multiprocessing.Process):
                 params.setdefault(param)
             reservation = connection.run_instances(
                 params['ami'],
-                instance_type=params['ec2name'],
+                instance_type=params['cloudhwname'],
                 key_name=ssh_key_name,
                 block_device_map=bmap,
                 subnet_id=params['subnet_id'],

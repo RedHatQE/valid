@@ -204,13 +204,13 @@ class ValidMain(object):
                         hwp = yaml.load(hwpfd)
                         hwpfd.close()
                         # filter hwps based on args
-                        hwp = [x for x in hwp if re.match(self.hwp_filter, x['ec2name']) is not None]
+                        hwp = [x for x in hwp if re.match(self.hwp_filter, x['cloudhwname']) is not None]
                         if not len(hwp):
                             # precautions
                             self.logger.info('no hwp match for %s; nothing to do', self.hwp_filter)
                             continue
 
-                        self.logger.info('using hwps: %s', reduce(lambda x, y: x + ', %s' % str(y['ec2name']), hwp[1:], str(hwp[0]['ec2name'])))
+                        self.logger.info('using hwps: %s', reduce(lambda x, y: x + ', %s' % str(y['cloudhwname']), hwp[1:], str(hwp[0]['ec2name'])))
                         ninstances = 0
                         for hwp_item in hwp:
                             params_copy = params.copy()
@@ -246,11 +246,11 @@ class ValidMain(object):
                             params_copy['stages'] = self.get_test_stages(params_copy)
                             ninstances += len(params_copy['stages'])
                             if params_copy['stages'] != []:
-                                self.logger.info('Adding ' + params_copy['iname'] + ': ' + hwp_item['ec2name'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
+                                self.logger.info('Adding ' + params_copy['iname'] + ': ' + hwp_item['cloudhwname'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
                                 self.mainq.put((0, 'create', params_copy))
                                 count += 1
                             else:
-                                self.logger.info('No tests for ' + params_copy['iname'] + ': ' + hwp_item['ec2name'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
+                                self.logger.info('No tests for ' + params_copy['iname'] + ': ' + hwp_item['cloudhwname'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
                         if ninstances > 0:
                             transaction_dict[params['ami']] = {'ninstances': ninstances, 'instances': []}
                             if emails:

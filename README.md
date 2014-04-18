@@ -62,7 +62,7 @@ HWP file is also a yaml-encoded list. Example:
 x86_64_hvm_kernel.yaml:
     - arch: x86_64
       cpu: '4'
-      ec2name: m3.xlarge
+      cloudhwname: m3.xlarge
       memory: '14000000'
       virtualization: hvm
     - arch: x86_64
@@ -70,13 +70,13 @@ x86_64_hvm_kernel.yaml:
       - {delete_on_termination: true, name: /dev/sda1, size: '15'}
       - {ephemeral_name: ephemeral0, name: /dev/sdf}
       cpu: '32'
-      ec2name: cr1.8xlarge
+      cloudhwname: cr1.8xlarge
       memory: '244000000'
       virtualization: 'hvm'
 
 Mandatory fields:
 * arch: hardware architecture ("x86_64", "i386")
-* ec2name: EC2 instance name ("t1.micro", "m3.xlarge", ...)
+* cloudhwname: EC2 instance name ("t1.micro", "m3.xlarge", ...)
 * cpu: expected numer of CPUs
 * memory: expected amount of memory
 * virtualization: virtualization type ("hwp", "paravirtual")

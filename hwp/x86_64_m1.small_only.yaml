@@ -1,7 +1,7 @@
 - arch: 'x86_64'
   cpu: '1'
   memory: '1690000'
-  ec2name: m1.small
+  cloudhwname: m1.small
   virtualization: 'paravirtual'
   bmap: &BMAP
   - {delete_on_termination: true, name: /dev/sda1, size: '15'}

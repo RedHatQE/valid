@@ -7,6 +7,6 @@
       touch /userdata_test
       date >> /userdata_test
   cpu: '32'
-  ec2name: cr1.8xlarge
+  cloudhwname: cr1.8xlarge
   memory: '244000000'
   virtualization: hvm

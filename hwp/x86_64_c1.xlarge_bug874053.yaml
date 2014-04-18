@@ -9,6 +9,6 @@
   - {delete_on_termination: true, name: /dev/sdg, size: '10'}
   - {delete_on_termination: true, name: /dev/sdh, size: '10'}
   cpu: '8'
-  ec2name: c1.xlarge
+  cloudhwname: c1.xlarge
   memory: '6997900'
   virtualization: paravirtual

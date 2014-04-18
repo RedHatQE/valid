@@ -1,7 +1,7 @@
 - arch: 'i386'
   cpu: '1'
   memory: '600000'
-  ec2name: t1.micro
+  cloudhwname: t1.micro
   virtualization: 'paravirtual'
   userdata: &USERDATA |
       #! /bin/sh -ex
@@ -11,7 +11,7 @@
 - arch: 'i386'
   cpu: '1'
   memory: '1700000'
-  ec2name: m1.small
+  cloudhwname: m1.small
   virtualization: 'paravirtual'
   userdata: *USERDATA
   bmap: &BMAP
@@ -20,7 +20,7 @@
 - arch: 'i386'
   cpu: '2'
   memory: '1700000'
-  ec2name: c1.medium
+  cloudhwname: c1.medium
   virtualization: 'paravirtual'
   userdata: *USERDATA
   bmap: *BMAP

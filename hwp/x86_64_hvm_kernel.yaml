@@ -1,6 +1,6 @@
 - arch: x86_64
   cpu: '4'
-  ec2name: m3.xlarge
+  cloudhwname: m3.xlarge
   memory: '14000000'
   virtualization: hvm
 - arch: x86_64
@@ -8,6 +8,6 @@
   - {delete_on_termination: true, name: /dev/sda1, size: '15'}
   - {ephemeral_name: ephemeral0, name: /dev/sdf}
   cpu: '32'
-  ec2name: cr1.8xlarge
+  cloudhwname: cr1.8xlarge
   memory: '244000000'
   virtualization: 'hvm'

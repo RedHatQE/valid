@@ -16,9 +16,9 @@
       touch /userdata_test
       date >> /userdata_test
   cpu: '32'
-  ec2name: i2.8xlarge
+  cloudhwname: i2.8xlarge
   memory: '244000000'
   virtualization: hvm
-- {arch: 'x86_64', cpu: '16', memory: '122000000', ec2name: i2.4xlarge, virtualization: 'hvm', userdata: *USERDATA}
-- {arch: 'x86_64', cpu: '8', memory: '61000000', ec2name: i2.2xlarge, virtualization: 'hvm', userdata: *USERDATA}
-- {arch: 'x86_64', cpu: '4', memory: '30500000', ec2name: i2.xlarge, virtualization: 'hvm', userdata: *USERDATA}
+- {arch: 'x86_64', cpu: '16', memory: '122000000', cloudhwname: i2.4xlarge, virtualization: 'hvm', userdata: *USERDATA}
+- {arch: 'x86_64', cpu: '8', memory: '61000000', cloudhwname: i2.2xlarge, virtualization: 'hvm', userdata: *USERDATA}
+- {arch: 'x86_64', cpu: '4', memory: '30500000', cloudhwname: i2.xlarge, virtualization: 'hvm', userdata: *USERDATA}

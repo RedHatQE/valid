@@ -63,7 +63,7 @@ def get_params(args):
         'ami',
         'arch',
         'itype',
-        'ec2name',
+        'cloudhwname',
         'virtualization',
         'memory'
     ]:
@@ -88,7 +88,7 @@ def main():
     argparser.add_argument('--version', help='version')
     argparser.add_argument('--region', help='aws region')
     argparser.add_argument('--ami', help='e.g. ami-12345678')
-    argparser.add_argument('--ec2name', help='ec2 instance type')
+    argparser.add_argument('--cloudhwname', help='ec2 instance type')
     argparser.add_argument('--itype', help='access/hourly')
     argparser.add_argument('--arch', help='i386/x86_64')
     argparser.add_argument('--memory', help='required memory')

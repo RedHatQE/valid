@@ -24,7 +24,7 @@ class testcase_361_ebs_deferred_detach(ValidTestcase):
         prod = params['product'].upper()
         ver = params['version'].upper()
         device = '/dev/sdk'
-        if params['ec2name'] == 'hs1.8xlarge':
+        if params['cloudhwname'] == 'hs1.8xlarge':
             for dev in params['bmap']:
                 if dev['name'] == device:
                     device = '/dev/xvdac'

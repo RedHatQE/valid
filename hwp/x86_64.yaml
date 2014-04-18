@@ -1,7 +1,7 @@
 - arch: 'x86_64'
   cpu: '1'
   memory: '600000'
-  ec2name: t1.micro
+  cloudhwname: t1.micro
   virtualization: 'paravirtual'
   userdata: &USERDATA |
       #! /bin/sh -ex
@@ -11,16 +11,16 @@
 - arch: 'x86_64'
   cpu: '1'
   memory: '1690000'
-  ec2name: m1.small
+  cloudhwname: m1.small
   virtualization: 'paravirtual'
   userdata: *USERDATA
   bmap: &BMAP
   - {delete_on_termination: true, name: /dev/sda1, size: '15'}
   - {ephemeral_name: ephemeral0, name: /dev/sdf}
 
-- {arch: 'x86_64', cpu: '2', memory: '7500000' , ec2name: m1.large, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
-- {arch: 'x86_64', cpu: '4', memory: '15000000', ec2name: m1.xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
-- {arch: 'x86_64', cpu: '2', memory: '17100000', ec2name: m2.xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
-- {arch: 'x86_64', cpu: '4', memory: '34200000', ec2name: m2.2xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
-- {arch: 'x86_64', cpu: '8', memory: '68400000', ec2name: m2.4xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
-- {arch: 'x86_64', cpu: '8', memory: '6997900', ec2name: c1.xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
+- {arch: 'x86_64', cpu: '2', memory: '7500000' , cloudhwname: m1.large, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
+- {arch: 'x86_64', cpu: '4', memory: '15000000', cloudhwname: m1.xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
+- {arch: 'x86_64', cpu: '2', memory: '17100000', cloudhwname: m2.xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
+- {arch: 'x86_64', cpu: '4', memory: '34200000', cloudhwname: m2.2xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
+- {arch: 'x86_64', cpu: '8', memory: '68400000', cloudhwname: m2.4xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
+- {arch: 'x86_64', cpu: '8', memory: '6997900', cloudhwname: c1.xlarge, virtualization: 'paravirtual', userdata: *USERDATA, bmap: *BMAP}
