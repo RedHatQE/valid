@@ -185,7 +185,7 @@ class ValidMain(object):
         transaction_dict = {}
         count = 0
         for params in data:
-            mandatory_fields = ['product', 'arch', 'region', 'version', 'ami']
+            mandatory_fields = ['product', 'arch', 'version', 'ami']
             minimal_set = set(mandatory_fields)
             exact_set = set(params.keys())
             if minimal_set.issubset(exact_set):
@@ -210,11 +210,18 @@ class ValidMain(object):
                             self.logger.info('no hwp match for %s; nothing to do', self.hwp_filter)
                             continue
 
-                        self.logger.info('using hwps: %s', reduce(lambda x, y: x + ', %s' % str(y['cloudhwname']), hwp[1:], str(hwp[0]['ec2name'])))
+                        self.logger.info('using hwps: %s', reduce(lambda x, y: x + ', %s' % str(y['cloudhwname']), hwp[1:], str(hwp[0]['cloudhwname'])))
                         ninstances = 0
                         for hwp_item in hwp:
                             params_copy = params.copy()
                             params_copy.update(hwp_item)
+
+                            if not 'region' in params_copy:
+                                params_copy['region'] = 'default'
+
+                            if not 'cloud' in params_copy:
+                                params_copy['cloud'] = 'ec2'
+
                             if not 'bmap' in params_copy.keys():
                                 params_copy['bmap'] = [{'name': '/dev/sda1', 'size': '15', 'delete_on_termination': True}]
                             if not 'userdata' in params_copy.keys():

@@ -163,8 +163,11 @@ class WorkerProcess(multiprocessing.Process):
 
             ec2_key = self.shareddata.yamlconfig['ec2']['ec2-key']
             ec2_secret_key = self.shareddata.yamlconfig['ec2']['ec2-secret-key']
+            region = params['region']
+            if region == 'default':
+                region = 'us-east-1'
 
-            reg = boto.ec2.get_region(params['region'], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
+            reg = boto.ec2.get_region(region, aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             (ssh_key_name, _) = self.shareddata.yamlconfig['ssh'][params['region']]
             # all handled params to be put in here
