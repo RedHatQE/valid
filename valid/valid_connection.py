@@ -39,14 +39,13 @@ class ValidConnection(object):
     """
     Stateful object to represent connection to the host
     """
-    def __init__(self, instance, username="root", key_filename=None,
-                 timeout=10, output_shell=False, disable_rpyc=False):
+    def __init__(self, hostname, username="root", key_filename=None,
+                 timeout=10, output_shell=False):
         """
         Create connection object
 
-        @param instance: host parameters we would like to establish connection
-                         to (or just a hostname)
-        @type instance: dict or str
+        @param hostname: hostname or ip address
+        @type hostname: str
 
         @param username: user name for creating ssh connection
         @type username: str
@@ -63,42 +62,10 @@ class ValidConnection(object):
         """
         self.logger = logging.getLogger('patchwork.connection')
 
-        if type(instance) == str:
-            self.parameters = {'private_hostname': instance,
-                               'public_hostname': instance}
-        else:
-            self.parameters = instance.copy()
-        # hostname is set for compatibility issues only, will be deprecated
-        # in future
-        if 'private_hostname' in self.parameters.keys() and \
-                'public_hostname' in self.parameters.keys():
-            # Custom stuff
-            self.hostname = self.parameters['private_hostname']
-            self.private_hostname = self.parameters['private_hostname']
-            self.public_hostname = self.parameters['public_hostname']
-        elif 'public_dns_name' in self.parameters.keys() and \
-                'private_ip_address' in self.parameters.keys():
-            # Amazon EC2/VPC instance
-            if self.parameters['public_dns_name'] != '':
-                # EC2
-                self.hostname = self.parameters['public_dns_name']
-                self.private_hostname = self.parameters['public_dns_name']
-                self.public_hostname = self.parameters['public_dns_name']
-            else:
-                # VPC
-                self.hostname = self.parameters['private_ip_address']
-                self.private_hostname = self.parameters['private_ip_address']
-                self.public_hostname = self.parameters['private_ip_address']
-        if 'username' in self.parameters:
-            self.username = self.parameters['username']
-        else:
-            self.username = username
+        self.hostname = hostname
+        self.username = username
+        self.key_filename = key_filename
         self.output_shell = output_shell
-        if 'key_filename' in self.parameters:
-            self.key_filename = self.parameters['key_filename']
-        else:
-            self.key_filename = key_filename
-        self.disable_rpyc = disable_rpyc
         self.timeout = timeout
 
         # debugging buffers
@@ -121,7 +88,7 @@ class ValidConnection(object):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-        client.connect(hostname=self.private_hostname,
+        client.connect(hostname=self.hostname,
                        username=self.username,
                        key_filename=self.key_filename,
                        timeout=self.timeout,
@@ -165,27 +132,26 @@ class ValidConnection(object):
     @lazyprop
     def rpyc(self):
         """ RPyC lazy property """
-        if not self.disable_rpyc:
-            try:
-                import rpyc
+        try:
+            import rpyc
 
-                devnull_fd = open("/dev/null", "w")
-                rpyc_dirname = os.path.dirname(rpyc.__file__)
-                rnd_id = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
-                pid_filename = "/tmp/%s.pid" % rnd_id
-                pid_dest_filename = "/tmp/%s%s.pid" % (rnd_id, rnd_id)
-                rnd_filename = "/tmp/" + rnd_id + ".tar.gz"
-                rnd_dest_filename = "/tmp/" + rnd_id + rnd_id + ".tar.gz"
-                subprocess.check_call(["tar", "-cz", "--exclude", "*.pyc", "--exclude", "*.pyo", "--transform",
-                                       "s,%s,%s," % (rpyc_dirname[1:][:-5], rnd_id), rpyc_dirname, "-f", rnd_filename],
-                                      stdout=devnull_fd, stderr=devnull_fd)
-                devnull_fd.close()
+            devnull_fd = open("/dev/null", "w")
+            rpyc_dirname = os.path.dirname(rpyc.__file__)
+            rnd_id = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
+            pid_filename = "/tmp/%s.pid" % rnd_id
+            pid_dest_filename = "/tmp/%s%s.pid" % (rnd_id, rnd_id)
+            rnd_filename = "/tmp/" + rnd_id + ".tar.gz"
+            rnd_dest_filename = "/tmp/" + rnd_id + rnd_id + ".tar.gz"
+            subprocess.check_call(["tar", "-cz", "--exclude", "*.pyc", "--exclude", "*.pyo", "--transform",
+                                   "s,%s,%s," % (rpyc_dirname[1:][:-5], rnd_id), rpyc_dirname, "-f", rnd_filename],
+                                  stdout=devnull_fd, stderr=devnull_fd)
+            devnull_fd.close()
 
-                self.sftp.put(rnd_filename, rnd_dest_filename)
-                os.remove(rnd_filename)
-                self.recv_exit_status("tar -zxvf %s -C /tmp" % rnd_dest_filename, 10)
+            self.sftp.put(rnd_filename, rnd_dest_filename)
+            os.remove(rnd_filename)
+            self.recv_exit_status("tar -zxvf %s -C /tmp" % rnd_dest_filename, 10)
 
-                server_script = r"""
+            server_script = r"""
 import os
 print os.environ
 from rpyc.utils.server import ThreadedServer
@@ -197,22 +163,20 @@ fd.write(str(t.port))
 fd.close()
 t.start()
 """
-                command = "echo \"%s\" | PYTHONPATH=\"/tmp/%s\" python " % (server_script, rnd_id)
-                self.stdin_rpyc, self.stdout_rpyc, self.stderr_rpyc = self.exec_command(command, get_pty=True)
-                self.recv_exit_status("while [ ! -f %s ]; do sleep 1; done" % (pid_filename), 10)
-                self.sftp.get(pid_filename, pid_dest_filename)
-                pid_fd = open(pid_dest_filename, 'r')
-                port = int(pid_fd.read())
-                pid_fd.close()
-                os.remove(pid_dest_filename)
-                local_port = self.forward_tunnel(0, 'localhost', port)
+            command = "echo \"%s\" | PYTHONPATH=\"/tmp/%s\" python " % (server_script, rnd_id)
+            self.stdin_rpyc, self.stdout_rpyc, self.stderr_rpyc = self.exec_command(command, get_pty=True)
+            self.recv_exit_status("while [ ! -f %s ]; do sleep 1; done" % (pid_filename), 10)
+            self.sftp.get(pid_filename, pid_dest_filename)
+            pid_fd = open(pid_dest_filename, 'r')
+            port = int(pid_fd.read())
+            pid_fd.close()
+            os.remove(pid_dest_filename)
+            local_port = self.forward_tunnel(0, 'localhost', port)
 
-                return rpyc.classic.connect('localhost', local_port)
+            return rpyc.classic.connect('localhost', local_port)
 
-            except Exception, err:
-                self.logger.debug("Failed to setup rpyc: %s" % err)
-                return None
-        else:
+        except Exception, err:
+            self.logger.debug("Failed to setup rpyc: %s" % err)
             return None
 
     def reconnect(self):

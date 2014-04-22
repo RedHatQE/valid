@@ -197,6 +197,10 @@ class WorkerProcess(multiprocessing.Process):
                 # packing creation results into params
                 params['id'] = result['id']
                 params['instance'] = result.copy()
+                if result['public_dns_name'] != '':
+                    params['hostname'] = result['public_dns_name']
+                else:
+                    params['hostname'] = result['private_ip_address']
                 self.shareddata.mainq.put((0, 'setup', params))
                 return
             elif instance_state == 'pending':
@@ -280,14 +284,14 @@ class WorkerProcess(multiprocessing.Process):
             for user in ['ec2-user', 'fedora']:
                 # If we're able to login with one of these users allow root ssh immediately
                 try:
-                    con = self.get_connection(params['instance'], user, ssh_key)
+                    con = self.get_connection(params['hostname'], user, ssh_key)
                     valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
                     valid_connection.Expect.ping_pong(con, 'sudo su -c \'cp -af /home/' + user + '/.ssh/authorized_keys /root/.ssh/authorized_keys; chown root.root /root/.ssh/authorized_keys; restorecon /root/.ssh/authorized_keys\' && echo SUCCESS', '\r\nSUCCESS\r\n')
-                    self.close_connection(params['instance'], user, ssh_key)
+                    self.close_connection(params['hostname'], user, ssh_key)
                 except:
                     pass
 
-            con = self.get_connection(params['instance'], 'root', ssh_key)
+            con = self.get_connection(params['hostname'], 'root', ssh_key)
             valid_connection.Expect.ping_pong(con, 'uname', 'Linux')
 
             self.logger.debug(self.name + ': sleeping for ' + str(self.shareddata.settlewait) + ' sec. to make sure instance has been settled.')
@@ -342,7 +346,7 @@ class WorkerProcess(multiprocessing.Process):
             ssh_key = params['ssh']['keyfile']
             self.logger.debug(self.name + ': ssh-key ' + ssh_key)
 
-            con = self.get_connection(params['instance'], 'root', ssh_key)
+            con = self.get_connection(params['hostname'], 'root', ssh_key)
 
             self.logger.info(self.name + ': doing testing for ' + params['iname'] + ' ' + stage)
 
@@ -406,7 +410,7 @@ class WorkerProcess(multiprocessing.Process):
             res = connection.terminate_instances([params['id']])
             self.logger.info(self.name + ': terminated ' + params['iname'])
             ssh_key = params['ssh']['keyfile']
-            self.close_connection(params['instance'], "root", ssh_key)
+            self.close_connection(params['hostname'], "root", ssh_key)
             return res
         except Exception, err:
             self.logger.error(self.name + ': got error during instance termination, %s %s' % (type(err), err))
@@ -437,21 +441,10 @@ class WorkerProcess(multiprocessing.Process):
             raise valid_connection.ExpectFailed('Command ' + command + ' failed with ' + str(status) + ' status.')
         return status
 
-    @staticmethod
-    def _get_instance_key(instance, user, ssh_key):
-        """ Get instance key for connection cache """
-        ikey = ''
-        if 'public_dns_name' in instance:
-            ikey = instance['public_dns_name']
-        if ikey == '' and 'private_ip_address' in instance:
-            ikey = instance['private_ip_address']
-        ikey += ":" + user + ":" + ssh_key
-        return ikey
-
-    def get_connection(self, instance, user, ssh_key):
+    def get_connection(self, hostname, user, ssh_key):
         """ Get connection """
         self.logger.debug(self.name + ': connection cache is: %s' % self.connection_cache)
-        ikey = self._get_instance_key(instance, user, ssh_key)
+        ikey = hostname + ":" + user + ":" + ssh_key
         self.logger.debug(self.name + ': searching for %s in connection cache' % ikey)
         con = None
         if ikey in self.connection_cache:
@@ -468,14 +461,14 @@ class WorkerProcess(multiprocessing.Process):
                 con = None
         if con is None:
             self.logger.debug(self.name + ': creating connection to %s' % ikey)
-            con = valid_connection.ValidConnection(instance, user, ssh_key)
+            con = valid_connection.ValidConnection(hostname, user, ssh_key)
             self.logger.debug(self.name + ': created connection to %s (%s)' % (ikey, con))
             self.connection_cache[ikey] = con
         return con
 
-    def close_connection(self, instance, user, ssh_key):
+    def close_connection(self, hostname, user, ssh_key):
         """ Close connection """
-        ikey = self._get_instance_key(instance, user, ssh_key)
+        ikey = hostname + ":" + user + ":" + ssh_key
         con = None
         if ikey in self.connection_cache:
             self.logger.debug(self.name + ': closing connection to %s' % ikey)
