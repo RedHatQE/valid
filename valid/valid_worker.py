@@ -43,7 +43,7 @@ class WorkerProcess(multiprocessing.Process):
         while True:
             self.logger.debug(self.name + ': heartbeat numprocesses: %i' % shareddata.numprocesses.value)
             if shareddata.resultdic.keys() == [] and shareddata.time2die.get():
-                self.logger.debug(self.name + ': nothing to do and time to die and, suiciding')
+                self.logger.debug(self.name + ': nothing to do and time to die, suiciding')
                 shareddata.numprocesses.value -= 1
                 break
             if shareddata.mainq.empty():
@@ -161,15 +161,11 @@ class WorkerProcess(multiprocessing.Process):
                     dev.ephemeral_name = device['ephemeral_name']
                 bmap[device['name']] = dev
 
-            ec2_key = self.shareddata.yamlconfig['ec2']['ec2-key']
-            ec2_secret_key = self.shareddata.yamlconfig['ec2']['ec2-secret-key']
-            region = params['region']
-            if region == 'default':
-                region = 'us-east-1'
+            ec2_key, ec2_secret_key = params['credentials']
 
-            reg = boto.ec2.get_region(region, aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
+            reg = boto.ec2.get_region(params['region'], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
-            (ssh_key_name, _) = self.shareddata.yamlconfig['ssh'][params['region']]
+            ssh_key_name = params['ssh']['keypair']
             # all handled params to be put in here
             boto_params = ['ami', 'subnet_id']
             for param in boto_params:
@@ -278,7 +274,7 @@ class WorkerProcess(multiprocessing.Process):
         """
         try:
             self.logger.debug(self.name + ': trying to do setup for ' + params['iname'] + ', ntry ' + str(ntry))
-            (_, ssh_key) = self.shareddata.yamlconfig['ssh'][params['region']]
+            ssh_key = params['ssh']['keyfile']
             self.logger.debug(self.name + ': ssh-key ' + ssh_key)
 
             for user in ['ec2-user', 'fedora']:
@@ -298,10 +294,10 @@ class WorkerProcess(multiprocessing.Process):
             time.sleep(self.shareddata.settlewait)
 
             setup_scripts = []
-            if 'setup' in self.shareddata.yamlconfig:
+            if self.shareddata.global_setup_script is not None:
                 # upload and execute a setup script as root in /tmp/
-                self.logger.debug(self.name + ': executing global setup script: %s' % self.shareddata.yamlconfig['setup'])
-                local_script_path = os.path.expandvars(os.path.expanduser(self.shareddata.yamlconfig['setup']))
+                self.logger.debug(self.name + ': executing global setup script: %s' % self.shareddata.global_setup_script)
+                local_script_path = os.path.expandvars(os.path.expanduser(self.shareddata.global_setup_script))
                 setup_scripts.append(local_script_path)
             tfile = tempfile.NamedTemporaryFile(delete=False)
             if 'setup' in params.keys() and params['setup']:
@@ -343,7 +339,7 @@ class WorkerProcess(multiprocessing.Process):
             stage = params['stages'][0]
             self.logger.debug(self.name + ': trying to do testing for ' + params['iname'] + ' ' + stage + ', ntry ' + str(ntry))
 
-            (_, ssh_key) = self.shareddata.yamlconfig['ssh'][params['region']]
+            ssh_key = params['ssh']['keyfile']
             self.logger.debug(self.name + ': ssh-key ' + ssh_key)
 
             con = self.get_connection(params['instance'], 'root', ssh_key)
@@ -409,7 +405,7 @@ class WorkerProcess(multiprocessing.Process):
             connection = params['instance']['connection']
             res = connection.terminate_instances([params['id']])
             self.logger.info(self.name + ': terminated ' + params['iname'])
-            (_, ssh_key) = self.shareddata.yamlconfig['ssh'][params['region']]
+            ssh_key = params['ssh']['keyfile']
             self.close_connection(params['instance'], "root", ssh_key)
             return res
         except Exception, err:

@@ -40,13 +40,15 @@ class ValidMain(object):
 
         self.debug = False
         self.config = '/etc/validation.yaml'
+        self.cloud_access = None
+        self.https = None
+        self.global_setup_script = None
         self.resultdic = None
         self.resultdic_lock = None
         self.resultdic_yaml = None
         self.mailfrom = None
         self.minprocesses = 8
         self.maxprocesses = 32
-        self.yamlconfig = None
         self.settlewait = 30
         self.maxtries = 30
         self.maxwait = 90
@@ -96,7 +98,20 @@ class ValidMain(object):
         logging.getLogger('valid.testcase').setLevel(loglevel)
 
         with open(self.config, 'r') as confd:
-            self.yamlconfig = yaml.load(confd)
+            yamlconfig = yaml.load(confd)
+            if 'cloud_access' in yamlconfig:
+                # new-style config
+                self.cloud_access = yamlconfig.get('cloud_access', {})
+                self.https = yamlconfig.get('https', None)
+                self.global_setup_script = yamlconfig.get('global_setup_script', None)
+            else:
+                # old-style config
+                self.cloud_access = {'ec2': {'credentials': (yamlconfig['ec2']['ec2-key'], yamlconfig['ec2']['ec2-secret-key']),
+                                             'ssh': yamlconfig['ssh']}}
+                self.https = {'server_ssl_ca': yamlconfig['server_ssl_ca'],
+                              'server_ssl_cert': yamlconfig['server_ssl_cert'],
+                              'server_ssl_key': yamlconfig['server_ssl_key']}
+                self.global_setup_script = yamlconfig.get('setup', None)
 
         # Check if result directory is writable
         try:
@@ -128,12 +143,13 @@ class ValidMain(object):
 
         self.time2die.set(False)
         # check keys
-        for key in 'server_ssl_ca', 'server_ssl_cert', 'server_ssl_key':
-            if not key in self.yamlconfig.keys():
-                self.logger.error('You should specify %s in %s to run in server mode!', key, self.config)
-                sys.exit(1)
-            elif not os.path.exists(self.yamlconfig[key]):
-                self.logger.error('File %s does not exist but required for server mode. Use valid_cert_creator.py to create it.', key)
+        if self.https is None:
+            self.logger.error('No \'https\' section in config file')
+            sys.exit(1)
+
+        for keyfile in self.https['server_ssl_ca'], self.https['server_ssl_cert'], self.https['server_ssl_key']:
+            if not os.path.exists(keyfile):
+                self.logger.error('File %s does not exist but required for server mode. Use valid_cert_creator.py to create it.', keyfile)
                 sys.exit(1)
         hostname = ''
         try:
@@ -185,94 +201,101 @@ class ValidMain(object):
         transaction_dict = {}
         count = 0
         for params in data:
-            mandatory_fields = ['product', 'arch', 'version', 'ami']
-            minimal_set = set(mandatory_fields)
-            exact_set = set(params.keys())
-            if minimal_set.issubset(exact_set):
-                # we have all required keys
-                for field in mandatory_fields:
-                    if type(params[field]) != str:
-                        params[field] = str(params[field])
-                if params['ami'] in transaction_dict.keys():
-                    self.logger.error('Ami %s was already added for transaction %s!', params['ami'], transaction_id)
-                    continue
-                self.logger.debug('Got valid data line ' + str(params))
-                hwp_found = False
-                for hwpdir in ['hwp', '/usr/share/valid/hwp']:
-                    try:
-                        hwpfd = open(hwpdir + '/' + params['arch'] + '.yaml', 'r')
-                        hwp = yaml.load(hwpfd)
-                        hwpfd.close()
-                        # filter hwps based on args
-                        hwp = [x for x in hwp if re.match(self.hwp_filter, x['cloudhwname']) is not None]
-                        if not len(hwp):
-                            # precautions
-                            self.logger.info('no hwp match for %s; nothing to do', self.hwp_filter)
-                            continue
+            cloud = params.get('cloud', 'ec2')
+            if not cloud in self.cloud_access:
+                self.logger.error('No cloud access data for %s in config', cloud)
+                continue
+            mandatory_fields = ['product', 'arch', 'version', 'ami'] + self.cloud_access[cloud].get('mandatory_fields', [])
+            data_is_valid = True
+            for field in mandatory_fields:
+                if not field in params:
+                    self.logger.error('Missing %s in params', field)
+                    data_is_valid = False
+            if not data_is_valid:
+                continue
+            if params['ami'] in transaction_dict.keys():
+                self.logger.error('Ami %s was already added for transaction %s!', params['ami'], transaction_id)
+                continue
+            self.logger.debug('Got valid data line ' + str(params))
+            hwp_found = False
+            for hwpdir in ['hwp', '/usr/share/valid/hwp']:
+                try:
+                    hwpfd = open(hwpdir + '/' + params['arch'] + '.yaml', 'r')
+                    hwp = yaml.load(hwpfd)
+                    hwpfd.close()
+                    # filter hwps based on args
+                    hwp = [x for x in hwp if re.match(self.hwp_filter, x['cloudhwname']) is not None]
+                    if not len(hwp):
+                        # precautions
+                        self.logger.info('no hwp match for %s; nothing to do', self.hwp_filter)
+                        continue
 
-                        self.logger.info('using hwps: %s', reduce(lambda x, y: x + ', %s' % str(y['cloudhwname']), hwp[1:], str(hwp[0]['cloudhwname'])))
-                        ninstances = 0
-                        for hwp_item in hwp:
-                            params_copy = params.copy()
-                            params_copy.update(hwp_item)
+                    self.logger.info('using hwps: %s', reduce(lambda x, y: x + ', %s' % str(y['cloudhwname']), hwp[1:], str(hwp[0]['cloudhwname'])))
+                    ninstances = 0
+                    for hwp_item in hwp:
+                        params_copy = params.copy()
+                        params_copy.update(hwp_item)
 
-                            if not 'region' in params_copy:
-                                params_copy['region'] = 'default'
+                        params_copy['version'] = str(params['version'])
 
-                            if not 'cloud' in params_copy:
-                                params_copy['cloud'] = 'ec2'
+                        if not 'cloud' in params_copy:
+                            params_copy['cloud'] = cloud
 
+                        if not 'enable_stages' in params_copy:
+                            params_copy['enable_stages'] = self.enable_stages
+                        if not 'disable_stages' in params_copy:
+                            params_copy['disable_stages'] = self.disable_stages
+                        if not 'enable_tags' in params_copy:
+                            params_copy['enable_tags'] = self.enable_tags
+                        if not 'disable_tags' in params_copy:
+                            params_copy['disable_tags'] = self.disable_tags
+                        if not 'enable_tests' in params_copy:
+                            params_copy['enable_tests'] = self.enable_tests
+                        if not 'disable_tests' in params_copy:
+                            params_copy['disable_tests'] = self.disable_tests
+
+                        if not 'repeat' in params_copy:
+                            params_copy['repeat'] = self.repeat
+
+                        if not 'name' in params_copy:
+                            params_copy['name'] = params_copy['ami'] + ' validation'
+
+                        params_copy['credentials'] = self.cloud_access[cloud].get('credentials', [])
+
+                        if cloud == 'ec2':
                             if not 'bmap' in params_copy.keys():
                                 params_copy['bmap'] = [{'name': '/dev/sda1', 'size': '15', 'delete_on_termination': True}]
                             if not 'userdata' in params_copy.keys():
                                 params_copy['userdata'] = None
-                            if not 'itype' in params_copy.keys():
-                                params_copy['itype'] = 'hourly'
+                            params_copy['ssh'] = {'keypair': self.cloud_access['ec2']['ssh'][params['region']][0],
+                                                  'keyfile': self.cloud_access['ec2']['ssh'][params['region']][1]}
+                        else:
+                            # FIXME
+                            self.logger.error('Unsupported cloud: %s', cloud)
+                            continue
 
-                            if not 'enable_stages' in params_copy:
-                                params_copy['enable_stages'] = self.enable_stages
-                            if not 'disable_stages' in params_copy:
-                                params_copy['disable_stages'] = self.disable_stages
-                            if not 'enable_tags' in params_copy:
-                                params_copy['enable_tags'] = self.enable_tags
-                            if not 'disable_tags' in params_copy:
-                                params_copy['disable_tags'] = self.disable_tags
-                            if not 'enable_tests' in params_copy:
-                                params_copy['enable_tests'] = self.enable_tests
-                            if not 'disable_tests' in params_copy:
-                                params_copy['disable_tests'] = self.disable_tests
-
-                            if not 'repeat' in params_copy:
-                                params_copy['repeat'] = self.repeat
-
-                            if not 'name' in params_copy:
-                                params_copy['name'] = params_copy['ami'] + ' validation'
-
-                            params_copy['transaction_id'] = transaction_id
-                            params_copy['iname'] = 'Instance' + str(count) + '_' + transaction_id
-                            params_copy['stages'] = self.get_test_stages(params_copy)
-                            ninstances += len(params_copy['stages'])
-                            if params_copy['stages'] != []:
-                                self.logger.info('Adding ' + params_copy['iname'] + ': ' + hwp_item['cloudhwname'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
-                                self.mainq.put((0, 'create', params_copy))
-                                count += 1
-                            else:
-                                self.logger.info('No tests for ' + params_copy['iname'] + ': ' + hwp_item['cloudhwname'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
-                        if ninstances > 0:
-                            transaction_dict[params['ami']] = {'ninstances': ninstances, 'instances': []}
-                            if emails:
-                                transaction_dict[params['ami']]['emails'] = emails
-                                if subject:
-                                    transaction_dict[params['ami']]['subject'] = subject
-                        hwp_found = True
-                        break
-                    except:
-                        self.logger.debug(':' + traceback.format_exc())
-                if not hwp_found:
-                    self.logger.error('HWP for ' + params['arch'] + ' is not found, skipping dataline for ' + params['ami'])
-            else:
-                # we something is missing
-                self.logger.error('Got invalid data line: ' + str(params))
+                        params_copy['transaction_id'] = transaction_id
+                        params_copy['iname'] = 'Instance' + str(count) + '_' + transaction_id
+                        params_copy['stages'] = self.get_test_stages(params_copy)
+                        ninstances += len(params_copy['stages'])
+                        if params_copy['stages'] != []:
+                            self.logger.info('Adding ' + params_copy['iname'] + ': ' + hwp_item['cloudhwname'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
+                            self.mainq.put((0, 'create', params_copy))
+                            count += 1
+                        else:
+                            self.logger.info('No tests for ' + params_copy['iname'] + ': ' + hwp_item['cloudhwname'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
+                    if ninstances > 0:
+                        transaction_dict[params['ami']] = {'ninstances': ninstances, 'instances': []}
+                        if emails:
+                            transaction_dict[params['ami']]['emails'] = emails
+                            if subject:
+                                transaction_dict[params['ami']]['subject'] = subject
+                    hwp_found = True
+                    break
+                except:
+                    self.logger.debug(':' + traceback.format_exc())
+            if not hwp_found:
+                self.logger.error('HWP for ' + params['arch'] + ' is not found, skipping dataline for ' + params['ami'])
         if count > 0:
             self.resultdic[transaction_id] = transaction_dict
             self.logger.info('Validation transaction ' + transaction_id + ' added')

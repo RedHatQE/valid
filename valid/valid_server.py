@@ -32,11 +32,11 @@ class ServerProcess(multiprocessing.Process):
         server_class = ValidHTTPServer
         httpd = server_class((self.hostname, self.port), ValidHTTPHandler, shareddata)
         httpd.socket = ssl.wrap_socket(httpd.socket,
-                                       certfile=shareddata.yamlconfig['server_ssl_cert'],
-                                       keyfile=shareddata.yamlconfig['server_ssl_key'],
+                                       certfile=shareddata.https['server_ssl_cert'],
+                                       keyfile=shareddata.https['server_ssl_key'],
                                        server_side=True,
                                        cert_reqs=ssl.CERT_REQUIRED,
-                                       ca_certs=shareddata.yamlconfig['server_ssl_ca'])
+                                       ca_certs=shareddata.https['server_ssl_ca'])
         httpd.serve_forever()
 
 
