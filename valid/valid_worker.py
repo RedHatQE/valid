@@ -2,19 +2,16 @@ import paramiko
 import multiprocessing
 import random
 import logging
-import boto
 import time
 import os
 import tempfile
 import sys
 import socket
 import traceback
-
-from boto.ec2.blockdevicemapping import BlockDeviceType
-from boto.ec2.blockdevicemapping import BlockDeviceMapping
+import boto
 
 from valid import valid_connection
-
+from valid import valid_ec2
 
 class WorkerProcess(multiprocessing.Process):
     """
@@ -112,8 +109,7 @@ class WorkerProcess(multiprocessing.Process):
         if len(params['stages']) == 1:
             try:
                 #getting console output after last stage
-                connection = params['instance']['connection']
-                console_output = connection.get_console_output(params['id']).output
+                console_output = valid_ec2.get_console_output(params)
                 self.logger.debug(self.name + ': got console output for %s: %s' % (params['iname'], console_output))
             except Exception, err:
                 self.logger.error(self.name + ': report_results: Failed to get console output %s' % err)
@@ -147,25 +143,11 @@ class WorkerProcess(multiprocessing.Process):
         self.logger.debug(self.name + ': trying to create instance  ' + params['iname'] + ', ntry ' + str(ntry))
         ntry += 1
         try:
-            bmap = BlockDeviceMapping()
-            for device in params['bmap']:
-                if not 'name' in device.keys():
-                    self.logger.debug(self.name + ': bad device ' + str(device))
-                    continue
-                dev = BlockDeviceType()
-                if 'size' in device.keys():
-                    dev.size = device['size']
-                if 'delete_on_termination' in device.keys():
-                    dev.delete_on_termination = device['delete_on_termination']
-                if 'ephemeral_name' in device.keys():
-                    dev.ephemeral_name = device['ephemeral_name']
-                bmap[device['name']] = dev
-
-            ec2_key, ec2_secret_key = params['credentials']
-
-            reg = boto.ec2.get_region(params['region'], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
-            connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
             ssh_key_name = params['ssh']['keypair']
+
+            bmap = valid_ec2.get_bmap(params)
+            connection = valid_ec2.get_connection(params)
+
             # all handled params to be put in here
             boto_params = ['ami', 'subnet_id']
             for param in boto_params:
@@ -406,7 +388,7 @@ class WorkerProcess(multiprocessing.Process):
             return True
         try:
             self.logger.debug(self.name + ': trying to terminata instance  ' + params['iname'] + ', ntry ' + str(ntry))
-            connection = params['instance']['connection']
+            connection = valid_ec2.get_connection(params)
             res = connection.terminate_instances([params['id']])
             self.logger.info(self.name + ': terminated ' + params['iname'])
             ssh_key = params['ssh']['keyfile']
