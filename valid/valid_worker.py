@@ -8,10 +8,9 @@ import tempfile
 import sys
 import socket
 import traceback
-import boto
 
 from valid import valid_connection
-from valid import valid_ec2
+from valid import cloud
 
 class WorkerProcess(multiprocessing.Process):
     """
@@ -24,7 +23,6 @@ class WorkerProcess(multiprocessing.Process):
         multiprocessing.Process.__init__(self, name='WorkerProcess_%s' % random.randint(1, 16384), target=self.runner, args=(shareddata,))
         self.connection_cache = {}
         self.logger = logging.getLogger('valid.runner')
-        logging.getLogger('boto').setLevel(logging.CRITICAL)
         if shareddata.debug:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
         else:
@@ -108,8 +106,9 @@ class WorkerProcess(multiprocessing.Process):
         console_output = ''
         if len(params['stages']) == 1:
             try:
+                driver = self.get_driver(params)
                 #getting console output after last stage
-                console_output = valid_ec2.get_console_output(params)
+                console_output = driver.get_console_output(params)
                 self.logger.debug(self.name + ': got console output for %s: %s' % (params['iname'], console_output))
             except Exception, err:
                 self.logger.error(self.name + ': report_results: Failed to get console output %s' % err)
@@ -129,6 +128,13 @@ class WorkerProcess(multiprocessing.Process):
             self.shareddata.resultdic[params['transaction_id']] = transd
         self.logger.debug(self.name + ': self.resultdic after report: %s' % (self.shareddata.resultdic.items(), ))
 
+    def get_driver(self, params):
+        if params['cloud'] == 'ec2':
+            driver = cloud.ec2.EC2(self.logger, self.shareddata.maxwait)
+        else:
+            driver = cloud.base.AbstractCloud(self.logger)
+        return driver
+
     def do_create(self, ntry, params):
         """
         Create stage of testing
@@ -139,114 +145,28 @@ class WorkerProcess(multiprocessing.Process):
         @param params: list of testing parameters
         @type params: list
         """
-        result = None
         self.logger.debug(self.name + ': trying to create instance  ' + params['iname'] + ', ntry ' + str(ntry))
-        ntry += 1
+        driver = self.get_driver(params)
         try:
-            ssh_key_name = params['ssh']['keypair']
-
-            bmap = valid_ec2.get_bmap(params)
-            connection = valid_ec2.get_connection(params)
-
-            # all handled params to be put in here
-            boto_params = ['ami', 'subnet_id']
-            for param in boto_params:
-                params.setdefault(param)
-            reservation = connection.run_instances(
-                params['ami'],
-                instance_type=params['cloudhwname'],
-                key_name=ssh_key_name,
-                block_device_map=bmap,
-                subnet_id=params['subnet_id'],
-                user_data=params['userdata']
-            )
-            myinstance = reservation.instances[0]
-            count = 0
-            # Sometimes EC2 failes to return something meaningful without small timeout between run_instances() and update()
+            params_new = driver.create(params)
+            self.shareddata.mainq.put((0, 'setup', params_new.copy()))
+        except cloud.base.TemporaryCloudException, exc:
+            self.logger.debug('%s: Temporary Cloud Exception: %s', self.name, exc)
             time.sleep(10)
-            while myinstance.update() == 'pending' and count < self.shareddata.maxwait / 5:
-                # Waiting out instance to appear
-                self.logger.debug(params['iname'] + '... waiting...' + str(count))
-                time.sleep(5)
-                count += 1
-            connection.close()
-            instance_state = myinstance.update()
-            if instance_state == 'running':
-                # Instance appeared - scheduling 'setup' stage
-                myinstance.add_tag('Name', params['name'])
-                result = myinstance.__dict__
-                self.logger.info(self.name + ': created instance ' + params['iname'] + ', ' + result['id'] + ':' + result['public_dns_name'])
-                # packing creation results into params
-                params['id'] = result['id']
-                params['instance'] = result.copy()
-                if result['public_dns_name'] != '':
-                    params['hostname'] = result['public_dns_name']
-                else:
-                    params['hostname'] = result['private_ip_address']
-                self.shareddata.mainq.put((0, 'setup', params))
-                return
-            elif instance_state == 'pending':
-                # maxwait seconds is enough to create an instance. If not -- EC2 failed.
-                self.logger.error('Error during instance creation: timeout in pending state')
-                result = myinstance.__dict__
-                if 'id' in result.keys():
-                    # terminate stucked instance
-                    params['id'] = result['id']
-                    params['instance'] = result.copy()
-                    self.shareddata.mainq.put((0, 'terminate', params.copy()))
-            else:
-                # error occured
-                self.logger.error('Error during instance creation: ' + instance_state)
-
-        except boto.exception.EC2ResponseError, err:
-            # Boto errors should be handled according to their error Message - there are some well-known ones
-            self.logger.debug(self.name + ': got boto error during instance creation: %s' % err)
-            if str(err).find('<Code>InstanceLimitExceeded</Code>') != -1:
-                # InstanceLimit is temporary problem
-                self.logger.debug(self.name + ': got InstanceLimitExceeded - not increasing ntry')
-                ntry -= 1
-            elif str(err).find('<Code>InvalidParameterValue</Code>') != -1:
-                # InvalidParameterValue is really bad
-                self.logger.error(self.name + ': got error during instance creation: %s' % err)
-                # Failing testing
-                params['result'] = {"create": 'failure'}
-                self.abort_testing(params)
-                return
-            elif str(err).find('<Code>InvalidAMIID.NotFound</Code>') != -1:
-                # No such AMI in the region
-                self.logger.error(self.name + ': AMI %s not found in %s' % (params['ami'], params['region']))
-                # Failing testing
-                params['result'] = {"create": 'failure, no such ami in the region'}
-                self.abort_testing(params)
-                return
-            elif str(err).find('<Code>AuthFailure</Code>') != -1:
-                # Not authorized is permanent
-                self.logger.error(self.name + ': not authorized for AMI %s in %s' % (params['ami'], params['region']))
-                # Failing testing
-                params['result'] = {"create": 'failure, not authorized for images'}
-                self.abort_testing(params)
-                return
-            elif str(err).find('<Code>Unsupported</Code>') != -1:
-                # Unsupported hardware in the region
-                self.logger.debug(self.name + ': got Unsupported - most likely the permanent error: %s' % err)
-                # Skipping testing
-                params['result'] = {"create": 'skip'}
-                self.abort_testing(params)
-                return
-            else:
-                self.logger.debug(self.name + ':' + traceback.format_exc())
-        except socket.error, err:
-            # Network errors are usual, reschedult silently
-            self.logger.debug(self.name + ': got socket error during instance creation: %s' % err)
-            self.logger.debug(self.name + ':' + traceback.format_exc())
-        except Exception, err:
-            # Unexpected error happened
-            self.logger.error(self.name + ': got error during instance creation: %s %s' % (type(err), err))
-            self.logger.debug(self.name + ':' + traceback.format_exc())
-        self.logger.debug(self.name + ': something went wrong with ' + params['iname'] + ' during creation, ntry: ' + str(ntry) + ', rescheduling')
-        # reschedule creation
-        time.sleep(10)
-        self.shareddata.mainq.put((ntry, 'create', params.copy()))
+            self.shareddata.mainq.put((ntry, 'create', params.copy()))
+        except cloud.base.PermanentCloudException, exc:
+            self.logger.error('%s: Permanent Cloud Exception: %s', self.name, exc)
+            params['result'] = {'create': str(exc)}
+            self.abort_testing(params)
+        except cloud.base.SkipCloudException, exc:
+            self.logger.debug('%s: Skip Cloud Exception: %s', self.name, exc)
+            params['result'] = {'create': 'skip'}
+            self.abort_testing(params)
+        except cloud.base.UnknownCloudException, exc:
+            self.logger.error('%s: Unknown Cloud Exception: %s', self.name, exc)
+            time.sleep(10)
+            self.shareddata.mainq.put((ntry, 'create', params.copy()))
+            ntry += 1
 
     def do_setup(self, ntry, params):
         """
@@ -339,8 +259,12 @@ class WorkerProcess(multiprocessing.Process):
                 test_result = testcase.test(con, params)
                 self.logger.debug(self.name + ': ' + params['iname'] + ': test ' + test_name + ' finised with ' + str(test_result))
                 result = test_result
-            except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError, boto.exception.EC2ResponseError), err:
+            except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), err:
                 self.logger.error(self.name + ': bad test, %s %s' % (stage, err))
+                self.logger.debug(self.name + ':' + traceback.format_exc())
+                result = 'Failure'
+            except (cloud.PermanentCloudException), err:
+                self.logger.error(self.name + ': permanent cloud exception, %s %s' % (stage, err))
                 self.logger.debug(self.name + ':' + traceback.format_exc())
                 result = 'Failure'
 
@@ -385,19 +309,26 @@ class WorkerProcess(multiprocessing.Process):
         """
         if 'keepalive' in params and params['keepalive'] is not None:
             self.logger.info(self.name + ': will not terminate %s (keepalive requested)' % params['iname'])
-            return True
+            return
+        driver = self.get_driver(params)
         try:
             self.logger.debug(self.name + ': trying to terminata instance  ' + params['iname'] + ', ntry ' + str(ntry))
-            connection = valid_ec2.get_connection(params)
-            res = connection.terminate_instances([params['id']])
+            driver.terminate(params)
             self.logger.info(self.name + ': terminated ' + params['iname'])
-            ssh_key = params['ssh']['keyfile']
-            self.close_connection(params['hostname'], "root", ssh_key)
-            return res
+        except cloud.PermanentCloudException, err:
+            self.logger.error(self.name + ': got permanent error during instance termination, %s %s' % (type(err), err))
+        except cloud.TemporaryCloudException, err:
+            self.logger.debug(self.name + ': got temporary error during instance termination, %s %s' % (type(err), err))
+            self.shareddata.mainq.put((ntry, 'terminate', params.copy()))
         except Exception, err:
             self.logger.error(self.name + ': got error during instance termination, %s %s' % (type(err), err))
             self.logger.debug(self.name + ':' + traceback.format_exc())
             self.shareddata.mainq.put((ntry + 1, 'terminate', params.copy()))
+        try:
+            ssh_key = params['ssh']['keyfile']
+            self.close_connection(params['hostname'], "root", ssh_key)
+        except Exception, err:
+            pass
 
     @staticmethod
     def remote_command(connection, command, timeout=5):
