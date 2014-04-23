@@ -115,8 +115,8 @@ BETA_6.5:
     /var/cache/yum: true
 
 RHEL_6.5:
+    <<: *RHEL_6ANY
     /etc/ssh/sshd_config: true
-    /var/cache/yum: true
 
 BETA_7.0:
     /sys: true

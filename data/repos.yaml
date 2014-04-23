@@ -147,6 +147,9 @@ ANY_REGION: &ANY_REGION
         rhui-REGION-rhel-server-source-rhscl: false
         rhui-REGION-rhel-server-source-supplementary: false
         rhui-REGION-rhel-server-supplementary: false
+        rhui-REGION-rhel-server-rh-common: true
+        rhui-REGION-rhel-server-source-rh-common: false
+        rhui-REGION-rhel-server-debug-rh-common: false
     BETA_7.0:
         rhui-REGION-client-config-server-7-beta: true
         rhui-REGION-rhel-server-releases-beta: true
