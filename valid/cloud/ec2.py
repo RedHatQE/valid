@@ -13,6 +13,8 @@ class EC2(AbstractCloud):
     """
     AWS EC2 driver
     """
+    cloud = 'ec2'
+
     def __init__(self, logger, maxwait):
         AbstractCloud.__init__(self, logger, maxwait)
         logging.getLogger('boto').setLevel(logging.CRITICAL)

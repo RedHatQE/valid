@@ -8,6 +8,7 @@ import tempfile
 import sys
 import socket
 import traceback
+import inspect
 
 from valid import valid_connection
 from valid import cloud
@@ -129,10 +130,14 @@ class WorkerProcess(multiprocessing.Process):
         self.logger.debug(self.name + ': self.resultdic after report: %s' % (self.shareddata.resultdic.items(), ))
 
     def get_driver(self, params):
-        if params['cloud'] == 'ec2':
-            driver = cloud.ec2.EC2(self.logger, self.shareddata.maxwait)
-        else:
-            driver = cloud.base.AbstractCloud(self.logger)
+        driver_cls = cloud.base.AbstractCloud
+        for name, cls in inspect.getmembers(sys.modules["valid.cloud"], inspect.isclass):
+            try:
+                if getattr(cls, 'cloud') == params['cloud']:
+                    driver_cls = cls
+            except:
+                pass
+        driver = driver_cls(self.logger, self.shareddata.maxwait)
         return driver
 
     def do_create(self, ntry, params):
