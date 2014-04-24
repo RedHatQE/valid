@@ -19,6 +19,17 @@ class EC2(AbstractCloud):
         AbstractCloud.__init__(self, logger, maxwait)
         logging.getLogger('boto').setLevel(logging.CRITICAL)
 
+    def set_default_params(self, params, cloud_access_config):
+        try:
+            if not 'bmap' in params:
+                params['bmap'] = [{'name': '/dev/sda1', 'size': '15', 'delete_on_termination': True}]
+            if not 'userdata' in params:
+                params['userdata'] = None
+            params['ssh'] = {'keypair': cloud_access_config['ec2']['ssh'][params['region']][0],
+                             'keyfile': cloud_access_config['ec2']['ssh'][params['region']][1]}
+        except Exception, err:
+            PermanentCloudException('Error while setting up required cloud params: %s' % err)
+
     def create(self, params):
         try:
             ssh_key_name = params['ssh']['keypair']

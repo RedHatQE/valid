@@ -8,7 +8,6 @@ import tempfile
 import sys
 import socket
 import traceback
-import inspect
 
 from valid import valid_connection
 from valid import cloud
@@ -107,7 +106,7 @@ class WorkerProcess(multiprocessing.Process):
         console_output = ''
         if len(params['stages']) == 1:
             try:
-                driver = self.get_driver(params)
+                driver = cloud.get_driver(params['cloud'], self.logger, self.shareddata.maxwait)
                 #getting console output after last stage
                 console_output = driver.get_console_output(params)
                 self.logger.debug(self.name + ': got console output for %s: %s' % (params['iname'], console_output))
@@ -129,17 +128,6 @@ class WorkerProcess(multiprocessing.Process):
             self.shareddata.resultdic[params['transaction_id']] = transd
         self.logger.debug(self.name + ': self.resultdic after report: %s' % (self.shareddata.resultdic.items(), ))
 
-    def get_driver(self, params):
-        driver_cls = cloud.base.AbstractCloud
-        for name, cls in inspect.getmembers(sys.modules["valid.cloud"], inspect.isclass):
-            try:
-                if getattr(cls, 'cloud') == params['cloud']:
-                    driver_cls = cls
-            except:
-                pass
-        driver = driver_cls(self.logger, self.shareddata.maxwait)
-        return driver
-
     def do_create(self, ntry, params):
         """
         Create stage of testing
@@ -151,7 +139,7 @@ class WorkerProcess(multiprocessing.Process):
         @type params: list
         """
         self.logger.debug(self.name + ': trying to create instance  ' + params['iname'] + ', ntry ' + str(ntry))
-        driver = self.get_driver(params)
+        driver = cloud.get_driver(params['cloud'], self.logger, self.shareddata.maxwait)
         try:
             params_new = driver.create(params)
             self.shareddata.mainq.put((0, 'setup', params_new.copy()))
@@ -315,7 +303,7 @@ class WorkerProcess(multiprocessing.Process):
         if 'keepalive' in params and params['keepalive'] is not None:
             self.logger.info(self.name + ': will not terminate %s (keepalive requested)' % params['iname'])
             return
-        driver = self.get_driver(params)
+        driver = cloud.get_driver(params['cloud'], self.logger, self.shareddata.maxwait)
         try:
             self.logger.debug(self.name + ': trying to terminata instance  ' + params['iname'] + ', ntry ' + str(ntry))
             driver.terminate(params)

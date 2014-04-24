@@ -13,7 +13,7 @@ import random
 
 from valid import valid_worker, valid_watchman, valid_server
 from valid.testing_modules import *
-
+from valid import cloud
 
 def strzero(value, maxvalue):
     """
@@ -201,11 +201,11 @@ class ValidMain(object):
         transaction_dict = {}
         count = 0
         for params in data:
-            cloud = params.get('cloud', 'ec2')
-            if not cloud in self.cloud_access:
-                self.logger.error('No cloud access data for %s in config', cloud)
+            cloud_name = params.get('cloud', 'ec2')
+            if not cloud_name in self.cloud_access:
+                self.logger.error('No cloud access data for %s in config', cloud_name)
                 continue
-            mandatory_fields = ['product', 'arch', 'version', 'ami'] + self.cloud_access[cloud].get('mandatory_fields', [])
+            mandatory_fields = ['product', 'arch', 'version', 'ami'] + self.cloud_access[cloud_name].get('mandatory_fields', [])
             data_is_valid = True
             for field in mandatory_fields:
                 if not field in params:
@@ -239,7 +239,7 @@ class ValidMain(object):
                         params_copy['version'] = str(params['version'])
 
                         if not 'cloud' in params_copy:
-                            params_copy['cloud'] = cloud
+                            params_copy['cloud'] = cloud_name
 
                         if not 'enable_stages' in params_copy:
                             params_copy['enable_stages'] = self.enable_stages
@@ -260,19 +260,10 @@ class ValidMain(object):
                         if not 'name' in params_copy:
                             params_copy['name'] = params_copy['ami'] + ' validation'
 
-                        params_copy['credentials'] = self.cloud_access[cloud].get('credentials', [])
+                        params_copy['credentials'] = self.cloud_access[cloud_name].get('credentials', [])
 
-                        if cloud == 'ec2':
-                            if not 'bmap' in params_copy.keys():
-                                params_copy['bmap'] = [{'name': '/dev/sda1', 'size': '15', 'delete_on_termination': True}]
-                            if not 'userdata' in params_copy.keys():
-                                params_copy['userdata'] = None
-                            params_copy['ssh'] = {'keypair': self.cloud_access['ec2']['ssh'][params['region']][0],
-                                                  'keyfile': self.cloud_access['ec2']['ssh'][params['region']][1]}
-                        else:
-                            # FIXME
-                            self.logger.error('Unsupported cloud: %s', cloud)
-                            continue
+                        driver = cloud.get_driver(cloud_name, self.logger, self.maxwait)
+                        driver.set_default_params(params_copy, self.cloud_access)
 
                         params_copy['transaction_id'] = transaction_id
                         params_copy['iname'] = 'Instance' + str(count) + '_' + transaction_id

@@ -41,6 +41,9 @@ class AbstractCloud(object):
         self.logger = logger
         self.maxwait = maxwait
 
+    def set_default_params(self, params, cloud_access_config):
+        raise PermanentCloudException("Not implemented")
+
     def create(self, params):
         raise PermanentCloudException("Not implemented")
 
