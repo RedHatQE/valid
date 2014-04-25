@@ -80,6 +80,7 @@ useradd -r -g valid -d /var/lib/valid -s /sbin/nologin \
 %exclude %{python_sitelib}/valid/__init__.py*
 %exclude %{python_sitelib}/valid/valid_result.py*
 %{python_sitelib}/valid/testing_modules
+%{python_sitelib}/valid/cloud
 %{_datadir}/%name
 %if 0%{?fedora} >= 15
 /lib/systemd/system/*.service
