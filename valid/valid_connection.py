@@ -78,6 +78,8 @@ class ValidConnection(object):
         else:
             self.look_for_keys = True
 
+        self.forwardthread = None
+        self.forwardport = None
         self.stdin_rpyc, self.stdout_rpyc, self.stderr_rpyc = None, None, None
 
         logging.getLogger("paramiko").setLevel(logging.WARNING)
@@ -171,9 +173,9 @@ t.start()
             port = int(pid_fd.read())
             pid_fd.close()
             os.remove(pid_dest_filename)
-            local_port = self.forward_tunnel(0, 'localhost', port)
+            self.forwardport = self.forward_tunnel(0, 'localhost', port)
 
-            return rpyc.classic.connect('localhost', local_port)
+            return rpyc.classic.connect('localhost', self.forwardport)
 
         except Exception, err:
             self.logger.debug("Failed to setup rpyc: %s" % err)
@@ -201,6 +203,13 @@ t.start()
         if hasattr(self, '_lazy_rpyc'):
             self.rpyc.close()
             delattr(self, '_lazy_rpyc')
+        if self.forwardthread and self.forwardport:
+            # do empty request to make 'handle_request' succeed
+            socket.create_connection(('localhost', self.forwardport))
+            # join forwarder thread
+            self.forwardthread.join(self.timeout)
+            self.forwardthread = None
+            self.forwardport = None
 
     def exec_command(self, command, bufsize=-1, get_pty=False):
         """
@@ -279,9 +288,9 @@ t.start()
             chain_port = remote_port
             ssh_transport = self.cli.get_transport()
         fserver = ForwardServer(('', local_port), SubHandler)
-        forwardthread = threading.Thread(target=_forward_threadfunc, args=(self, fserver))
-        forwardthread.setDaemon(True)
-        forwardthread.start()
+        self.forwardthread = threading.Thread(target=_forward_threadfunc, args=(self, fserver))
+        self.forwardthread.setDaemon(True)
+        self.forwardthread.start()
         return fserver.server_address[1]
 
 
