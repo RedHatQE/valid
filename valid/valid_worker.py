@@ -52,34 +52,49 @@ class WorkerProcess(multiprocessing.Process):
                 continue
             try:
                 (ntry, action, params) = shareddata.mainq.get()
+                self.logger.debug(self.name + ': got %s for %s (ntry: %s) from queue', action, str(params)[:512], ntry)
             except:
                 continue
-            if ntry > shareddata.maxtries:
-                # Maxtries reached: something is wrong, reporting 'failure' and terminating the instance
-                self.logger.error(self.name + ': ' + action + ':' + str(params) + ' failed after ' + str(shareddata.maxtries) + ' tries')
-                if action in ['create', 'setup']:
-                    params['result'] = {action: 'failure'}
-                elif action == 'test':
-                    params['result'] = {params['stages'][0]: 'failure'}
-                if action != 'terminate':
-                    self.abort_testing(params)
-                continue
-            if action == 'create':
-                # create an instance
-                self.logger.debug(self.name + ': picking up ' + params['iname'])
-                self.do_create(ntry, params)
-            elif action == 'setup':
-                # setup instance for testing
-                self.logger.debug(self.name + ': doing setup for ' + params['iname'])
-                self.do_setup(ntry, params)
+            self.process(ntry, action, params)
+
+    def process(self, ntry, action, params):
+        """
+        Process testing item
+        @param ntry: number of try
+        @type ntry: int
+
+        @param action: action to do ['create', 'setup', 'test', 'terminate']
+        @type action: str
+
+        @param params: list of testing parameters
+        @type params: list
+        """
+        self.logger.debug(self.name + ': processing %s for %s (ntry: %s)', action, str(params)[:512], ntry)
+        if ntry > self.shareddata.maxtries:
+            # Maxtries reached: something is wrong, reporting 'failure' and terminating the instance
+            self.logger.error(self.name + ': ' + action + ':' + str(params)[:512] + ' failed after ' + str(self.shareddata.maxtries) + ' tries')
+            if action in ['create', 'setup']:
+                params['result'] = {action: 'failure'}
             elif action == 'test':
-                # do some testing
-                self.logger.debug(self.name + ': doing testing for ' + params['iname'])
-                self.do_testing(ntry, params)
-            elif action == 'terminate':
-                # terminate instance
-                self.logger.debug(self.name + ': terminating ' + params['iname'])
-                self.do_terminate(ntry, params)
+                params['result'] = {params['stages'][0]: 'failure'}
+            if action != 'terminate':
+                self.abort_testing(params)
+        elif action == 'create':
+            # create an instance
+            self.logger.debug(self.name + ': picking up ' + params['iname'])
+            self.do_create(ntry, params)
+        elif action == 'setup':
+            # setup instance for testing
+            self.logger.debug(self.name + ': doing setup for ' + params['iname'])
+            self.do_setup(ntry, params)
+        elif action == 'test':
+            # do some testing
+            self.logger.debug(self.name + ': doing testing for ' + params['iname'])
+            self.do_testing(ntry, params)
+        elif action == 'terminate':
+            # terminate instance
+            self.logger.debug(self.name + ': terminating ' + params['iname'])
+            self.do_terminate(ntry, params)
 
     def abort_testing(self, params):
         """
@@ -96,7 +111,7 @@ class WorkerProcess(multiprocessing.Process):
         self.report_results(params)
         if 'id' in params.keys():
             # Try to terminate the instance
-            self.shareddata.mainq.put((0, 'terminate', params.copy()))
+            self.process(0, 'terminate', params)
 
     def report_results(self, params):
         """
@@ -214,17 +229,17 @@ class WorkerProcess(multiprocessing.Process):
                 con.sftp.chmod(remote_script_path, 0700)
                 self.remote_command(con, remote_script_path)
             os.unlink(tfile.name)
-            self.shareddata.mainq.put((0, 'test', params.copy()))
+            self.process(0, 'test', params)
         except (socket.error, paramiko.SFTPError, paramiko.SSHException, paramiko.PasswordRequiredException, paramiko.AuthenticationException, valid_connection.ExpectFailed) as err:
             self.logger.debug(self.name + ': got \'predictable\' error during instance setup, %s, ntry: %i' % (err, ntry))
             self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
-            self.shareddata.mainq.put((ntry + 1, 'setup', params.copy()))
+            self.process(ntry + 1, 'setup', params)
         except Exception, err:
             self.logger.error(self.name + ': got error during instance setup, %s %s, ntry: %i' % (type(err), err, ntry))
             self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
-            self.shareddata.mainq.put((ntry + 1, 'setup', params.copy()))
+            self.process(ntry + 1, 'setup', params)
 
     def do_testing(self, ntry, params):
         """
@@ -268,9 +283,9 @@ class WorkerProcess(multiprocessing.Process):
             params_new = params.copy()
             if len(params['stages']) > 1:
                 params_new['stages'] = params['stages'][1:]
-                self.shareddata.mainq.put((0, 'test', params_new))
+                self.process(0, 'test', params_new)
             else:
-                self.shareddata.mainq.put((0, 'terminate', params_new))
+                self.process(0, 'terminate', params_new)
             self.logger.debug(self.name + ': done testing for ' + params['iname'] + ', result: ' + str(result))
             params['result'] = {params['stages'][0]: result}
             self.report_results(params)
@@ -284,13 +299,13 @@ class WorkerProcess(multiprocessing.Process):
             self.logger.debug(self.name + ': got \'predictable\' error during instance testing, %s, ntry: %i' % (err, ntry))
             self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
-            self.shareddata.mainq.put((ntry + 1, 'test', params.copy()))
+            self.process(ntry + 1, 'test', params)
         except Exception, err:
             # Got unexpected error
             self.logger.error(self.name + ': got error during instance testing, %s %s, ntry: %i' % (type(err), err, ntry))
             self.logger.debug(self.name + ':' + traceback.format_exc())
             time.sleep(10)
-            self.shareddata.mainq.put((ntry + 1, 'test', params.copy()))
+            self.process(ntry + 1, 'test', params)
 
     def do_terminate(self, ntry, params):
         """
