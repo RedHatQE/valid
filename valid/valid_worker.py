@@ -8,6 +8,7 @@ import tempfile
 import sys
 import socket
 import traceback
+import threading
 
 from valid import valid_connection
 from valid import cloud
@@ -37,6 +38,7 @@ class WorkerProcess(multiprocessing.Process):
         self.shareddata = shareddata
         while True:
             self.logger.debug(self.name + ': heartbeat numprocesses: %i' % shareddata.numprocesses.value)
+            self.logger.debug(self.name + ': heartbeat numthreads: %i' % len(threading.enumerate()))
             if shareddata.resultdic.keys() == [] and shareddata.time2die.get():
                 self.logger.debug(self.name + ': nothing to do and time to die, suiciding')
                 shareddata.numprocesses.value -= 1
