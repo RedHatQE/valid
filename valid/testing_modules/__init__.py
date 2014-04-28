@@ -46,6 +46,7 @@ import valid.testing_modules.testcase_50_yum_package_install
 import valid.testing_modules.testcase_55_yum_group_install
 import valid.testing_modules.testcase_60_yum_update
 import valid.testing_modules.testcase_61_yum_proxy
+import valid.testing_modules.testcase_62_cpuflags
 import valid.testing_modules.testcase_80_no_avc_denials
 import valid.testing_modules.testcase_90_1_kernel_bug874053
 import valid.testing_modules.testcase_90_2_cgroups_kernel_bug914737
