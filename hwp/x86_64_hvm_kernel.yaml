@@ -1,7 +1,12 @@
 - arch: x86_64
-  cpu: '4'
-  cloudhwname: m3.xlarge
-  memory: '14000000'
+  cpu: '2'
+  cloudhwname: m3.large
+  memory: '7000000'
+  virtualization: hvm
+- arch: x86_64
+  cpu: '2'
+  cloudhwname: c3.large
+  memory: '3500000'
   virtualization: hvm
 - arch: x86_64
   bmap:
