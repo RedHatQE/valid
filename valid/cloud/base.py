@@ -36,6 +36,7 @@ class AbstractCloud(object):
     Abstract cloud class
     """
     cloud = 'default'
+    mandatory_fields = []
 
     def __init__(self, logger, maxwait):
         self.logger = logger

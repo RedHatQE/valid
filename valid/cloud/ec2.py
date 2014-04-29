@@ -14,6 +14,7 @@ class EC2(AbstractCloud):
     AWS EC2 driver
     """
     cloud = 'ec2'
+    mandatory_fields = ['region', 'itype']
 
     def __init__(self, logger, maxwait):
         AbstractCloud.__init__(self, logger, maxwait)

@@ -2,7 +2,6 @@ bugzilla: {password: password, user: user@example.com}
 cloud_access:
   ec2:
     credentials: [AAAAAAAAAAAAAAAAAAAA, B0B0B0B0B0B0B0B0B0B0a1a1a1a1a1a1a1a1a1a1]
-    mandatory_fields: [region, itype]
     ssh:
       ap-northeast-1: [user-ap-northeast-1, /home/user/.pem/ap-northeast-1-iam.pem]
       ap-southeast-1: [user-ap-southeast-1, /home/user/.pem/ap-southeast-1-iam.pem]

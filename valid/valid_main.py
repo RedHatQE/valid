@@ -202,10 +202,13 @@ class ValidMain(object):
         count = 0
         for params in data:
             cloud_name = params.get('cloud', 'ec2')
+
+            driver = cloud.get_driver(cloud_name, self.logger, self.maxwait)
+
             if not cloud_name in self.cloud_access:
                 self.logger.error('No cloud access data for %s in config', cloud_name)
                 continue
-            mandatory_fields = ['product', 'arch', 'version', 'ami'] + self.cloud_access[cloud_name].get('mandatory_fields', [])
+            mandatory_fields = ['product', 'arch', 'version', 'ami'] + driver.mandatory_fields
             data_is_valid = True
             for field in mandatory_fields:
                 if not field in params:
@@ -238,8 +241,7 @@ class ValidMain(object):
 
                         params_copy['version'] = str(params['version'])
 
-                        if not 'cloud' in params_copy:
-                            params_copy['cloud'] = cloud_name
+                        params_copy['cloud'] = cloud_name
 
                         if not 'enable_stages' in params_copy:
                             params_copy['enable_stages'] = self.enable_stages
@@ -262,7 +264,6 @@ class ValidMain(object):
 
                         params_copy['credentials'] = self.cloud_access[cloud_name].get('credentials', [])
 
-                        driver = cloud.get_driver(cloud_name, self.logger, self.maxwait)
                         driver.set_default_params(params_copy, self.cloud_access)
 
                         params_copy['transaction_id'] = transaction_id
