@@ -218,6 +218,10 @@ class ValidMain(object):
                     data_is_valid = False
             if not data_is_valid:
                 continue
+
+            if not 'region' in params:
+                params['region'] = 'default'
+
             if params['ami'] in transaction_dict.keys():
                 self.logger.error('Ami %s was already added for transaction %s!', params['ami'], transaction_id)
                 continue
