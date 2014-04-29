@@ -16,6 +16,7 @@ class testcase_360_ebs(ValidTestcase):
     """
     stages = ['stage1']
     tags = ['default', 'kernel']
+    applicable = {'cloud': 'ec2'}
     not_applicable = {"product": "(?i)RHEL|BETA", "version": "6.0"}
 
     def test(self, connection, params):

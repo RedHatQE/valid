@@ -10,6 +10,7 @@ class testcase_14_host_details(ValidTestcase):
     """
     stages = ['stage1']
     tags = ['default']
+    applicable = {'cloud': 'ec2'}
 
     def test(self, connection, params):
         """ Perform test """
