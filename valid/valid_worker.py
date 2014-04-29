@@ -41,12 +41,14 @@ class WorkerProcess(multiprocessing.Process):
             self.logger.debug(self.name + ': heartbeat numthreads: %i' % len(threading.enumerate()))
             if shareddata.resultdic.keys() == [] and shareddata.time2die.get():
                 self.logger.debug(self.name + ': nothing to do and time to die, suiciding')
-                shareddata.numprocesses.value -= 1
+                with shareddata.manager.Lock():
+                    shareddata.numprocesses.value -= 1
                 break
             if shareddata.mainq.empty():
                 if shareddata.numprocesses.value > shareddata.minprocesses:
                     self.logger.debug(self.name + ': too many worker processes and nothing to do, suiciding')
-                    shareddata.numprocesses.value -= 1
+                    with shareddata.manager.Lock():
+                        shareddata.numprocesses.value -= 1
                     break
                 time.sleep(random.randint(2, 10))
                 continue
@@ -104,7 +106,7 @@ class WorkerProcess(multiprocessing.Process):
         @type params: list
         """
         # we need to change expected value in resultdic
-        with self.shareddata.resultdic_lock:
+        with self.shareddata.manager.Lock():
             transd = self.shareddata.resultdic[params['transaction_id']]
             transd[params['ami']]['ninstances'] -= (len(params['stages']) - 1)
             self.shareddata.resultdic[params['transaction_id']] = transd
@@ -139,7 +141,7 @@ class WorkerProcess(multiprocessing.Process):
                         'result': params['result']}
         self.logger.debug(self.name + ': reporting result: %s' % (report_value, ))
         self.logger.debug(self.name + ': self.resultdic before report: %s' % (self.shareddata.resultdic.items(), ))
-        with self.shareddata.resultdic_lock:
+        with self.shareddata.manager.Lock():
             transd = self.shareddata.resultdic[params['transaction_id']]
             transd[params['ami']]['instances'].append(report_value)
             self.shareddata.resultdic[params['transaction_id']] = transd

@@ -44,7 +44,6 @@ class ValidMain(object):
         self.https = None
         self.global_setup_script = None
         self.resultdic = None
-        self.resultdic_lock = None
         self.resultdic_yaml = None
         self.mailfrom = None
         self.minprocesses = 8
@@ -83,7 +82,6 @@ class ValidMain(object):
         self.mainq = self.manager.Queue()
 
         # resulting dictionary
-        self.resultdic_lock = multiprocessing.Lock()
         self.resultdic = self.manager.dict()
 
         # resulting dictionary YAML
@@ -136,7 +134,8 @@ class ValidMain(object):
         for _ in range(self.minprocesses):
             # Creating minimum amount of worker processes
             wprocess = valid_worker.WorkerProcess(self)
-            self.numprocesses.value += 1
+            with self.manager.Lock():
+                self.numprocesses.value += 1
             wprocess.start()
 
         watchprocess = valid_watchman.WatchmanProcess(self)
