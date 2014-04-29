@@ -107,6 +107,7 @@ class ValidMain(object):
                 self.global_setup_script = yamlconfig.get('global_setup_script', None)
             else:
                 # old-style config
+                self.logger.warn("Your %s config format is obsolete, it won't be supported forever. Consider switching to new-style config.", self.config)
                 self.cloud_access = {'ec2': {'ec2_access_key': yamlconfig['ec2']['ec2-key'],
                                              'ec2_secret_key': yamlconfig['ec2']['ec2-secret-key'],
                                              'ssh': yamlconfig['ssh']}}
