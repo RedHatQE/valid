@@ -65,7 +65,8 @@ class OpenStackEC2(AbstractCloud):
             instance_state = myinstance.update()
             if instance_state == 'running':
                 # Instance appeared - scheduling 'setup' stage
-                myinstance.add_tag('Name', params['name'])
+                # can't assign tags in openstack
+                # myinstance.add_tag('Name', params['name'])
                 result = myinstance.__dict__
                 self.logger.info('EC2: Created instance ' + params['iname'] + ', ' + result['id'] + ':' + result['public_dns_name'])
                 # packing creation results into params
