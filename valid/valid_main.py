@@ -314,23 +314,30 @@ class ValidMain(object):
         result = []
         for module_name in sys.modules.keys():
             if module_name.startswith('valid.testing_modules.testcase'):
+                self.logger.debug('Checking %s module', module_name)
                 test_name = module_name.split('.')[2]
                 while True:
                     try:
                         testcase = getattr(sys.modules[module_name], test_name)()
+                        self.logger.debug('Got %s testcase', testcase)
                         if test_name in params['disable_tests']:
                             # Test is disabled, skipping
+                            self.logger.debug('Test %s is disabled, skipping', test_name)
                             break
                         if params['enable_tests'] and not test_name in params['enable_tests']:
                             # Test is not enabled, skipping
+                            self.logger.debug('Test %s is not enabled, skipping', test_name)
                             break
                         if not params['enable_tests']:
                             tags = set(testcase.tags)
+                            self.logger.debug('Test %s has following tags: %s', test_name, tags)
                             if len(tags.intersection(params['disable_tags'])) != 0:
                                 # Test disabled as it contains disabled tags
+                                self.logger.debug('Test %s is disabled by disable_tags (%s), skipping', test_name, params['disable_tags'])
                                 break
                             if params['enable_tags'] and len(tags.intersection(params['enable_tags'])) == 0:
                                 # Test disabled as it doesn't contain enabled tags
+                                self.logger.debug('Test %s is not enabled by enable_tags (%s), skipping', test_name, params['enable_tags'])
                                 break
                         applicable_flag = True
                         if hasattr(testcase, 'not_applicable'):
