@@ -34,15 +34,14 @@ examle_datafile.yaml:
       version: '18'
 
 Mandatory fileds:
-* ami: EC2 AMI id
-* region: EC2 region name
+* ami: AMI id
 * arch: name of hwp file (/usr/share/valid/hwp/<name>.yaml)
 * product: product name ("RHEL", "Fedora", ...)
 * version: product version (e.g. "18", "6.3", ...)
 
 Optional fields:
+* cloud: cloud driver to use ('ec2', 'openstack')
 * name: name tag for testing
-* itype: Instance type ("hourly", "access")
 * disable_stages: disable specified stages
 * enable_stages: enable specified stages only (overrides disable_stages)
 * disable_tags: disable specified tags
@@ -51,6 +50,10 @@ Optional fields:
 * enable_tests: enable specified tests only (overrides disable_stages)
 * repeat: repeat testing with the same instance N times
 * keepalive: do not terminate the instance after testing (true/false)
+
+EC2-specific mandatory fields:
+* region: EC2 region name
+* itype: Instance type ("hourly", "access")
 
 Data file is being updated by hwp data!
 
