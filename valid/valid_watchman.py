@@ -86,6 +86,12 @@ class WatchmanProcess(multiprocessing.Process):
                             # we're interested in latest console output only, overwriting
                             result_item['console_output'][instance['instance_type']] = instance['console_output']
                         result.append(result_item)
+                        # setting shareddata.last_testing_exitstatus, valid_runner script will return this exit status
+                        overall_result, _, _ = valid_result.get_overall_result(result_item)
+                        if overall_result == 'succeeded':
+                            self.shareddata.last_testing_exitstatus.set(0)
+                        else:
+                            self.shareddata.last_testing_exitstatus.set(1)
                         if 'emails' in data[ami].keys():
                             emails = data[ami]['emails']
                         if 'subject' in data[ami].keys():

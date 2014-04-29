@@ -141,4 +141,9 @@ except KeyboardInterrupt:
     for process in multiprocessing.active_children():
         process.terminate()
     sys.exit(1)
+
+exit_status = runner.last_testing_exitstatus.get()
+
 runner.manager.shutdown()
+
+sys.exit(exit_status)

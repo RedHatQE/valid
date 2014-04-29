@@ -76,6 +76,9 @@ class ValidMain(object):
         # exit
         self.time2die = self.manager.Value('b', False)
 
+        # last testing result
+        self.last_testing_exitstatus = self.manager.Value('i', 0)
+
         # main queue for worker processes
         self.mainq = self.manager.Queue()
 
