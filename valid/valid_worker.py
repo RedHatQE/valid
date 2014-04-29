@@ -281,14 +281,14 @@ class WorkerProcess(multiprocessing.Process):
             self.logger.info(self.name + ': done testing for ' + params['iname'] + ' ' + stage)
 
             params_new = params.copy()
+            params['result'] = {params['stages'][0]: result}
+            self.logger.debug(self.name + ': reporting result after test for %s, result: %s', params['iname'], result)
+            self.report_results(params)
             if len(params['stages']) > 1:
                 params_new['stages'] = params['stages'][1:]
                 self.process(0, 'test', params_new)
             else:
                 self.process(0, 'terminate', params_new)
-            self.logger.debug(self.name + ': done testing for ' + params['iname'] + ', result: ' + str(result))
-            params['result'] = {params['stages'][0]: result}
-            self.report_results(params)
         except (socket.error,
                 paramiko.SFTPError,
                 paramiko.SSHException,
