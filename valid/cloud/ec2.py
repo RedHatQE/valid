@@ -26,8 +26,11 @@ class EC2(AbstractCloud):
                 params['bmap'] = [{'name': '/dev/sda1', 'size': '15', 'delete_on_termination': True}]
             if not 'userdata' in params:
                 params['userdata'] = None
-            params['ssh'] = {'keypair': cloud_access_config['ec2']['ssh'][params['region']][0],
-                             'keyfile': cloud_access_config['ec2']['ssh'][params['region']][1]}
+            params['credentials'] = {'ec2_access_key': cloud_access_config[self.cloud]['ec2_access_key'],
+                                     'ec2_secret_key': cloud_access_config[self.cloud]['ec2_secret_key']}
+
+            params['ssh'] = {'keypair': cloud_access_config[self.cloud]['ssh'][params['region']][0],
+                             'keyfile': cloud_access_config[self.cloud]['ssh'][params['region']][1]}
         except Exception, err:
             PermanentCloudException('Error while setting up required cloud params: %s' % err)
 
@@ -123,9 +126,9 @@ class EC2(AbstractCloud):
         return connection.get_console_output(params['id']).output
 
     def _get_connection(self, params):
-        ec2_key, ec2_secret_key = params['credentials']
-        reg = boto.ec2.get_region(params['region'], aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
-        connection = reg.connect(aws_access_key_id=ec2_key, aws_secret_access_key=ec2_secret_key)
+        ec2_access_key, ec2_secret_key = params['credentials']['ec2_access_key'], params['credentials']['ec2_secret_key']
+        reg = boto.ec2.get_region(params['region'], aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
+        connection = reg.connect(aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
         return connection
 
     def _get_bmap(self, params):

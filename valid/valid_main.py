@@ -106,7 +106,8 @@ class ValidMain(object):
                 self.global_setup_script = yamlconfig.get('global_setup_script', None)
             else:
                 # old-style config
-                self.cloud_access = {'ec2': {'credentials': (yamlconfig['ec2']['ec2-key'], yamlconfig['ec2']['ec2-secret-key']),
+                self.cloud_access = {'ec2': {'ec2_access_key': yamlconfig['ec2']['ec2-key'],
+                                             'ec2_secret_key': yamlconfig['ec2']['ec2-secret-key'],
                                              'ssh': yamlconfig['ssh']}}
                 self.https = {'server_ssl_ca': yamlconfig['server_ssl_ca'],
                               'server_ssl_cert': yamlconfig['server_ssl_cert'],
@@ -202,6 +203,7 @@ class ValidMain(object):
         count = 0
         for params in data:
             cloud_name = params.get('cloud', 'ec2')
+            params['cloud'] = cloud_name
 
             driver = cloud.get_driver(cloud_name, self.logger, self.maxwait)
 
@@ -236,12 +238,8 @@ class ValidMain(object):
                     self.logger.info('using hwps: %s', reduce(lambda x, y: x + ', %s' % str(y['cloudhwname']), hwp[1:], str(hwp[0]['cloudhwname'])))
                     ninstances = 0
                     for hwp_item in hwp:
-                        params_copy = params.copy()
+                        params_copy = {par: str(params[par]) for par in params}
                         params_copy.update(hwp_item)
-
-                        params_copy['version'] = str(params['version'])
-
-                        params_copy['cloud'] = cloud_name
 
                         if not 'enable_stages' in params_copy:
                             params_copy['enable_stages'] = self.enable_stages
@@ -261,8 +259,6 @@ class ValidMain(object):
 
                         if not 'name' in params_copy:
                             params_copy['name'] = params_copy['ami'] + ' validation'
-
-                        params_copy['credentials'] = self.cloud_access[cloud_name].get('credentials', [])
 
                         driver.set_default_params(params_copy, self.cloud_access)
 
