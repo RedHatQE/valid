@@ -1,0 +1,12 @@
+- arch: 'x86_64'
+  cpu: '1'
+  memory: '2000000'
+  cloudhwname: m1.small
+#  bmap: &BMAP
+#  - {delete_on_termination: true, name: /dev/sda1, size: '15'}
+#  - {ephemeral_name: ephemeral0, name: /dev/sdf}
+  userdata: &USERDATA |
+      #! /bin/sh -ex
+      yum -y install xdelta
+      touch /userdata_test
+      date >> /userdata_test
