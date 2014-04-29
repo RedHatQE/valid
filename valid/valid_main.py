@@ -344,8 +344,12 @@ class ValidMain(object):
                             for akey in applicable.keys():
                                 self.logger.debug('applicable key %s %s ... ', akey, applicable[akey])
                                 rexp = re.compile(applicable[akey])
+                                if akey not in params:
+                                    self.logger.debug('No %s key for %s', test_name, akey)
+                                    applicable_flag = False
+                                    break
                                 if not rexp.match(params[akey]):
-                                    self.logger.debug('Got \'not applicable\' for ' + test_name + ' %s = %s', akey, params[akey])
+                                    self.logger.debug('Got \'not applicable\' for %s (%s = %s)', test_name, akey, params[akey])
                                     applicable_flag = False
                                     break
                         if not applicable_flag:
