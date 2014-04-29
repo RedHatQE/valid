@@ -12,6 +12,13 @@ cloud_access:
       us-east-1: [user-us-east-1, /home/user/.pem/us-east-1-iam.pem]
       us-west-1: [user-us-west-1, /home/user/.pem/us-west-1-iam.pem]
       us-west-2: [user-us-west-2, /home/user/.pem/us-west-2-iam.pem]
+  openstack:
+    ec2_access_key: AAAAAAAAAAAAAAAAAAAA
+    ec2_secret_key: B0B0B0B0B0B0B0B0B0B0a1a1a1a1a1a1a1a1a1a1
+    endpoint: 192.168.0.1
+    path: /services/Cloud
+    port: 8773
+    ssh: [user, /home/user/.pem/openstack.pem]
 global_setup_script: /etc/valid/setup_script.sh
 https: {server_ssl_ca: /etc/pki/CA/certs/valid_ca.crt, server_ssl_cert: /etc/pki/tls/certs/valid_server.crt,
   server_ssl_key: /etc/pki/tls/private/valid_server.key}
