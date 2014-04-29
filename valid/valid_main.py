@@ -245,7 +245,11 @@ class ValidMain(object):
                     self.logger.info('using hwps: %s', reduce(lambda x, y: x + ', %s' % str(y['cloudhwname']), hwp[1:], str(hwp[0]['cloudhwname'])))
                     ninstances = 0
                     for hwp_item in hwp:
-                        params_copy = {par: str(params[par]) for par in params}
+                        params_copy = {par: params[par] for par in params}
+                        # we want to avoid version being float or int
+                        params_copy['version'] = str(params['version'])
+
+                        # update params with hwp details
                         params_copy.update(hwp_item)
 
                         if not 'enable_stages' in params_copy:
