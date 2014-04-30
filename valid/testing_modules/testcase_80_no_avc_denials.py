@@ -13,6 +13,7 @@ class testcase_80_no_avc_denials(ValidTestcase):
     def test(self, connection, params):
         """ Perform test """
 
-        self.get_return_value(connection, 'cat /var/log/messages /var/log/audit/audit.log | grep -v userdata | grep \'avc:[[:space:]]*denied\'', 60, 1)
+        self.ping_pong(connection, 'echo START; grep \'avc:[[:space:]]*denied\' /var/log/messages /var/log/audit/audit.log | grep -v userdata; echo END',
+                       '\r\nSTART\r\nEND\r\n', 60)
 
         return self.log
