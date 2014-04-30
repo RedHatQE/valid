@@ -46,15 +46,14 @@ class WatchmanProcess(multiprocessing.Process):
             self.logger.debug('WatchmanProcess: should create %i additional worker processes', processes_2create)
             for _ in range(processes_2create):
                 workprocess = valid_worker.WorkerProcess(self.shareddata)
-                with self.shareddata.manager.Lock():
-                    self.shareddata.numprocesses.value += 1
+                self.shareddata.numprocesses.value += 1
                 workprocess.start()
 
     def report_results(self):
         """
         Looking if we can report some transactions
         """
-        with self.shareddata.manager.Lock():
+        with self.shareddata.resultdic_lock:
             for transaction_id in self.shareddata.resultdic.keys():
                 # Checking all transactions
                 transaction_dict = self.shareddata.resultdic[transaction_id].copy()
