@@ -72,6 +72,7 @@ class ValidMain(object):
 
         # number of running processes
         self.numprocesses = self.manager.Value('i', 0)
+        self.numprocesses_lock = multiprocessing.Lock()
 
         # exit
         self.time2die = self.manager.Value('b', False)
@@ -137,7 +138,8 @@ class ValidMain(object):
         for _ in range(self.minprocesses):
             # Creating minimum amount of worker processes
             wprocess = valid_worker.WorkerProcess(self)
-            self.numprocesses.value += 1
+            with self.numprocesses_lock:
+                self.numprocesses.value += 1
             wprocess.start()
 
         watchprocess = valid_watchman.WatchmanProcess(self)

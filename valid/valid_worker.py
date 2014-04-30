@@ -41,12 +41,14 @@ class WorkerProcess(multiprocessing.Process):
             self.logger.debug(self.name + ': heartbeat numthreads: %i' % len(threading.enumerate()))
             if shareddata.resultdic.keys() == [] and shareddata.time2die.get():
                 self.logger.debug(self.name + ': nothing to do and time to die, suiciding')
-                shareddata.numprocesses.value -= 1
+                with shareddata.numprocesses_lock:
+                    shareddata.numprocesses.value -= 1
                 break
             if shareddata.mainq.empty():
                 if shareddata.numprocesses.value > shareddata.minprocesses:
                     self.logger.debug(self.name + ': too many worker processes and nothing to do, suiciding')
-                    shareddata.numprocesses.value -= 1
+                    with shareddata.numprocesses_lock:
+                        shareddata.numprocesses.value -= 1
                     break
                 time.sleep(random.randint(2, 10))
                 continue

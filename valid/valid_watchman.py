@@ -46,7 +46,8 @@ class WatchmanProcess(multiprocessing.Process):
             self.logger.debug('WatchmanProcess: should create %i additional worker processes', processes_2create)
             for _ in range(processes_2create):
                 workprocess = valid_worker.WorkerProcess(self.shareddata)
-                self.shareddata.numprocesses.value += 1
+                with self.shareddata.numprocesses_lock:
+                    self.shareddata.numprocesses.value += 1
                 workprocess.start()
 
     def report_results(self):
