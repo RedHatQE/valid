@@ -32,7 +32,7 @@ class EC2(AbstractCloud):
             params['ssh'] = {'keypair': cloud_access_config[self.cloud]['ssh'][params['region']][0],
                              'keyfile': cloud_access_config[self.cloud]['ssh'][params['region']][1]}
         except Exception, err:
-            PermanentCloudException('Error while setting up required cloud params: %s' % err)
+            raise PermanentCloudException('Error while setting up required cloud params: %s' % err)
 
     def create(self, params):
         try:
