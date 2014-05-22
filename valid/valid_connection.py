@@ -18,7 +18,7 @@ import threading
 
 
 class ValidConnectionException(Exception):
-    """ PatchworkConnection Exception """
+    """ StitchesConnection Exception """
     pass
 
 
@@ -60,7 +60,7 @@ class ValidConnection(object):
                              output
         @type output_shell: bool
         """
-        self.logger = logging.getLogger('patchwork.connection')
+        self.logger = logging.getLogger('stitches.connection')
 
         self.hostname = hostname
         self.username = username
@@ -309,10 +309,10 @@ class ForwardHandler(SocketServer.BaseRequestHandler):
 # pylint: disable=E1101
     def __init__(self, *args, **kwargs):
         SocketServer.BaseRequestHandler.__init__(self, *args, **kwargs)
-        self.logger = logging.getLogger('patchwork.connection')
+        self.logger = logging.getLogger('stitches.connection')
 
     def handle(self):
-        self.logger = logging.getLogger('patchwork.connection')
+        self.logger = logging.getLogger('stitches.connection')
         try:
             chan = self.ssh_transport.open_channel('direct-tcpip',
                                                    (self.chain_host, self.chain_port),
@@ -379,7 +379,7 @@ class Expect(object):
         while count < timeout:
             try:
                 recv_part = connection.channel.recv(16384)
-                logging.getLogger('patchwork.expect').debug("RCV: " + recv_part)
+                logging.getLogger('stitches.expect').debug("RCV: " + recv_part)
                 if connection.output_shell:
                     sys.stdout.write(recv_part)
                 result += recv_part
@@ -441,13 +441,13 @@ class Expect(object):
 
         @raises ExpectFailed
         '''
-        logging.getLogger('patchwork.expect').debug("MATCHING: " + regexp.pattern)
+        logging.getLogger('stitches.expect').debug("MATCHING: " + regexp.pattern)
         result = ""
         count = 0
         while count < timeout:
             try:
                 recv_part = connection.channel.recv(16384)
-                logging.getLogger('patchwork.expect').debug("RCV: " + recv_part)
+                logging.getLogger('stitches.expect').debug("RCV: " + recv_part)
                 if connection.output_shell:
                     sys.stdout.write(recv_part)
                 result += recv_part
@@ -459,7 +459,7 @@ class Expect(object):
             if match:
                 ret_list = []
                 for group in grouplist:
-                    logging.getLogger('patchwork.expect').debug("matched: " + match.group(group))
+                    logging.getLogger('stitches.expect').debug("matched: " + match.group(group))
                     ret_list.append(match.group(group))
                 return ret_list
             time.sleep(1)
