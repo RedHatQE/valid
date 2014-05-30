@@ -87,3 +87,4 @@ BETA_7.0:
     <<: *RHEL_7ANY
 RHEL_7.0:
     <<: *RHEL_7ANY
+    /etc/sysconfig/rh-cloud-firstboot: [etc_runtime_t, etc_t]
