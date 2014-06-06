@@ -238,9 +238,12 @@ class ValidMain(object):
                     hwpfd = open(hwpdir + '/' + params['arch'] + '.yaml', 'r')
                     hwp = yaml.load(hwpfd)
                     hwpfd.close()
+                    for item in hwp:
+                        # old-style hwps
+                        if 'ec2name' in item:
+                            item['cloudhwname'] = item['ec2name']
                     # filter hwps based on args
-                    hwp = [dict(hwp_item.items() + [('cloudhwname', hwp_item['ec2name'])]) for hwp_item in hwp if 'ec2name' in hwp_item]
-                    hwp = [x for x in hwp if re.match(self.hwp_filter, x['cloudhwname']) is not None]
+                    hwp = [x for x in hwp if re.match(self.hwp_filter, str(x['cloudhwname']))]
                     if not len(hwp):
                         # precautions
                         self.logger.info('no hwp match for %s; nothing to do', self.hwp_filter)
