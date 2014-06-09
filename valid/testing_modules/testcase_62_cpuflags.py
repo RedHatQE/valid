@@ -1,5 +1,6 @@
 """ This module contains testcase_62_cpuflags test """
 from valid.valid_testcase import ValidTestcase
+from distutils.versionpredicate import VersionPredicate
 
 
 class testcase_62_cpuflags(ValidTestcase):
@@ -8,10 +9,13 @@ class testcase_62_cpuflags(ValidTestcase):
     """
     stages = ['stage1', 'stage2']
     tags = ['default', 'kernel']
-    applicable = {'virtualization': 'hvm'}
+    applicable = {'virtualization': 'hvm', 'product': 'BETA|RHEL'}
 
     def test(self, connection, params):
         """ Perform test """
+        if VersionPredicate('RHEL (>= 6.6, !=7.0)').satisfied_by(params['version']):
+            self.log.append({'result': 'skip', 'comment': 'not applicable for this product/version'})
+            return self.log
 
         # https://bugzilla.redhat.com/show_bug.cgi?id=1061348
         self.get_return_value(connection, 'grep ^flags /proc/cpuinfo | grep "[^a-z0-9]avx[^a-z0-9]"')
