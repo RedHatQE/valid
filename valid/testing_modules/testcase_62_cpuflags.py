@@ -13,7 +13,7 @@ class testcase_62_cpuflags(ValidTestcase):
 
     def test(self, connection, params):
         """ Perform test """
-        if VersionPredicate('RHEL (>= 6.6, !=7.0)').satisfied_by(params['version']):
+        if not VersionPredicate('RHEL (>= 6.6)').satisfied_by(params['version']):
             self.log.append({'result': 'skip', 'comment': 'not applicable for this product/version'})
             return self.log
 
