@@ -1,22 +1,23 @@
 """ This module contains testcase_30_rhn_certificates test """
 from valid.valid_testcase import ValidTestcase
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
-
+EXP_WARN_TIME=timedelta(90) # fail the check if the cert is less than 90 days to expiration
 
 
 def _expiration_date(params):
     """ Get expiration delta in years """
     seven_year_releases = re.compile('^5\.[12345678]$|^6\.[012345]$')
 
+
     if seven_year_releases.match(params['version']):
         expiration = 7
     else:
         expiration = 10
     if params['version'].startswith('5.'):
-        return datetime(2007 + expiration, 3, 14)
+        return datetime(2007 + expiration, 3, 14) + EXP_WARN_TIME
     elif params['version'].startswith('6.'):
-        return datetime(2010 + expiration, 11, 10)
+        return datetime(2010 + expiration, 11, 10) + EXP_WARN_TIME
     else:
         raise ValueError('release %s unsupported' % params['version'])
 
