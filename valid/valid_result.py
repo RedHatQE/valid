@@ -1,7 +1,7 @@
 """ Result parsing functions """
 
 
-def get_overall_result(ami):
+def get_overall_result(ami, verbose=False):
     """ Get human-readable representation of the result """
 
     arch = ami['arch']
@@ -31,9 +31,9 @@ def get_overall_result(ami):
                         if command['result'] in ['warn', 'warning']:
                             is_failed = 'warning'
                     bug_description += 'test %s %s\n' % (stage, is_failed)
-                    if is_failed != 'succeeded':
+                    if is_failed != 'succeeded' or verbose:
                         for command in test_result:
-                            if is_failed != 'warning' or command['result'] in ['warn', 'warning']:
+                            if is_failed != 'warning' or command['result'] in ['warn', 'warning'] or verbose:
                                 bug_description += '--->\n'
                                 for key in sorted(command.keys()):
                                     bug_description += '\t%s: %s\n' % (key, command[key])

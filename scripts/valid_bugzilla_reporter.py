@@ -47,6 +47,8 @@ def main():
                            default=False, help='report to stdout instead of bugzilla')
     argparser.add_argument('-v', '--verbose', help='provide info in yaml',
                            action='store_const', default=False, const=True)
+    argparser.add_argument('-a', '--all-commands', help='show all commands in bugzillas not just failed',
+                           action='store_true')
 
     args = argparser.parse_args()
 
@@ -72,7 +74,7 @@ def main():
         ami_fd = tempfile.NamedTemporaryFile()
         ami_fd.write(yaml.safe_dump(ami))
         ami_fd.seek(0)
-        overall_result, bug_summary, bug_description = valid_result.get_overall_result(ami)
+        overall_result, bug_summary, bug_description = valid_result.get_overall_result(ami, verbose=args.all_commands)
         bugnr = None
 
         if not args.test:
