@@ -26,7 +26,14 @@ class Summary(object):
         self.contents.append({'id': str(ami), 'bug': str(bug), 'status': str(status)})
 
     def __str__(self):
-        return "## total: %d records\n" % len(self.contents) + (self.yaml_summary and yaml.dump(self.contents) or "")
+        ret = "## total: %d records\n" % len(self.contents)
+        if self.yaml_summary:
+            try:
+                from yaml import CDumper as Dumper
+            except ImportError:
+                from yaml import Dumper
+            ret += yaml.dump(self.contents, Dumper=Dumper)
+        return ret
 
 def main():
     """ Main """
@@ -53,7 +60,11 @@ def main():
     args = argparser.parse_args()
 
     resultd = open(args.result, 'r')
-    result = yaml.load(resultd)
+    try:
+        from yaml import CLoader as Loader
+    except ImportError:
+        from yaml import Loader
+    result = yaml.load(resultd, Loader=Loader)
     resultd.close()
 
     summary = Summary(yaml_summary=args.yaml_summary)
