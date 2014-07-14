@@ -16,9 +16,9 @@ class Summary(object):
     """ Testing summary """
 
     # pylint: disable=W0102
-    def __init__(self, contents=[], verbose=False):
+    def __init__(self, contents=[], yaml_summary=False):
         self.contents = contents
-        self.verbose = verbose
+        self.yaml_summary = yaml_summary
 
     def add(self, ami, status=None, bug=None):
         """ Add info """
@@ -26,7 +26,7 @@ class Summary(object):
         self.contents.append({'id': str(ami), 'bug': str(bug), 'status': str(status)})
 
     def __str__(self):
-        return "## total: %d records\n" % len(self.contents) + (self.verbose and yaml.dump(self.contents) or "")
+        return "## total: %d records\n" % len(self.contents) + (self.yaml_summary and yaml.dump(self.contents) or "")
 
 def main():
     """ Main """
@@ -45,7 +45,7 @@ def main():
     argparser.add_argument('--result', help='yaml file with validation result', required=True)
     argparser.add_argument('--test', action='store_const', const=True,
                            default=False, help='report to stdout instead of bugzilla')
-    argparser.add_argument('-v', '--verbose', help='provide info in yaml',
+    argparser.add_argument('-y', '--yaml-summary', help='provide info in yaml',
                            action='store_const', default=False, const=True)
     argparser.add_argument('-a', '--all-commands', help='show all commands in bugzillas not just failed',
                            action='store_true')
@@ -56,7 +56,7 @@ def main():
     result = yaml.load(resultd)
     resultd.close()
 
-    summary = Summary(verbose=args.verbose)
+    summary = Summary(yaml_summary=args.yaml_summary)
 
     if not args.test:
         confd = open(args.config, 'r')
