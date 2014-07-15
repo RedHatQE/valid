@@ -33,6 +33,13 @@ class testcase_32_ephemeral(ValidTestcase):
             if self.get_result(connection, 'ls -la /sbin/mkfs.%s 2> /dev/null | wc -l' % fstype, 5) == '1':
                 break
 
+        if fstype == 'vfat':
+            # so that mkfs.vfat /dev/<device> doesn't complain
+            # because of making fs on whole drive instead of a partition
+            mkfs_opt = '-I'
+        else:
+            mkfs_opt = ''
+
         for bdev in ephemerals:
             name = bdev['name']
             if (prod in ['RHEL', 'BETA']) and (ver.startswith('5.')):
@@ -54,10 +61,10 @@ class testcase_32_ephemeral(ValidTestcase):
             if self.get_result(connection, 'grep \'%s \' /proc/mounts  | wc -l' % name, 5) == '0':
                 # device is not mounted, doing fs creation
                 # test: mkfs
-                self.get_return_value(connection, 'mkfs.%s %s' % (fstype, name), 1000)
-                # create mount-point
-                if self.get_result(connection, 'mkdir -p /tmp/mnt-%s' % basename(name), 5) == '0':
-                    # test: mount
-                    self.get_return_value(connection, 'mount -t %s %s /tmp/mnt-%s' % (fstype, name, basename(name)), 60)
+                if self.get_return_value(connection, 'mkfs.%s %s %s' % (fstype, mkfs_opt, name), 1000) == 0:
+                    # create mount-point
+                    if self.get_return_value(connection, 'mkdir -p /tmp/mnt-%s' % basename(name), 5) == 0:
+                        # test: mount
+                        self.get_return_value(connection, 'mount -t %s %s /tmp/mnt-%s' % (fstype, name, basename(name)), 60)
 
         return self.log
