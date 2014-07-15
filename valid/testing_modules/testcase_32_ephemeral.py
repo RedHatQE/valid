@@ -29,6 +29,7 @@ class testcase_32_ephemeral(ValidTestcase):
             return self.log
 
         # figure out what fstype to use with focus on mkfs.<fstype> speed
+        fstype = None
         for fstype in ['vfat', 'xfs', 'ext3']:
             if self.get_result(connection, 'ls -la /sbin/mkfs.%s 2> /dev/null | wc -l' % fstype, 5) == '1':
                 break
