@@ -13,5 +13,5 @@ class testcase_39_root_is_locked(ValidTestcase):
     def test(self, connection, params):
         """ Perform test """
 
-        self.get_return_value(connection, r'egrep "^root:(\!\!|\*|x|locked):" /etc/shadow')
+        self.get_return_value(connection, 'passwd -S root | grep -q "Password locked"')
         return self.log
