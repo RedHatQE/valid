@@ -27,14 +27,17 @@ class testcase_31_subscription_management(ValidTestcase):
             expectation='Loading "subscription-manager" plugin',
             timeout=30
         )
-        # check system isn't subscribbed
         if params['version'].startswith('5.'):
-            self.ping_pong(
+            # RHEL5.* is going to be updated to match newer major versions gradually
+            result = self.ping_pong(
                 connection,
                 'subscription-manager list',
-                expectation='No installed products to list',
+                expectation='Installed Product Status',
                 timeout=90
             )
+            if result == 'failed':
+                # warn in case there's no subscription shown
+                self.log[-1]['result'] = 'warning'
         else:
             self.ping_pong(
                 connection,
