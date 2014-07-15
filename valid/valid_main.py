@@ -10,10 +10,12 @@ import subprocess
 import traceback
 import string
 import random
+from collections import defaultdict
 
 from valid import valid_worker, valid_watchman, valid_server
 from valid.testing_modules import *
 from valid import cloud
+from valid.tags_filter import factory as check_factory
 
 def strzero(value, maxvalue):
     """
@@ -331,6 +333,7 @@ class ValidMain(object):
                     try:
                         testcase = getattr(sys.modules[module_name], test_name)()
                         self.logger.debug('Got %s testcase', testcase)
+
                         if test_name in params['disable_tests']:
                             # Test is disabled, skipping
                             self.logger.debug('Test %s is disabled, skipping', test_name)
@@ -350,34 +353,13 @@ class ValidMain(object):
                                 # Test disabled as it doesn't contain enabled tags
                                 self.logger.debug('Test %s is not enabled by enable_tags (%s), skipping', test_name, params['enable_tags'])
                                 break
-                        applicable_flag = True
-                        if hasattr(testcase, 'not_applicable'):
-                            self.logger.debug('Checking not_applicable list for ' + test_name)
-                            not_applicable = testcase.not_applicable
-                            applicable_flag = False
-                            for nakey in not_applicable.keys():
-                                self.logger.debug('not_applicable key %s %s ... ', nakey, not_applicable[nakey])
-                                rexp = re.compile(not_applicable[nakey])
-                                if rexp.match(params[nakey]) is None:
-                                    applicable_flag = True
-                                    self.logger.debug('not_applicable check failed for ' + test_name + ' %s = %s', nakey, params[nakey])
-                                else:
-                                    self.logger.debug('got not_applicable for ' + test_name + ' %s = %s' % (nakey, params[nakey]))
-                        if hasattr(testcase, 'applicable'):
-                            self.logger.debug('Checking applicable list for ' + test_name)
-                            applicable = testcase.applicable
-                            for akey in applicable.keys():
-                                self.logger.debug('applicable key %s %s ... ', akey, applicable[akey])
-                                rexp = re.compile(applicable[akey])
-                                if akey not in params:
-                                    self.logger.debug('No %s key for %s', test_name, akey)
-                                    applicable_flag = False
-                                    break
-                                if not rexp.match(params[akey]):
-                                    self.logger.debug('Got \'not applicable\' for %s (%s = %s)', test_name, akey, params[akey])
-                                    applicable_flag = False
-                                    break
-                        if not applicable_flag:
+
+                        # compile a tags check based on applicable/not_applicable tags dicts
+                        applicability_check = check_factory(applicable=getattr(testcase, 'applicable', defaultdict(lambda: None)),
+                                                    not_applicable=getattr(testcase, 'not_applicable', defaultdict(lambda: None)))
+                        if not applicability_check(params):
+                            # filtered away
+                            self.logger.info('skipping testcase: %s (applicability check)' % test_name)
                             break
                         for stage in testcase.stages:
                             if stage in params['disable_stages']:
