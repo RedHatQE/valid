@@ -11,6 +11,11 @@ RHEL_5ANY: &RHEL_5ANY
     /etc/inittab: [etc_runtime_t,etc_t]
     /etc/sysconfig/rh-cloud-firstboot: [etc_runtime_t,etc_t]
     /etc/modprobe.conf: [etc_runtime_t,modules_conf_t]
+    /etc/sysconfig/network-scripts/ifcfg-eth0: [etc_runtime_t, etc_t]
+    /etc/modprobe.d/anaconda.conf: [file_t, etc_t]
+    /etc/sysconfig/mkinitrd/multipath: [file_t, etc_t]
+    /etc/sysconfig/firstboot: [etc_t, etc_runtime_t]
+    /.rnd: [etc_runtime_t, default_t]
 
 BETA_5ANY: &BETA_5ANY
     <<: *RHEL_5ANY
