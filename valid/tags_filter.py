@@ -44,7 +44,7 @@ class FactoryRegistry(type):
         '''
         return lambda check_spec: all([mcs._key_check_map[spec_key](applicable[spec_key])(spec_value) \
                                         for spec_key, spec_value in check_spec.items() if spec_key in applicable]) and \
-                                not all([mcs._key_check_map[spec_key](not_applicable[spec_key])(spec_value) \
+                                not any([mcs._key_check_map[spec_key](not_applicable[spec_key])(spec_value) \
                                         for spec_key, spec_value in check_spec.items() if spec_key in not_applicable])
 
 
