@@ -8,7 +8,7 @@ class testcase_33_userdata(ValidTestcase):
     """
     stages = ['stage1']
     tags = ['default']
-    not_applicable = {"product": "(?i)RHEL|BETA", "version": "5.*"}
+    applicable = {"product": "(?i)RHEL|BETA", "version": "OS ( > 6.3)"}
 
     def test(self, connection, params):
         """ Perform test """

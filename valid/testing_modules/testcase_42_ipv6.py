@@ -8,7 +8,7 @@ class testcase_42_ipv6(ValidTestcase):
     """
     stages = ['stage1']
     tags = ['default']
-    applicable = {'product': '(?i)RHEL|BETA', 'version': r'5\..*|6\..*'}
+    applicable = {'product': '(?i)RHEL|BETA', 'version': 'OS (< 7.0)'}
 
     def test(self, connection, params):
         """ Perform test """

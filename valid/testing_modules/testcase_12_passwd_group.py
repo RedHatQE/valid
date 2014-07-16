@@ -7,7 +7,7 @@ class testcase_12_passwd_group(ValidTestcase):
     Check for root/nobody/sshd users and root/daemon/bin groups
     """
     stages = ['stage1']
-    applicable = {'product': '(?i)RHEL|BETA', 'version': '5.*|6.*'}
+    applicable = {'product': '(?i)RHEL|BETA', 'version': 'OS (>=5.5, <7.0)'}
     tags = ['default']
 
     def test(self, connection, params):

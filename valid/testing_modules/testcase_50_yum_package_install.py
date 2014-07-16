@@ -8,7 +8,7 @@ class testcase_50_yum_package_install(ValidTestcase):
     """
     stages = ['stage1']
     tags = ['default']
-    not_applicable = {"product": "(?i)RHEL|BETA", "version": "6.0"}
+    applicable = {"product": "(?i)rhel|beta", "version": "OS (>=5.5, !=6.0)"}
 
     # pylint: disable=W0613
     def test(self, connection, params):

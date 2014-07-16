@@ -7,7 +7,7 @@ class testcase_23_syslog(ValidTestcase):
     Check /etc/rsyslog.conf checksum
     """
     stages = ['stage1']
-    applicable = {'product': '(?i)RHEL|BETA', 'version': '5.*|6.*'}
+    applicable = {'product': '(?i)RHEL|BETA', 'version': 'OS(>=5.5, <7.0)'}
     tags = ['default']
 
     def test(self, connection, params):

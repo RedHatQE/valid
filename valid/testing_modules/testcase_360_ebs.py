@@ -1,7 +1,6 @@
 """ This module contains testcase_360_ebs test """
 import time
 import multiprocessing
-import logging
 from valid.valid_testcase import ValidTestcase
 
 
@@ -16,8 +15,7 @@ class testcase_360_ebs(ValidTestcase):
     """
     stages = ['stage1']
     tags = ['default', 'kernel']
-    applicable = {'cloud': 'ec2'}
-    not_applicable = {"product": "(?i)RHEL|BETA", "version": "6.0"}
+    applicable = {"product": "(?i)RHEL|BETA", 'cloud': 'ec2', 'version': 'OS (>=5.5, !=6.0)'}
 
     def test(self, connection, params):
         """ Perform test """

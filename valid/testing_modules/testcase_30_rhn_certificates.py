@@ -1,16 +1,17 @@
 """ This module contains testcase_30_rhn_certificates test """
 from valid.valid_testcase import ValidTestcase
 from datetime import datetime, timedelta
-import re
-EXP_WARN_TIME=timedelta(90) # fail the check if the cert is less than 90 days to expiration
+from distutils.version import LooseVersion as Version
+EXP_WARN_TIME = timedelta(90) # fail the check if the cert is less than 90 days to expiration
 
 
 def _expiration_date(params):
     """ Get expiration delta in years """
-    seven_year_releases = re.compile('^5\.[12345678]$|^6\.[012345]$')
+    seven_year_releases = lambda ver: ver >= Version('5.5') and ver <= Version('5.8') or\
+                                ver >= Version('6.0') and ver <= Version('6.5')
 
 
-    if seven_year_releases.match(params['version']):
+    if seven_year_releases(params['version']):
         expiration = 7
     else:
         expiration = 10
@@ -27,7 +28,7 @@ class testcase_30_rhn_certificates(ValidTestcase):
     Check for rhn certificates lifetime
     """
     stages = ['stage1']
-    applicable = {'product': '(?i)RHEL|BETA', 'version': '5.*|6.*'}
+    applicable = {'product': '(?i)RHEL|BETA', 'version': 'OS (>= 5.5)'}
     tags = ['default']
 
     def test(self, connection, params):
@@ -39,7 +40,7 @@ class testcase_30_rhn_certificates(ValidTestcase):
             config_rpms = 'rh-amazon-rhui-client'
         cert_files = self.get_result(
             connection,
-            'rpm -ql %s | egrep \'.*\.(pem|crt)\'' % config_rpms
+            r"rpm -ql %s | egrep '.*\.(pem|crt)'" % config_rpms
         )
         # for each cert file, the notAfter field is examined
         # against the expiration_date and the result is stored in self.log

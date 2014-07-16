@@ -1,6 +1,5 @@
 """ This module contains testcase_62_cpuflags test """
 from valid.valid_testcase import ValidTestcase
-from distutils.versionpredicate import VersionPredicate
 
 
 class testcase_62_cpuflags(ValidTestcase):
@@ -11,6 +10,7 @@ class testcase_62_cpuflags(ValidTestcase):
     tags = ['default', 'kernel']
     applicable = {'virtualization': 'hvm', 'product': 'BETA|RHEL', 'version': 'OS (>=6.6)'}
 
+    # pylint: disable=unused-argument
     def test(self, connection, params):
         """ Perform test """
 

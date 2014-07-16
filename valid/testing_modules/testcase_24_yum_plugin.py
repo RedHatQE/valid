@@ -7,7 +7,7 @@ class testcase_24_yum_plugin(ValidTestcase):
     RHN plugin should be disabled
     """
     stages = ['stage1']
-    applicable = {'product': '(?i)RHEL|BETA', 'version': '5.*|6.*'}
+    applicable = {'product': '(?i)RHEL|BETA', 'version': 'OS (>=5.5, <7.0)'}
     tags = ['default']
 
     # pylint: disable=W0613

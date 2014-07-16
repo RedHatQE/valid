@@ -9,7 +9,7 @@ class testcase_60_yum_update(ValidTestcase):
 
     stages = ['stage1']
     tags = ['default']
-    not_applicable = {"product": "(?i)RHEL|BETA", "version": "6.0"}
+    applicable = {"product": "(?i)RHEL|BETA", "version": "OS (>=5.5, !=6.0)"}
 
     def test(self, connection, params):
         """ Perform test """

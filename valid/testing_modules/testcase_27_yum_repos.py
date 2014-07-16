@@ -1,6 +1,5 @@
 """ This module contains testcase_27_yum_repos test """
 from valid.valid_testcase import ValidTestcase
-
 import yaml
 
 
@@ -9,8 +8,7 @@ class testcase_27_yum_repos(ValidTestcase):
     Check for enabled yum repos
     """
     stages = ['stage1']
-    applicable = {'product': '(?i)RHEL|BETA'}
-    not_applicable = {"product": "(?i)RHEL|BETA", "version": "6.0"}
+    applicable = {'product': '(?i)RHEL|BETA', 'version': 'OS (>=5.5, !=6.0)'}
     tags = ['default']
 
     def test(self, connection, params):

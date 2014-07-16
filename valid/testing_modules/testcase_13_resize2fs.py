@@ -9,7 +9,7 @@ class testcase_13_resize2fs(ValidTestcase):
     the space. Please note that cloud-init does the resize automatically.
     """
     stages = ['stage1']
-    applicable = {'product': '(?i)RHEL|BETA', 'version': '5.*|6.*', 'virtualization': '(?!hvm)'}
+    applicable = {'product': '(?i)RHEL|BETA', 'version': 'OS (>=5.5, <7.0)', 'virtualization': '(?!hvm)'}
     tags = ['default']
 
     def test(self, connection, params):
