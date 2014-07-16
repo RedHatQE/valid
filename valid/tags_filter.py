@@ -73,7 +73,7 @@ class RegexpCheckFactory(BasicCheckFactory):
     def __init__(self, specification):
         try:
             pattern = re.compile(specification)
-        except re.error as error:
+        except (re.error, TypeError) as error:
             LOG.debug('unsuccessfull regexp compilation (%s); trying basic check', error)
             super(RegexpCheckFactory, self).__init__(specification)
         else:
@@ -88,7 +88,7 @@ class VersionCheckFactory(RegexpCheckFactory):
     def __init__(self, specification):
         try:
             predicate = VersionPredicate(specification)
-        except ValueError as error:
+        except (ValueError, AttributeError) as error:
             LOG.debug('unsuccessfull predicate compilation (%s); trying regexp check', error)
             super(VersionCheckFactory, self).__init__(specification)
         else:
