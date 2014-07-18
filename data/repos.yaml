@@ -96,6 +96,25 @@ ANY_REGION: &ANY_REGION
         rhui-REGION-rhel-server-source-supplementary: false
         rhui-REGION-rhel-server: true
         rhui-REGION-rhel-server-releases-source-beta: false
+    RHEL_5.11:
+        <<: *HAS_RHEL_DEBUGINFO
+        rhui-REGION-rhel-server-supplementary: false
+        rhui-REGION-rhel-server-source-supplementary: false
+        rhui-REGION-rhel-server: true
+        rhui-REGION-client-config-server-5: true
+        rhui-REGION-rhel-server-source: false
+        rhui-REGION-rhel-server-debug-supplementary: false
+    BETA_5.11:
+        <<: *HAS_RHEL_DEBUGINFO
+        rhui-REGION-rhel-server-supplementary: true
+        rhui-REGION-rhel-server-releases-debug-beta: true
+        rhui-REGION-rhel-server-releases-beta: true
+        rhui-REGION-client-config-server-5-beta: true
+        rhui-REGION-rhel-server-source: false
+        rhui-REGION-client-config-server-5: true
+        rhui-REGION-rhel-server-source-supplementary: false
+        rhui-REGION-rhel-server: true
+        rhui-REGION-rhel-server-releases-source-beta: false
     RHEL_6.1:
         <<: *RHEL_6ANY
     BETA_6.1:

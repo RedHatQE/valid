@@ -54,6 +54,11 @@ RHEL_5.10:
     <<: *RHEL_5ANY
 BETA_5.10:
     <<: *BETA_5ANY
+RHEL_5.11:
+    <<: *RHEL_5ANY
+BETA_5.11:
+    <<: *BETA_5ANY
+
 RHEL_6.0:
     <<: *RHEL_6ANY
     /root/.ssh: [ssh_home_t,home_ssh_t]
