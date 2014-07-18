@@ -16,6 +16,9 @@ RHEL_5ANY: &RHEL_5ANY
     /etc/sysconfig/mkinitrd/multipath: [file_t, etc_t]
     /etc/sysconfig/firstboot: [etc_t, etc_runtime_t]
     /.rnd: [etc_runtime_t, default_t]
+    /var/log/rpmpkgs: ['cron_log_t', 'rpm_log_t']
+    /var/log/yum.log: ['var_log_t', 'rpm_log_t']
+    /var/lib/mlocate/mlocate.db: ['cron_var_lib_t', 'var_lib_t']
 
 BETA_5ANY: &BETA_5ANY
     <<: *RHEL_5ANY
