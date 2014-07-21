@@ -124,8 +124,8 @@ There are some examples in valid/testing_modules directory. The test is a class 
 valid/testing_modules/testcase_xx_testname.py:
 
     from valid.valid_testcase import *
-    
-    
+
+
     class testcase_xx_testname(ValidTestcase):
         # applicable stages
         stages = ["stage1"]
@@ -141,6 +141,23 @@ valid/testing_modules/testcase_xx_testname.py:
 * 'params' is a data line united with hardware profile and runtime information (so you can use something like params["memory"], params["product"], ...)
 * Setting "stages" and "tags" is mandatory. Don't forget to include your new test in `valid/testing_modules/__init__.py`.
 * Tests are executed in alphabetical order with repetition count and stage name as prefix (e.g. 01stage1testcase_xx_testname).
+
+
+Custom 3rd-party test cases as validation plugins
+-------------------------------------------------
+It is possible to add custom 3rd-party test cases. These have to sub-class `valid.valid_testcase.ValidTestcase`.
+To register the 3rd-party test cases to valid, provide  `valid.testing_modules` entry points in setup.py:
+```
+setup(name='custom_valid_testcases_module',
+       version=0.1,
+       description='custom valid testcase module',
+       install_requires=['valid >= 0.6'],
+       packages=['custom_valid', 'custom_valid.testing_modules'],
+       entry_points={
+           'valid.testing_modules.my_module': ['my_module = custom_valid.testing_modules.my_module'],
+      },
+)
+```
 
 Prebuil RPMs
 ------------

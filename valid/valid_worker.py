@@ -12,6 +12,7 @@ import threading
 
 from valid import valid_connection
 from valid import cloud
+from valid.registry import TEST_CLASSES
 
 class WorkerProcess(multiprocessing.Process):
     """
@@ -266,7 +267,7 @@ class WorkerProcess(multiprocessing.Process):
 
             try:
                 test_name = stage.split(':')[1]
-                testcase = getattr(sys.modules['valid.testing_modules.' + test_name], test_name)()
+                testcase = TEST_CLASSES[test_name]()
                 self.logger.debug(self.name + ': doing test ' + test_name + ' for ' + params['iname'] + ' ' + stage)
                 test_result = testcase.test(con, params)
                 self.logger.debug(self.name + ': ' + params['iname'] + ': test ' + test_name + ' finised with ' + str(test_result))
