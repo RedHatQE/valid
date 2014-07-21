@@ -128,7 +128,8 @@ class WorkerProcess(multiprocessing.Process):
             try:
                 driver = cloud.get_driver(params['cloud'], self.logger, self.shareddata.maxwait)
                 #getting console output after last stage
-                console_output = driver.get_console_output(params)
+                if self.shareddata.enabled:
+                    console_output = driver.get_console_output(params)
                 self.logger.debug(self.name + ': got console output for %s: %s' % (params['iname'], console_output))
             except Exception, err:
                 self.logger.error(self.name + ': report_results: Failed to get console output %s' % err)
@@ -160,6 +161,9 @@ class WorkerProcess(multiprocessing.Process):
         """
         self.logger.debug(self.name + ': trying to create instance  ' + params['iname'] + ', ntry ' + str(ntry))
         driver = cloud.get_driver(params['cloud'], self.logger, self.shareddata.maxwait)
+        if not self.shareddata.enabled:
+            self.shareddata.mainq.put((0, 'setup', params.copy()))
+            return
         try:
             params_new = driver.create(params)
             self.shareddata.mainq.put((0, 'setup', params_new.copy()))
@@ -191,6 +195,9 @@ class WorkerProcess(multiprocessing.Process):
         @param params: list of testing parameters
         @type params: list
         """
+        if not self.shareddata.enabled:
+            self.process(0, 'test', params)
+            return
         try:
             self.logger.debug(self.name + ': trying to do setup for ' + params['iname'] + ', ntry ' + str(ntry))
             ssh_key = params['ssh']['keyfile']
@@ -260,8 +267,10 @@ class WorkerProcess(multiprocessing.Process):
 
             ssh_key = params['ssh']['keyfile']
             self.logger.debug(self.name + ': ssh-key ' + ssh_key)
-
-            con = self.get_connection(params['hostname'], 'root', ssh_key)
+            if self.shareddata.enabled:
+                con = self.get_connection(params['hostname'], 'root', ssh_key)
+            else:
+                con = None
 
             self.logger.info(self.name + ': doing testing for ' + params['iname'] + ' ' + stage)
 
@@ -269,7 +278,10 @@ class WorkerProcess(multiprocessing.Process):
                 test_name = stage.split(':')[1]
                 testcase = TEST_CLASSES[test_name]()
                 self.logger.debug(self.name + ': doing test ' + test_name + ' for ' + params['iname'] + ' ' + stage)
-                test_result = testcase.test(con, params)
+                if self.shareddata.enabled:
+                    test_result = testcase.test(con, params)
+                else:
+                    test_result = None
                 self.logger.debug(self.name + ': ' + params['iname'] + ': test ' + test_name + ' finised with ' + str(test_result))
                 result = test_result
             except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), err:
@@ -326,7 +338,8 @@ class WorkerProcess(multiprocessing.Process):
         driver = cloud.get_driver(params['cloud'], self.logger, self.shareddata.maxwait)
         try:
             self.logger.debug(self.name + ': trying to terminata instance  ' + params['iname'] + ', ntry ' + str(ntry))
-            driver.terminate(params)
+            if self.shareddata.enabled:
+                driver.terminate(params)
             self.logger.info(self.name + ': terminated ' + params['iname'])
         except cloud.PermanentCloudException, err:
             self.logger.error(self.name + ': got permanent error during instance termination, %s %s' % (type(err), err))

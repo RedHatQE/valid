@@ -68,6 +68,9 @@ argparser.add_argument('--settlewait', type=int,
 argparser.add_argument('--hwp-filter', help='select hwps to instantiate',
                        default=runner.hwp_filter)
 
+argparser.add_argument('--list-only', '-l', help='Do not run tests, just list what would be done otherwise',
+                        action='store_true')
+
 args = argparser.parse_args()
 runner.debug = args.debug
 if not args.server:
@@ -114,6 +117,9 @@ if args.disable_tags:
 
 if args.repeat:
     runner.repeat = args.repeat
+
+# in list_only mode -> runner.enabled = False
+runner.enabled = not args.list_only
 
 runner.start()
 

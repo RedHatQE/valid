@@ -14,6 +14,7 @@ class ValidTestcaseMetaClass(type):
         return class_instance
 
 # load valid test cases
+# pylint: disable=unused-wildcard-import,wildcard-import
 from valid.testing_modules import *
 
 # 3rd-party test classes registry look-up:
