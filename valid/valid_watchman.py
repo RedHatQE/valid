@@ -9,6 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from valid import valid_result, valid_worker
+from fractions import Fraction
 
 
 class WatchmanProcess(multiprocessing.Process):
@@ -23,6 +24,7 @@ class WatchmanProcess(multiprocessing.Process):
         """
         multiprocessing.Process.__init__(self, name='WatchmanProcess', target=self.runner, args=(shareddata,))
         self.logger = logging.getLogger('valid.runner')
+
 
     def runner(self, shareddata):
         """
@@ -50,6 +52,17 @@ class WatchmanProcess(multiprocessing.Process):
                     self.shareddata.numprocesses.value += 1
                 workprocess.start()
 
+    def transaction_progress(self, transaction_id, transaction_dict):
+        """
+        return the progress of a transaction in the form of a fraction
+        return type Fraction
+        """
+        tasks_total_count = sum([int(transaction_dict[ami]['ninstances']) for ami in transaction_dict])
+        tasks_finished_count = sum([len(transaction_dict[ami]['instances']) for ami in transaction_dict])
+        ret = Fraction(tasks_finished_count, tasks_total_count)
+        self.logger.info("transaction %s progress: %.2f%% (%s/%s)", transaction_id, 100*ret, tasks_finished_count, tasks_total_count)
+        return ret
+
     def report_results(self):
         """
         Looking if we can report some transactions
@@ -58,14 +71,8 @@ class WatchmanProcess(multiprocessing.Process):
             for transaction_id in self.shareddata.resultdic.keys():
                 # Checking all transactions
                 transaction_dict = self.shareddata.resultdic[transaction_id].copy()
-                report_ready = True
-                for ami in transaction_dict.keys():
-                    # Checking all amis: they should be finished
-                    if transaction_dict[ami]['ninstances'] != len(transaction_dict[ami]['instances']):
-                        # Still have some jobs running ...
-                        self.logger.debug('WatchmanProcess: ' + transaction_id + ': ' + ami + ':  waiting for ' + str(transaction_dict[ami]['ninstances']) + ' results, got ' + str(len(transaction_dict[ami]['instances'])))
-                        report_ready = False
-                if report_ready:
+                # if the transaction progress ratio is equal to 1.0 the transaction is finished
+                if self.transaction_progress(transaction_id, transaction_dict) == 1.0:
                     resfile = self.shareddata.resdir + '/' + transaction_id + '.yaml'
                     result = []
                     data = transaction_dict
