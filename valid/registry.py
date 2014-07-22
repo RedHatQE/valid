@@ -10,7 +10,7 @@ class ValidTestcaseMetaClass(type):
         '''register a mcs at the test_classes list'''
         class_instance = type.__new__(mcs, name, bases, class_dict)
         if name not in _CLASS_NAME_BLACKLIST:
-            TEST_CLASSES[name] = (class_instance)
+            TEST_CLASSES[name] = class_instance
         return class_instance
 
 # load valid test cases
