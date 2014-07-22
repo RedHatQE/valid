@@ -104,6 +104,10 @@ class EC2(AbstractCloud):
             elif str(err).find('<Code>Unsupported</Code>') != -1:
                 # Unsupported hardware in the region
                 raise SkipCloudException('got Unsupported - most likely the permanent error: %s' % err)
+            elif str(err).find('<Code>InvalidSubnetID.NotFound</Code>') != -1:
+                # Invalid subnet-id --- skip the instantiation
+                raise SkipCloudException('got InvalidSubnetID - skipping: %s, %s, %s (%s)' % (params['ami'],
+                                            params['region'], params['iname'], err))
             else:
                 raise UnknownCloudException('Unknown boto error during instance creation: ' + traceback.format_exc())
         except socket.error, err:
