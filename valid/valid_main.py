@@ -1,4 +1,6 @@
 import logging
+from valid.logging_customizations import ValidLogger
+logging.setLoggerClass(ValidLogger)
 import multiprocessing
 import os
 import sys
@@ -41,7 +43,7 @@ class ValidMain(object):
     def __init__(self):
         self.logger = logging.getLogger('valid.runner')
 
-        self.debug = False
+        self.loglevel = logging.NOTSET
         self.config = '/etc/validation.yaml'
         self.cloud_access = None
         self.https = None
@@ -96,13 +98,8 @@ class ValidMain(object):
     def start(self):
         """ Do sanity checks and start required processes """
 
-        if self.debug:
-            loglevel = logging.DEBUG
-        else:
-            loglevel = logging.INFO
-
-        logging.getLogger('valid.runner').setLevel(loglevel)
-        logging.getLogger('valid.testcase').setLevel(loglevel)
+        logging.getLogger('valid.runner').setLevel(self.loglevel)
+        logging.getLogger('valid.testcase').setLevel(self.loglevel)
 
         with open(self.config, 'r') as confd:
             yamlconfig = yaml.load(confd)
@@ -207,7 +204,7 @@ class ValidMain(object):
         @rtype: str or None
         """
         transaction_id = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
-        self.logger.info('Adding validation transaction ' + transaction_id)
+        self.logger.progress('Adding validation transaction ' + transaction_id)
         transaction_dict = {}
         count = 0
         for params in data:
@@ -307,7 +304,7 @@ class ValidMain(object):
                 self.logger.error('HWP for ' + params['arch'] + ' is not found, skipping dataline for ' + params['ami'])
         if count > 0:
             self.resultdic[transaction_id] = transaction_dict
-            self.logger.info('Validation transaction ' + transaction_id + ' added')
+            self.logger.progress('Validation transaction ' + transaction_id + ' added')
             return transaction_id
         else:
             self.logger.error('No data added')

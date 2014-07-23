@@ -1,5 +1,7 @@
 import multiprocessing
 import logging
+from valid.logging_customizations import ValidLogger
+logging.setLoggerClass(ValidLogger)
 import time
 import random
 import yaml
@@ -60,7 +62,7 @@ class WatchmanProcess(multiprocessing.Process):
         tasks_total_count = sum([int(transaction_dict[ami]['ninstances']) for ami in transaction_dict])
         tasks_finished_count = sum([len(transaction_dict[ami]['instances']) for ami in transaction_dict])
         ret = Fraction(tasks_finished_count, tasks_total_count)
-        self.logger.info("transaction %s progress: %.2f%% (%s/%s)", transaction_id, 100*ret, tasks_finished_count, tasks_total_count)
+        self.logger.progress("%s: %.2f%% (%s/%s)", transaction_id, 100*ret, tasks_finished_count, tasks_total_count)
         return ret
 
     def report_results(self):
@@ -130,5 +132,5 @@ class WatchmanProcess(multiprocessing.Process):
                                 smtp.quit()
                     except Exception, err:
                         self.logger.error('WatchmanProcess: saving result failed, %s', err)
-                    self.logger.info('Transaction ' + transaction_id + ' finished. Result: ' + resfile)
+                    self.logger.progress('Transaction ' + transaction_id + ' finished. Result: ' + resfile)
                     self.shareddata.resultdic.pop(transaction_id)

@@ -6,6 +6,8 @@ Validation runner
 import multiprocessing
 import time
 import logging
+from valid.logging_customizations import ValidLogger
+logging.setLoggerClass(ValidLogger)
 import argparse
 import sys
 
@@ -26,6 +28,19 @@ def csv(value):
     return [str(val) for val in value.split(',')]
 
 
+def logArgType(value):
+    """
+    figure out logging level from value
+
+    @return: logging.<LEVEL>
+    @rtype: type(logging.<LEVEL>)
+    """
+    level = getattr(logging, value.upper(), logging.NOTSET)
+    return level
+            
+    
+
+
 runner = valid_main.ValidMain()
 
 # pylint: disable=C0103,E1101
@@ -33,8 +48,8 @@ argparser = argparse.ArgumentParser(description='Run cloud image validation')
 argparser.add_argument('--data', help='data file for validation')
 argparser.add_argument('--config',
                        default=runner.config, help='use supplied yaml config file')
-argparser.add_argument('--debug', action='store_const', const=True,
-                       default=False, help='debug mode')
+argparser.add_argument('--loglevel', type=logArgType, default=logging.PROGRESS,
+                        help='set logging level')
 
 argparser.add_argument('--disable-stages', type=csv, help='disable specified stages')
 argparser.add_argument('--enable-stages', type=csv, help='enable specified stages (overrides --disable-stages)')
@@ -68,16 +83,16 @@ argparser.add_argument('--settlewait', type=int,
 argparser.add_argument('--hwp-filter', help='select hwps to instantiate',
                        default=runner.hwp_filter)
 
-argparser.add_argument('--list-only', '-l', help='Do not run tests, just list what would be done otherwise',
+argparser.add_argument('--no-action', '-n', help='Do not run tests, just list what would be done otherwise',
                         action='store_true')
 
 args = argparser.parse_args()
-runner.debug = args.debug
+runner.loglevel = args.loglevel
 if not args.server:
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 else:
     # We use systemd-journald, skip date-time
-    if args.debug:
+    if args.loglevel == logging.DEBUG:
         logging.basicConfig(format='%(levelname)s %(message)s')
     else:
         # skip loglevel as well
@@ -118,8 +133,8 @@ if args.disable_tags:
 if args.repeat:
     runner.repeat = args.repeat
 
-# in list_only mode -> runner.enabled = False
-runner.enabled = not args.list_only
+# in no_action mode -> runner.enabled = False
+runner.enabled = not args.no_action
 
 runner.start()
 

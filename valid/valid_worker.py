@@ -25,8 +25,8 @@ class WorkerProcess(multiprocessing.Process):
         multiprocessing.Process.__init__(self, name='WorkerProcess_%s' % random.randint(1, 16384), target=self.runner, args=(shareddata,))
         self.connection_cache = {}
         self.logger = logging.getLogger('valid.runner')
-        if shareddata.debug:
-            logging.getLogger('paramiko').setLevel(logging.DEBUG)
+        if shareddata.loglevel == logging.DEBUG:
+            logging.getLogger('paramiko').setLevel(shareddata.loglevel)
         else:
             logging.getLogger('paramiko').setLevel(logging.ERROR)
 
