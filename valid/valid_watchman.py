@@ -1,3 +1,8 @@
+"""
+validation worker's watcher process module
+"""
+
+
 import multiprocessing
 import logging
 from valid.logging_customizations import ValidLogger
@@ -24,6 +29,7 @@ class WatchmanProcess(multiprocessing.Process):
         """
         Create WatchmanProcess object
         """
+        self.shareddata = None
         multiprocessing.Process.__init__(self, name='WatchmanProcess', target=self.runner, args=(shareddata,))
         self.logger = logging.getLogger('valid.runner')
 
@@ -62,6 +68,7 @@ class WatchmanProcess(multiprocessing.Process):
         tasks_total_count = sum([int(transaction_dict[ami]['ninstances']) for ami in transaction_dict])
         tasks_finished_count = sum([len(transaction_dict[ami]['instances']) for ami in transaction_dict])
         ret = Fraction(tasks_finished_count, tasks_total_count)
+        # pylint: disable=maybe-no-member
         self.logger.progress("%s: %.2f%% (%s/%s)", transaction_id, 100*ret, tasks_finished_count, tasks_total_count)
         return ret
 
@@ -130,7 +137,9 @@ class WatchmanProcess(multiprocessing.Process):
                                 smtp = smtplib.SMTP('localhost')
                                 smtp.sendmail(self.shareddata.mailfrom, emails.split(','), msg.as_string())
                                 smtp.quit()
+                    # pylint: disable=broad-except
                     except Exception, err:
                         self.logger.error('WatchmanProcess: saving result failed, %s', err)
+                    # pylint: disable=maybe-no-member
                     self.logger.progress('Transaction ' + transaction_id + ' finished. Result: ' + resfile)
                     self.shareddata.resultdic.pop(transaction_id)

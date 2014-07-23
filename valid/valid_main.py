@@ -1,3 +1,8 @@
+"""
+Validation runner main module
+"""
+
+
 import logging
 from valid.logging_customizations import ValidLogger
 logging.setLoggerClass(ValidLogger)
@@ -15,7 +20,6 @@ import random
 from collections import defaultdict
 
 from valid import valid_worker, valid_watchman, valid_server
-from valid.testing_modules import *
 from valid import cloud
 from valid.tags_filter import factory as check_factory
 from valid.registry import TEST_CLASSES
@@ -40,6 +44,7 @@ def strzero(value, maxvalue):
 
 
 class ValidMain(object):
+    """validation main runner object"""
     def __init__(self):
         self.logger = logging.getLogger('valid.runner')
 
@@ -76,23 +81,29 @@ class ValidMain(object):
         self.manager = multiprocessing.Manager()
 
         # number of running processes
+        # pylint: disable=no-member
         self.numprocesses = self.manager.Value('i', 0)
         self.numprocesses_lock = multiprocessing.Lock()
 
         # exit
+        # pylint: disable=no-member
         self.time2die = self.manager.Value('b', False)
 
         # last testing result
+        # pylint: disable=no-member
         self.last_testing_exitstatus = self.manager.Value('i', 0)
 
         # main queue for worker processes
+        # pylint: disable=no-member
         self.mainq = self.manager.Queue()
 
         # resulting dictionary
         self.resultdic_lock = multiprocessing.Lock()
+        # pylint: disable=no-member
         self.resultdic = self.manager.dict()
 
         # resulting dictionary YAML
+        # pylint: disable=no-member
         self.resultdic_yaml = self.manager.dict()
 
     def start(self):
@@ -164,6 +175,7 @@ class ValidMain(object):
             response = urllib2.urlopen('http://169.254.169.254/latest/meta-data/public-hostname', timeout=5)
             hostname = response.read()
             self.logger.debug('Fetched %s as real hostname')
+        # pylint: disable=bare-except
         except:
             # looks like we're not in EC2 environment
             pass
@@ -183,6 +195,7 @@ class ValidMain(object):
             with open(datafile, 'r') as datafd:
                 data2add = yaml.load(datafd)
                 result = self.add_data(data2add)
+        # pylint: disable=broad-except
         except Exception, err:
             self.logger.error('Failed to read data file %s with error %s', datafile, err)
             sys.exit(1)
@@ -204,6 +217,7 @@ class ValidMain(object):
         @rtype: str or None
         """
         transaction_id = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
+        # pylint: disable=maybe-no-member
         self.logger.progress('Adding validation transaction ' + transaction_id)
         transaction_dict = {}
         count = 0
@@ -285,11 +299,15 @@ class ValidMain(object):
                         params_copy['stages'] = self.get_test_stages(params_copy)
                         ninstances += len(params_copy['stages'])
                         if params_copy['stages'] != []:
-                            self.logger.info('Adding ' + params_copy['iname'] + ': ' + hwp_item['cloudhwname'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
+                            self.logger.info('Adding ' + params_copy['iname'] + ': ' + \
+                                                hwp_item['cloudhwname'] + ' instance for ' + \
+                                                params_copy['ami'] + ' testing in ' + params_copy['region'])
                             self.mainq.put((0, 'create', params_copy))
                             count += 1
                         else:
-                            self.logger.info('No tests for ' + params_copy['iname'] + ': ' + hwp_item['cloudhwname'] + ' instance for ' + params_copy['ami'] + ' testing in ' + params_copy['region'])
+                            self.logger.info('No tests for ' + params_copy['iname'] + ': ' + \
+                                                hwp_item['cloudhwname'] + ' instance for ' + \
+                                                params_copy['ami'] + ' testing in ' + params_copy['region'])
                     if ninstances > 0:
                         transaction_dict[params['ami']] = {'ninstances': ninstances, 'instances': []}
                         if emails:
@@ -298,12 +316,14 @@ class ValidMain(object):
                                 transaction_dict[params['ami']]['subject'] = subject
                     hwp_found = True
                     break
+                # pylint: disable=bare-except
                 except:
                     self.logger.debug(':' + traceback.format_exc())
             if not hwp_found:
                 self.logger.error('HWP for ' + params['arch'] + ' is not found, skipping dataline for ' + params['ami'])
         if count > 0:
             self.resultdic[transaction_id] = transaction_dict
+            # pylint: disable=maybe-no-member
             self.logger.progress('Validation transaction ' + transaction_id + ' added')
             return transaction_id
         else:
@@ -366,7 +386,7 @@ class ValidMain(object):
                         # Everything is fine, appending stage to the result
                         result.append(stage + ':' + test_name)
                 except (AttributeError, TypeError, NameError, IndexError, ValueError, KeyError), err:
-                    self.logger.error('bad test, %s %s', module_name, err)
+                    self.logger.error('bad test, %s %s', testcase, err)
                     self.logger.debug(traceback.format_exc())
                     sys.exit(1)
                 break
