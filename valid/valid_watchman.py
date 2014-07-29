@@ -43,7 +43,7 @@ class WatchmanProcess(multiprocessing.Process):
             self.logger.debug('WatchmanProcess: heartbeat numprocesses: %i', shareddata.numprocesses.value)
             time.sleep(random.randint(2, 10))
             self.report_results()
-            self.add_worker_processes()
+            # FIXME: self.add_worker_processes()
             if shareddata.resultdic.keys() == [] and shareddata.time2die.get():
                 break
 
