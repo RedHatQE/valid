@@ -1,8 +1,24 @@
 """ Result parsing functions """
+import textwrap
 
+COMMON_COMMAND_KEYS_ORDERED=('command', 'match', 'result', 'value', 'actual', 'expected', 'comment')
+
+def command_repr(command):
+    '''repr a single command as list of lines'''
+    ret = []
+    format_value = lambda key, value: textwrap.wrap(('%s: ' % key) + str(value), initial_indent='  ', subsequent_indent='  ',
+                        break_on_hyphens=False,  break_long_words=True, width=70)
+    ret.append('-')
+    for key in COMMON_COMMAND_KEYS_ORDERED:
+        if key not in command:
+            continue
+        ret.extend(format_value(key, command[key]))
+    for key in set(command) - set(COMMON_COMMAND_KEYS_ORDERED):
+        ret.extend(format_value(key, command[key]))
+    return ret
 
 def get_overall_result(ami, verbose=False):
-    """ Get human-readable representation of the result """
+    """ Get human-readable representation of the result; partitioned by instance """
 
     arch = ami['arch']
     product = ami['product']
@@ -11,10 +27,11 @@ def get_overall_result(ami, verbose=False):
     ami_result = ami['result']
     overall_result = 'succeeded'
     bug_summary = ami['ami'] + ' ' + product + ' ' + version + ' ' + arch + ' ' + region
-    bug_description = ''
+    bug_description = []
 
     for itype in ami_result.keys():
-        bug_description += itype + '\n'
+        instance_result = 'succeeded'
+        itype_description = []
         itype_result = ami_result[itype]
         if type(itype_result) == dict:
             for stage in sorted(itype_result.keys()):
@@ -24,33 +41,30 @@ def get_overall_result(ami, verbose=False):
                     for command in test_result:
                         if command['result'] in ['fail', 'failed', 'failure']:
                             is_failed = 'failed'
-                            if overall_result == 'succeeded':
-                                overall_result = 'failed'
+                            if instance_result == 'succeeded':
+                                instance_result = 'failure'
                         if command['result'] in ['skip', 'skipped']:
                             is_failed = 'skipped'
                         if command['result'] in ['warn', 'warning']:
                             is_failed = 'warning'
-                    bug_description += 'test %s %s\n' % (stage, is_failed)
+                    itype_description.append('test %s %s' % (stage, is_failed))
                     if is_failed != 'succeeded' or verbose:
                         for command in test_result:
                             if is_failed != 'warning' or command['result'] in ['warn', 'warning'] or verbose:
-                                bug_description += '--->\n'
-                                for key in sorted(command.keys()):
-                                    bug_description += '\t%s: %s\n' % (key, command[key])
-                                bug_description += '<---\n'
+                                   itype_description.extend(command_repr(command))
                 elif test_result == 'skip':
-                    bug_description += '%s: test skipped\n' % stage
+                    itype_description.append('%s: test skipped' % stage)
                 else:
-                    bug_description += '%s: test failure\n' % stage
-                    overall_result = 'failure'
+                    itype_description.append('%s: test failure' % stage)
+                    instance_result = 'failure'
         else:
-            bug_description += 'instance testing failed!\n'
+            itype_description.append('instance testing failed!')
             overall_result = 'failure'
-    bug_description = 'Validation %s for %s in %s product: %s, version: %s, arch: %s\n\n%s' % (overall_result,
-                                                                                               ami["ami"],
-                                                                                               region,
-                                                                                               product,
-                                                                                               version,
-                                                                                               arch,
-                                                                                               bug_description)
-    return (overall_result, bug_summary, bug_description)
+        if overall_result == 'succeeded' and instance_result == 'failure':
+            overall_result = 'failure'
+        itype_header = '%s -- %s' % (itype, instance_result)
+        itype_description.insert(0, '-' * len(itype_header))
+        itype_description.insert(0, itype_header)
+        bug_description.append('\n'.join(itype_description))
+    info = '# Validation %s for %s, %s. Product: %s, %s, %s.' % (overall_result, ami["ami"], region, product, version, arch)
+    return (overall_result, bug_summary, info, bug_description)

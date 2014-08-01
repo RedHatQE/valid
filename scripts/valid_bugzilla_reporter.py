@@ -85,7 +85,7 @@ def main():
         ami_fd = tempfile.NamedTemporaryFile()
         ami_fd.write(yaml.safe_dump(ami))
         ami_fd.seek(0)
-        overall_result, bug_summary, bug_description = valid_result.get_overall_result(ami, verbose=args.all_commands)
+        overall_result, bug_summary, info, bug_description = valid_result.get_overall_result(ami, verbose=args.all_commands)
         bugnr = None
 
         if not args.test:
@@ -114,10 +114,12 @@ def main():
                     time.sleep(10)
             if bug:
                 bugnr = bug.id
-                bug.addcomment(bug_description)
+                for comment in bug_description:
+                    bug.addcomment(comment)
                 bug.setstatus("VERIFIED" if overall_result == "succeeded" else "ON_QA")
         else:
-            print bug_description
+            print info
+            print '\n'.join(bug_description)
 
         summary.add(ami['ami'], bug=bugnr, status='pass' if overall_result == "succeeded" else 'fail')
         ami_fd.close()
