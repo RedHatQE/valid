@@ -198,6 +198,7 @@ python-ethtool
 python-iniparse
 python-jsonpatch
 python-jsonpointer
+python-kitchen
 python-libs
 python-lxml
 python-markdown
@@ -258,4 +259,5 @@ xz
 xz-libs
 yum
 yum-metadata-parser
+yum-utils
 zlib
