@@ -329,6 +329,7 @@ pygobject2
 pygtk2
 pygtk2-libglade
 python
+python-dateutil
 python-dmidecode
 python-elementtree
 python-ethtool
