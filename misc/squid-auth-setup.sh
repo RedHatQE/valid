@@ -42,8 +42,8 @@ cat /etc/squid/squid.conf | sed 's,allow localnet,allow auth,' >> /etc/squid/squ
 mv -f /etc/squid/squid.conf.new /etc/squid/squid.conf
 systemctl enable squid.service
 systemctl start squid.service
-iptables -I INPUT -p tcp --destination-port 3128 -j ACCEPT
-service iptables save
+#iptables -I INPUT -p tcp --destination-port 3128 -j ACCEPT
+#service iptables save
 
 cat <<__VARIABLES > /tmp/squid_setup_variables.sh
 PROXY_PASSWORD=$PROXY_PASSWORD
