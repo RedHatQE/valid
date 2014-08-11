@@ -24,6 +24,13 @@ from valid import cloud
 from valid.tags_filter import factory as check_factory
 from valid.registry import TEST_CLASSES
 
+
+# TEST_CASE LOAD
+import pkg_resources
+from valid.testing_modules import *
+for entry_point in pkg_resources.iter_entry_points(group='valid.testing_modules'):
+    entry_point.load()
+
 def strzero(value, maxvalue):
     """
     Generate string from number with leading zeros to save lexicographical order

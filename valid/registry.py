@@ -1,22 +1,26 @@
-'''Global valid test case registry module'''
-import pkg_resources
+from collections import defaultdict
+import logging
+logger = logging.getLogger(__name__)
 
-_CLASS_NAME_BLACKLIST = ('ValidTestcase',)
+BLACKLIST_CLASS_NAMES = ['ValidTestcase']
+
 TEST_CLASSES = {}
+TEST_STAGES = defaultdict(lambda: [])
 
-class ValidTestcaseMetaClass(type):
-    '''Meta class to register a class instances as a valid test class'''
+
+
+class TestRegistry(type):
     def __new__(mcs, name, bases, class_dict):
-        '''register a mcs at the test_classes list'''
         class_instance = type.__new__(mcs, name, bases, class_dict)
-        if name not in _CLASS_NAME_BLACKLIST:
-            TEST_CLASSES[name] = class_instance
+        if name in BLACKLIST_CLASS_NAMES:
+            logger.debug('skip %s', name)
+            return class_instance
+        # register in class-dict
+        TEST_CLASSES[name] = class_instance
+        # register in stage-dict
+        for stage in getattr(class_instance, 'stage', ['default']):
+            TEST_STAGES[stage].append(name)
+        logger.debug('registered: %s', name)
         return class_instance
 
-# load valid test cases
-# pylint: disable=unused-wildcard-import,wildcard-import
-from valid.testing_modules import *
-
-# 3rd-party test classes registry look-up:
-for entry_point in pkg_resources.iter_entry_points(group='valid.testing_modules'):
-    entry_point.load()
+__all__ = ['TestRegistry', 'TEST_CLASSES', 'TEST_STAGES', 'BLACKLIST_CLASS_NAMES']

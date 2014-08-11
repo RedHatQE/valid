@@ -2,13 +2,13 @@
 import re
 import logging
 import multiprocessing
-from registry import ValidTestcaseMetaClass
 from valid.valid_connection import Expect, ExpectFailed
 
 
 class ValidTestcase(object):
     """ Base test class """
-    __metaclass__ = ValidTestcaseMetaClass
+    from registry import TestRegistry
+    __metaclass__ = TestRegistry
 
     datadir = '/usr/share/valid/data'
 
