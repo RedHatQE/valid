@@ -19,7 +19,9 @@ Contents
 
 Usage example
 -------------
-Example: valid_runner.py --data examples/example_rhel63_58_all_x86_64.yaml
+Example: 
+
+`valid_runner.py --data examples/example_rhel63_58_all_x86_64.yaml`
 
 
 Data files
@@ -27,6 +29,7 @@ Data files
 Data file is a yaml-encoded list. Example:
 
 examle_datafile.yaml:
+
     - ami: ami-bafcf3ce
       arch: x86_64_bug914737
       product: Fedora
@@ -63,10 +66,11 @@ HWP files
 HWP file is also a yaml-encoded list. Example:
 
 x86_64_hvm_kernel.yaml:
+
     - arch: x86_64
-      cpu: '4'
+      cpu: '2'
       cloudhwname: m3.xlarge
-      memory: '14000000'
+      memory: '7000000'
       virtualization: hvm
     - arch: x86_64
       bmap:
@@ -92,29 +96,33 @@ Optional fields:
 Useful tools
 ------------
 There are several useful tools available:
-* valid_bugzilla_reporter.py - examine result, report to bugzilla (--test option is useful as well)
-* valid_debug_run.py - run one specified test on existing instance
+* `valid_bugzilla_reporter.py` - examine result, report to bugzilla (--test option is useful as well)
+* `valid_debug_run.py` - run one specified test on existing instance
 
 
 Requirements
 ------------
-python-paramiko, python-rpyc, and python-boto are required.
+`python-paramiko`, `python-rpyc`, and `python-boto` are required.
 
 Server mode
 -----------
 Validation can be done in client/server mode as well. The communications are secured with HTTPS (default
-port is 8080). You can create certificates using 'valid_cert_creator.py' script. You should use real hostname
+port is 8080). You can create certificates using `valid_cert_creator.py` script. You should use real hostname
 you'll be connecting to, it will be checked during ssl negotiations. Client certificate and key are generated
 in /etc/valid/ directory.
-On server side:
-'valid_runner.py --server' (or use provided systemd valid.service)
 
-On client side:
-valid_client.py --cert 'certfile' --key 'keyfile' --host 'hostname' --add 'datafile' [ --emails 'comma-separated email list']
+* On server side:
+
+`valid_runner.py --server` (or use provided systemd valid.service)
+
+* On client side:
+
+`valid_client.py --cert 'certfile' --key 'keyfile' --host 'hostname' --add 'datafile' [ --emails 'comma-separated email list']`
 you'll get the transaction id.
 
-and then
-valid_client.py	--cert 'certfile' --key	'keyfile' --host 'hostname' --get 'transaction id'
+* And then:
+
+`valid_client.py --cert 'certfile' --key 'keyfile' --host 'hostname' --get 'transaction id'`
 
 
 Writing tests
@@ -159,6 +167,6 @@ setup(name='custom_valid_testcases_module',
 )
 ```
 
-Prebuil RPMs
+Prebuilt RPMs
 ------------
 Prebuilt RPMs are available here: https://rhuiqerpm.s3.amazonaws.com/index.html
