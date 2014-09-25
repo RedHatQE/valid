@@ -25,8 +25,8 @@ Example:
 
 Note
 ----
-Please note valid isn't maintained any more.
-You might consider using [dva](https://github.com/RedHatQE/valid) istead.
+Please note `Valid` isn't maintained any more.
+You might consider using [dva](https://github.com/RedHatQE/dva) istead.
 
 Data files
 ----------
