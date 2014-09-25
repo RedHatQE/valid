@@ -23,6 +23,10 @@ Example:
 
 `valid_runner.py --data examples/example_rhel63_58_all_x86_64.yaml`
 
+Note
+----
+Please note valid isn't maintained any more.
+You might consider using [dva](https://github.com/RedHatQE/valid) istead.
 
 Data files
 ----------
